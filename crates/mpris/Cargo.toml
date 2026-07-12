@@ -1,0 +1,8 @@
+[package]
+name = "mpris"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.52.3", features = ["sync"] }
+zbus = { version = "5.17.0", features = ["tokio"] }
