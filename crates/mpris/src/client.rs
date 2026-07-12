@@ -6,14 +6,15 @@ use futures_core::Stream;
 use futures_util::StreamExt;
 use url::Url;
 use zbus::{
+    Connection,
     fdo::{PropertiesChanged, PropertiesProxy},
     names::OwnedWellKnownName,
-    zvariant::{OwnedValue, Value}, Connection
+    zvariant::{OwnedValue, Value},
 };
 
 use crate::{
     proxy::PlayerProxy,
-    track::{MprisEvents, PlaybackCommand, PlaybackStatus, PlayerEvent, Track}
+    track::{MprisEvents, PlaybackCommand, PlaybackStatus, PlayerEvent, Track},
 };
 
 pub struct MprisClient {
@@ -26,7 +27,10 @@ impl MprisClient {
         let connection = Connection::session().await?;
         let service = format!("org.mpris.MediaPlayer2.{player}");
 
-        Ok(Self { connection, service: service.try_into()? })
+        Ok(Self {
+            connection,
+            service: service.try_into()?,
+        })
     }
 
     async fn proxy(&self) -> zbus::Result<PlayerProxy<'_>> {
@@ -44,7 +48,14 @@ impl MprisClient {
         let url = get_url(&metadata, "xesam:url");
         let duration = get_duration(&metadata);
 
-        Track { id, title, artists, album, url, duration }
+        Track {
+            id,
+            title,
+            artists,
+            album,
+            url,
+            duration,
+        }
     }
 
     pub async fn position(&self) -> zbus::Result<Duration> {
@@ -85,15 +96,15 @@ impl MprisClient {
             PlaybackCommand::Toggle => proxy.play_pause().await?,
             PlaybackCommand::Next => proxy.next().await?,
             PlaybackCommand::Previous => proxy.previous().await?,
-            PlaybackCommand::Seek(offset) => proxy.seek(offset.num_microseconds().unwrap_or(0)).await?,
+            PlaybackCommand::Seek(offset) => {
+                proxy.seek(offset.num_microseconds().unwrap_or(0)).await?
+            }
         }
 
         Ok(())
     }
 
-    pub async fn events(
-        &self,
-    ) -> zbus::Result<impl Stream<Item = PlayerEvent>> {
+    pub async fn events(&self) -> zbus::Result<impl Stream<Item = PlayerEvent>> {
         let proxy = PropertiesProxy::builder(&self.connection)
             .destination(&self.service)?
             .build()
@@ -128,52 +139,36 @@ impl MprisClient {
     }
 }
 
-fn get_string(
-    metadata: &HashMap<String, OwnedValue>,
-    key: &str,
-) -> String {
+fn get_string(metadata: &HashMap<String, OwnedValue>, key: &str) -> String {
     metadata
         .get(key)
         .and_then(|v| v.downcast_ref::<String>().ok())
         .unwrap_or_default()
 }
 
-fn get_optional_string(
-    metadata: &HashMap<String, OwnedValue>,
-    key: &str,
-) -> Option<String> {
+fn get_optional_string(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<String> {
     metadata
         .get(key)
         .and_then(|v| v.downcast_ref::<String>().ok())
 }
 
-fn get_array(
-    metadata: &HashMap<String, OwnedValue>,
-    key: &str,
-) -> Vec<String> {
+fn get_array(metadata: &HashMap<String, OwnedValue>, key: &str) -> Vec<String> {
     let Some(value) = metadata.get(key) else {
-        return Vec::new()
+        return Vec::new();
     };
 
     let value: &Value = value;
 
     match value {
-        Value::Array(array) => {
-            array
-                .iter()
-                .filter_map(|v| {
-                    String::try_from(v).ok()
-                })
-                .collect()
-        }
+        Value::Array(array) => array
+            .iter()
+            .filter_map(|v| String::try_from(v).ok())
+            .collect(),
         _ => vec![],
     }
 }
 
-fn get_url(
-    metadata: &HashMap<String, OwnedValue>,
-    key: &str,
-) -> Option<PathBuf> {
+fn get_url(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<PathBuf> {
     metadata
         .get(key)
         .and_then(|v| v.downcast_ref::<String>().ok())
@@ -187,9 +182,7 @@ fn get_url(
         })
 }
 
-fn get_duration(
-    metadata: &HashMap<String, OwnedValue>,
-) -> Duration {
+fn get_duration(metadata: &HashMap<String, OwnedValue>) -> Duration {
     metadata
         .get("mpris:length")
         .and_then(|v| v.downcast_ref::<i64>().ok())
