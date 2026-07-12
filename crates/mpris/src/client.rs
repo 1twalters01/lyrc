@@ -1,12 +1,19 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use async_stream::stream;
 use chrono::Duration;
+use futures_core::Stream;
+use futures_util::StreamExt;
 use url::Url;
-use zbus::{names::OwnedWellKnownName, zvariant::{OwnedValue, Value}, Connection};
+use zbus::{
+    fdo::{PropertiesChanged, PropertiesProxy},
+    names::OwnedWellKnownName,
+    zvariant::{OwnedValue, Value}, Connection
+};
 
 use crate::{
     proxy::PlayerProxy,
-    track::{PlaybackStatus, Track}
+    track::{MprisEvents, PlaybackStatus, PlayerEvent, Track}
 };
 
 pub struct MprisClient {
@@ -55,6 +62,54 @@ impl MprisClient {
         let metadata = self.proxy().await?.metadata().await?;
 
         Ok(Self::parse_track(metadata))
+    }
+
+    pub async fn playback_status(&self) -> zbus::Result<PlaybackStatus> {
+        let proxy = self.proxy().await?;
+        let status = proxy.playback_status().await?;
+
+        Ok(match status.as_str() {
+            "Playing" => PlaybackStatus::Playing,
+            "Paused" => PlaybackStatus::Paused,
+            "Stopped" => PlaybackStatus::Stopped,
+            _ => PlaybackStatus::Unknown,
+        })
+    }
+
+    pub async fn events(
+        &self,
+    ) -> zbus::Result<impl Stream<Item = PlayerEvent>> {
+        let proxy = PropertiesProxy::builder(&self.connection)
+            .destination(&self.service)?
+            .build()
+            .await?;
+
+        let client = self.clone();
+        let mut signals = proxy.receive_properties_changed().await?;
+
+        let output = stream! {
+            while let Some(signal) = signals.next().await {
+                let Ok(args) = signal.args() else {
+                    continue;
+                };
+
+                let changed = args.changed_properties();
+
+                if changed.contains_key("Metadata") {
+                    if let Ok(track) = client.current_track().await {
+                        yield PlayerEvent::TrackChanged(track);
+                    }
+                }
+
+                if changed.contains_key("PlaybackStatus") {
+                    if let Ok(status) = client.playback_status().await {
+                        yield PlayerEvent::PlaybackChanged(status);
+                    }
+                }
+            }
+        };
+
+        Ok(Box::pin(output))
     }
 }
 

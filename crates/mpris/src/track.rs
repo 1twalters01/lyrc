@@ -17,6 +17,7 @@ pub enum PlaybackStatus {
     Playing,
     Paused,
     Stopped,
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
@@ -26,3 +27,6 @@ pub enum PlayerEvent {
     PlaybackChanged(PlaybackStatus),
 }
 
+pub struct MprisEvents {
+    stream: PropertyChangedStream<'static>,
+}

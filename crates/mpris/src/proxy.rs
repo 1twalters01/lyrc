@@ -16,6 +16,14 @@ pub trait Player {
     #[zbus(property)]
     fn metadata(&self) -> zbus::Result<HashMap<String, OwnedValue>>;
 
+    #[zbus(signal)]
+    fn properties_changed(
+        &self,
+        interface_name: &str,
+        changed_properties: std::collections::HashMap<String, zbus::zvariant::OwnedValue>,
+        invalidated_properties: Vec<String>,
+    ) -> zbus::Result<()>;
+
     fn play(&self) -> zbus::Result<()>;
 
     fn pause(&self) -> zbus::Result<()>;
@@ -23,4 +31,6 @@ pub trait Player {
     fn next(&self) -> zbus::Result<()>;
 
     fn previous(&self) -> zbus::Result<()>;
+
+    fn seek(&self, offset: i64) -> zbus::Result<()>;
 }
