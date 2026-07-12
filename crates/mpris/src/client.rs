@@ -13,7 +13,7 @@ use zbus::{
 
 use crate::{
     proxy::PlayerProxy,
-    track::{MprisEvents, PlaybackStatus, PlayerEvent, Track}
+    track::{MprisEvents, PlaybackCommand, PlaybackStatus, PlayerEvent, Track}
 };
 
 pub struct MprisClient {
@@ -74,6 +74,21 @@ impl MprisClient {
             "Stopped" => PlaybackStatus::Stopped,
             _ => PlaybackStatus::Unknown,
         })
+    }
+
+    pub async fn execute(&self, command: PlaybackCommand) -> zbus::Result<()> {
+        let proxy = self.proxy().await?;
+
+        match command {
+            PlaybackCommand::Play => proxy.play().await?,
+            PlaybackCommand::Pause => proxy.pause().await?,
+            PlaybackCommand::Toggle => proxy.play_pause().await?,
+            PlaybackCommand::Next => proxy.next().await?,
+            PlaybackCommand::Previous => proxy.previous().await?,
+            PlaybackCommand::Seek(offset) => proxy.seek(offset.num_microseconds().unwrap_or(0)).await?,
+        }
+
+        Ok(())
     }
 
     pub async fn events(

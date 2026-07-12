@@ -28,6 +28,8 @@ pub trait Player {
 
     fn pause(&self) -> zbus::Result<()>;
 
+    fn play_pause(&self) -> zbus::Result<()>;
+
     fn next(&self) -> zbus::Result<()>;
 
     fn previous(&self) -> zbus::Result<()>;

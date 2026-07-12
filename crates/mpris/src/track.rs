@@ -20,13 +20,19 @@ pub enum PlaybackStatus {
     Unknown,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum PlaybackCommand {
+    Play,
+    Pause,
+    Toggle,
+    Next,
+    Previous,
+    Seek(Duration),
+}
+
 #[derive(Debug, Clone)]
 pub enum PlayerEvent {
     TrackChanged(Track),
     PositionChanged(Duration),
     PlaybackChanged(PlaybackStatus),
-}
-
-pub struct MprisEvents {
-    stream: PropertyChangedStream<'static>,
 }
