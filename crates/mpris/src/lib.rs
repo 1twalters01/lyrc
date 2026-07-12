@@ -1,2 +1,3 @@
-pub mod player;
-
+pub mod client;
+pub mod track;
+pub mod proxy;
