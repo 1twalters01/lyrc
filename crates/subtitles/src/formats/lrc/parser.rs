@@ -1,6 +1,6 @@
 use chrono::Duration;
 
-use crate::{parser::SubtitleParser, subtitles::SubtitleDocument};
+use crate::{parser::SubtitleParser, subtitles::{SubtitleCue, SubtitleDocument}};
 
 pub enum LrcError {
     MissingTagClosingBracket,
@@ -39,14 +39,11 @@ impl SubtitleParser for LrcParser {
     type Error = LrcError;
 
     fn parse(&self, input: &str) -> Result<SubtitleDocument, Self::Error> {
-        let mut doc = SubtitleDocument::default();
+        let lrc_lines = input.lines()
+            .map(|line| Self::parse_line(line))
+            .collect::<Result<Vec<_>, _>>()?;
 
-        for line in input.lines() {
-            let lrc_line = LrcParser::parse_line(line)?;
-            LrcParser::add_lrc_line_to_doc(lrc_line, doc);
-        }
-
-        Ok(doc)
+        Ok(LrcParser::build_subtitle_document(lrc_lines))
     }
 }
 
@@ -179,5 +176,44 @@ impl LrcParser {
         };
 
         Ok(minutes + seconds + milliseconds)
+    }
+
+    fn build_subtitle_document(lrc_lines: Vec<LrcLine>) -> SubtitleDocument {
+        let mut subtitle_document = SubtitleDocument::default();
+
+        for lrc_line in lrc_lines {
+            match lrc_line {
+                LrcLine::Metadata { key, value } => {
+                    match key.as_str() {
+                        "ti" => subtitle_document.metadata.title = Some(value),
+                        "ar" => subtitle_document.metadata.artist = Some(value),
+                        "al" => subtitle_document.metadata.album = Some(value),
+                        "la" => subtitle_document.metadata.language = Some(value),
+                        _ => {},
+                    }
+                },
+                LrcLine::Lyric { timestamps, text } => {
+                    let cues: Vec<SubtitleCue> = timestamps.into_iter()
+                    .map(|timestamp| SubtitleCue {
+                        id: None,
+                        start: timestamp,
+                        end: None,
+                        text: text.clone(),
+                    }).collect();
+                    subtitle_document.cues.extend(cues);
+                },
+                LrcLine::Empty => {},
+                LrcLine::Unknown(_) => {},
+            }
+        }
+
+        subtitle_document.cues.sort_by_key(|c| c.start);
+
+        for i in 0..subtitle_document.cues.len() - 1 {
+            subtitle_document.cues[i].end =
+            Some(subtitle_document.cues[i + 1].start);
+        }
+
+        subtitle_document
     }
 }
