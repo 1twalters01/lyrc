@@ -7,6 +7,9 @@ pub enum LrcError {
     InvalidTimestamp,
     InvalidTimestampMillisecondFormat,
     MissingColonSeparatorInTimestamp,
+    ContentAfterMetadataTag,
+    InvalidMetadata,
+    MissingMetadataSeparator,
 }
 
 enum LrcLine {
@@ -20,6 +23,14 @@ enum LrcLine {
         text: String,
     },
     Empty,
+    Unknown(String),
+}
+
+enum LrcLineType {
+    Metadata,
+    Lyric,
+    Empty,
+    Unknown,
 }
 
 pub struct LrcParser;
@@ -31,7 +42,8 @@ impl SubtitleParser for LrcParser {
         let mut doc = SubtitleDocument::default();
 
         for line in input.lines() {
-            self.parse_line(line, &mut doc)?;
+            let lrc_line = LrcParser::parse_line(line)?;
+            LrcParser::add_lrc_line_to_doc(lrc_line, doc);
         }
 
         Ok(doc)
@@ -40,20 +52,64 @@ impl SubtitleParser for LrcParser {
 
 impl LrcParser {
     fn parse_line(
-        &self,
         line: &str,
-        doc: &mut SubtitleDocument
     ) -> Result<LrcLine, LrcError> {
+        match Self::get_line_type(line) {
+            LrcLineType::Metadata => Self::parse_metadata(line),
+            LrcLineType::Lyric => Self::parse_lyric(line),
+            LrcLineType::Empty => Ok(LrcLine::Empty),
+            LrcLineType::Unknown => Ok(LrcLine::Unknown(line.into())),
+        }
+    }
+
+    fn get_line_type(line: &str) -> LrcLineType {
+        let line = line.trim();
+
+        if line.is_empty() {
+            return LrcLineType::Empty;
+        }
+
+        let Some(tag) = line
+            .strip_prefix('[')
+            .and_then(|s| s.split_once(']'))
+            .map(|(tag, _)| tag)
+        else {
+            return LrcLineType::Unknown;
+        };
+
+        if Self::parse_timestamp(tag).is_ok() {
+            return LrcLineType::Lyric;
+        }
+
+        if let Some((key, _)) = tag.split_once(":") {
+            if key.len() >= 2 && key.chars().all(|c| c.is_ascii_alphabetic()) {
+                return LrcLineType::Metadata;
+            }
+        }
+
+        LrcLineType::Unknown
     }
 
     fn parse_metadata(
-        &self,
         line: &str,
     ) -> Result<LrcLine, LrcError> {
+        let tag = line
+            .strip_prefix('[')
+            .and_then(|s| s.split_once(']'))
+            .map(|(tag, _)| tag)
+            .ok_or(LrcError::InvalidMetadata)?;
+            
+        let (key, value) = tag
+            .split_once(":")
+            .ok_or(LrcError::MissingMetadataSeparator)?;
+
+        Ok(LrcLine::Metadata {
+            key: key.to_owned(),
+            value: value.to_owned(),
+        })
     }
 
     fn parse_lyric(
-        &self,
         line: &str,
     ) -> Result<LrcLine, LrcError> {
         let mut remaining_line = line;
@@ -67,14 +123,7 @@ impl LrcParser {
             let tag = &stripped_line[..end];
             remaining_line = &stripped_line[end + 1..];
 
-            match LrcParser::parse_timestamp(tag) {
-                Ok(timestamp) => timestamps.push(timestamp),
-                Err(lrc_error) => return Err(lrc_error),
-            }
-        }
-
-        if timestamps.is_empty() {
-            return Ok(ParsedLine::Empty);
+            timestamps.push(LrcParser::parse_timestamp(tag)?);
         }
 
         Ok(LrcLine::Lyric {
