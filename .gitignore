@@ -1,1 +1,9 @@
+# rust build
 **/target/
+
+# python build
+**/__pycache__/
+**/*.py[cod]
+python/**/build/
+**/*.egg-info/
+**/.venv/
