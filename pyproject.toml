@@ -1,7 +1,6 @@
 [tool.uv.workspace]
 members = [
     'python/*',
-    "python",
 ]
 
 [dependency-groups]
