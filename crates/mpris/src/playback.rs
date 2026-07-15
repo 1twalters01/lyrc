@@ -2,7 +2,7 @@ use chrono::Duration;
 
 use crate::track::Track;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlaybackStatus {
     Playing,
     Paused,

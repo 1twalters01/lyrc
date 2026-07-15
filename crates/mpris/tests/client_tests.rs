@@ -1,4 +1,4 @@
-use mpris::{client::MprisClient, track::Track};
+use mpris::{client::MprisClient, playback::PlaybackStatus, track::Track};
 
 #[tokio::test]
 async fn connect_to_cmus() {
@@ -11,6 +11,40 @@ async fn connect_to_cmus() {
 }
 
 #[tokio::test]
+async fn get_current_position() {
+    let player = "cmus";
+    let client = MprisClient::connect(player)
+        .await
+        .expect("failed to connect to cmus");
+
+    let current_position = client.get_current_position().await.unwrap();
+    assert_ne!(current_position, chrono::Duration::microseconds(0));
+}
+
+#[tokio::test]
+#[ignore = "takes 2 seconds"]
+async fn poll_current_position() {
+    let client = MprisClient::connect("cmus")
+        .await
+        .expect("failed to connect to cmus");
+
+    for _ in 0..20 {
+        let position = client
+            .get_current_position()
+            .await
+            .expect("failed to get position");
+
+        println!(
+            "Position: {}s {}µs",
+            position.num_seconds(),
+            position.num_microseconds().unwrap()
+        );
+
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+}
+
+#[tokio::test]
 async fn get_current_track() {
     let player = "cmus";
     let client = MprisClient::connect(player)
@@ -18,6 +52,7 @@ async fn get_current_track() {
         .expect("failed to connect to cmus");
 
     let current_track = client.get_current_track().await.unwrap();
-    
+
     assert_ne!(current_track.title, String::new());
 }
+

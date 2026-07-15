@@ -39,15 +39,15 @@ impl MprisClient {
             .await
     }
 
-    pub async fn position(&self) -> zbus::Result<Duration> {
-        let proxy = self.proxy().await?;
-        let micros = proxy.position().await?;
-        Ok(Duration::microseconds(micros as i64))
-    }
-
     pub async fn metadata(&self) -> zbus::Result<HashMap<String, OwnedValue>> {
         let proxy = self.proxy().await?;
         Ok(proxy.metadata().await?)
+    }
+
+    pub async fn get_current_position(&self) -> zbus::Result<Duration> {
+        let proxy = self.proxy().await?;
+        let micros = proxy.position().await?;
+        Ok(Duration::microseconds(micros as i64))
     }
 
     pub async fn get_current_track(&self) -> zbus::Result<Track> {
@@ -56,7 +56,7 @@ impl MprisClient {
         Ok(Track::parse_track(metadata))
     }
 
-    pub async fn playback_status(&self) -> zbus::Result<PlaybackStatus> {
+    pub async fn get_playback_status(&self) -> zbus::Result<PlaybackStatus> {
         let proxy = self.proxy().await?;
         let status = proxy.playback_status().await?;
 
@@ -108,7 +108,7 @@ impl MprisClient {
                 }
 
                 if changed.contains_key("PlaybackStatus") {
-                    if let Ok(status) = self.playback_status().await {
+                    if let Ok(status) = self.get_playback_status().await {
                         yield PlayerEvent::PlaybackChanged(status);
                     }
                 }
