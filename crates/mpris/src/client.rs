@@ -72,11 +72,9 @@ impl MprisClient {
         let proxy = self.proxy().await?;
 
         match command {
-            PlaybackCommand::Play => {
-                match self.get_playback_status().await? {
-                    PlaybackStatus::Playing => {},
-                    _ => proxy.play().await?,
-                }
+            PlaybackCommand::Play => match self.get_playback_status().await? {
+                PlaybackStatus::Playing => {}
+                _ => proxy.play().await?,
             },
             PlaybackCommand::Pause => proxy.pause().await?,
             PlaybackCommand::Toggle => proxy.play_pause().await?,
@@ -84,16 +82,18 @@ impl MprisClient {
             PlaybackCommand::Previous => proxy.previous().await?,
             PlaybackCommand::Seek(offset) => {
                 proxy.seek(offset.num_microseconds().unwrap_or(0)).await?
-            },
+            }
             PlaybackCommand::SetPosition(position) => {
                 let track = self.get_current_track().await?;
-                let track_id = track.id.as_ref().ok_or_else(|| zbus::Error::Failure("missing track id".into()))?;
+                let track_id = track
+                    .id
+                    .as_ref()
+                    .ok_or_else(|| zbus::Error::Failure("missing track id".into()))?;
 
-                proxy.set_position(
-                    track_id,
-                    position.num_microseconds().unwrap_or(0)
-                ).await?
-            },
+                proxy
+                    .set_position(track_id, position.num_microseconds().unwrap_or(0))
+                    .await?
+            }
         }
 
         Ok(())
@@ -102,6 +102,7 @@ impl MprisClient {
     pub async fn events(&self) -> zbus::Result<impl Stream<Item = PlayerEvent>> {
         let proxy = PropertiesProxy::builder(&self.connection)
             .destination(&self.service)?
+            .path("/org/mpris/MediaPlayer2")?
             .build()
             .await?;
 

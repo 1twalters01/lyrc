@@ -56,9 +56,7 @@ fn get_optional_string(metadata: &HashMap<String, OwnedValue>, key: &str) -> Opt
 }
 
 fn get_optional_i32(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<i32> {
-    metadata
-        .get(key)
-        .and_then(|v| v.downcast_ref::<i32>().ok())
+    metadata.get(key).and_then(|v| v.downcast_ref::<i32>().ok())
 }
 
 fn get_string_array(metadata: &HashMap<String, OwnedValue>, key: &str) -> Vec<String> {
@@ -85,13 +83,9 @@ fn get_duration(metadata: &HashMap<String, OwnedValue>, key: &str) -> Duration {
         .unwrap_or_default()
 }
 
-fn get_object_path(
-    metadata: &HashMap<String, OwnedValue>,
-    key: &str,
-) -> Option<OwnedObjectPath> {
+fn get_object_path(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<OwnedObjectPath> {
     metadata
         .get(key)
         .and_then(|v| v.downcast_ref::<ObjectPath>().ok())
         .map(OwnedObjectPath::from)
 }
-

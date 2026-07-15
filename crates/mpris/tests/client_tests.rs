@@ -1,5 +1,10 @@
 use chrono::Duration;
-use mpris::{client::MprisClient, playback::{PlaybackCommand, PlaybackStatus}, track::Track};
+use futures_util::stream::StreamExt;
+
+use mpris::{
+    client::MprisClient,
+    playback::{PlaybackCommand, PlaybackStatus},
+};
 
 #[tokio::test]
 async fn connect_to_cmus() {
@@ -114,7 +119,6 @@ async fn execute_toggle_track() {
     } else if playback_status == PlaybackStatus::Paused {
         assert_eq!(new_playback_status, PlaybackStatus::Playing);
     }
-        
 }
 
 #[tokio::test]
@@ -165,7 +169,10 @@ async fn execute_seek() {
 
     let current_position = client.get_current_position().await.unwrap();
 
-    client.execute(PlaybackCommand::Seek(target_position)).await.unwrap();
+    client
+        .execute(PlaybackCommand::Seek(target_position))
+        .await
+        .unwrap();
 
     let new_position = client.get_current_position().await.unwrap();
     assert_eq!(current_position + target_position, new_position);
@@ -184,8 +191,29 @@ async fn execute_set_position() {
     let current_position = client.get_current_position().await.unwrap();
     assert_ne!(current_position, target_position);
 
-    client.execute(PlaybackCommand::SetPosition(target_position)).await.unwrap();
+    client
+        .execute(PlaybackCommand::SetPosition(target_position))
+        .await
+        .unwrap();
 
     let current_position = client.get_current_position().await.unwrap();
     assert_eq!(current_position, target_position);
+}
+
+#[tokio::test]
+#[ignore = "relies on playback changing"]
+async fn events_test() {
+    let client = MprisClient::connect("cmus").await.unwrap();
+
+    let mut events = client.events().await.unwrap();
+
+    let mut count = 0;
+    let event_limit = 10;
+    while let Some(event) = events.next().await {
+        println!("{event:?}");
+        count += 1;
+        if count == event_limit {
+            break;
+        }
+    }
 }
