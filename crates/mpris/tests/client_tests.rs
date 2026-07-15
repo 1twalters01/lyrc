@@ -69,6 +69,7 @@ async fn get_playback_status() {
 }
 
 #[tokio::test]
+#[ignore = "changes current track"]
 async fn execute_next_track() {
     let player = "cmus";
     let client = MprisClient::connect(player)
@@ -81,6 +82,22 @@ async fn execute_next_track() {
 
     assert_eq!(
         current_track.track_number.and_then(|n| Some(n + 1)),
+        next_track.track_number
+    );
+}
+#[tokio::test]
+async fn execute_previous_track() {
+    let player = "cmus";
+    let client = MprisClient::connect(player)
+        .await
+        .expect("failed to connect to cmus");
+
+    let current_track = client.get_current_track().await.unwrap();
+    client.execute(PlaybackCommand::Previous).await.unwrap();
+    let next_track = client.get_current_track().await.unwrap();
+
+    assert_eq!(
+        current_track.track_number.and_then(|n| Some(n - 1)),
         next_track.track_number
     );
 }
