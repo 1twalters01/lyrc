@@ -18,7 +18,6 @@ pub struct Track {
 
 impl Track {
     pub fn parse_track(metadata: HashMap<String, OwnedValue>) -> Track {
-        println!("metadata: {:#?}", &metadata);
         let album = get_optional_string(&metadata, "xesam:album");
         let disc_number = get_optional_i32(&metadata, "xesam:discNumber");
         let title = get_string(&metadata, "xesam:title");

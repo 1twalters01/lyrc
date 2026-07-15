@@ -1,4 +1,4 @@
-use mpris::{client::MprisClient, playback::PlaybackStatus, track::Track};
+use mpris::{client::MprisClient, playback::{PlaybackCommand, PlaybackStatus}, track::Track};
 
 #[tokio::test]
 async fn connect_to_cmus() {
@@ -18,7 +18,7 @@ async fn get_current_position() {
         .expect("failed to connect to cmus");
 
     let current_position = client.get_current_position().await.unwrap();
-    assert_ne!(current_position, chrono::Duration::microseconds(0));
+    assert_ne!(current_position, chrono::Duration::microseconds(5));
 }
 
 #[tokio::test]
@@ -66,4 +66,21 @@ async fn get_playback_status() {
     let playback_status = client.get_playback_status().await.unwrap();
 
     assert_eq!(playback_status, PlaybackStatus::Playing);
+}
+
+#[tokio::test]
+async fn execute_next_track() {
+    let player = "cmus";
+    let client = MprisClient::connect(player)
+        .await
+        .expect("failed to connect to cmus");
+
+    let current_track = client.get_current_track().await.unwrap();
+    client.execute(PlaybackCommand::Next).await.unwrap();
+    let next_track = client.get_current_track().await.unwrap();
+
+    assert_eq!(
+        current_track.track_number.and_then(|n| Some(n + 1)),
+        next_track.track_number
+    );
 }
