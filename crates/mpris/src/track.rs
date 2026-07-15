@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::Duration;
-use zbus::zvariant::{OwnedValue, Value};
+use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Track {
@@ -10,7 +10,7 @@ pub struct Track {
     pub title: String,
     pub track_number: Option<i32>,
     pub duration: Duration,
-    pub id: String,
+    pub id: Option<OwnedObjectPath>,
     pub genres: Vec<String>,
     pub artists: Vec<String>,
     pub album_artists: Vec<String>,
@@ -23,7 +23,7 @@ impl Track {
         let title = get_string(&metadata, "xesam:title");
         let track_number = get_optional_i32(&metadata, "xesam:trackNumber");
         let duration = get_duration(&metadata, "mpris:length");
-        let id = get_string(&metadata, "mpris:trackid");
+        let id = get_object_path(&metadata, "mpris:trackid");
         let genres = get_string_array(&metadata, "xesam:genre");
         let artists = get_string_array(&metadata, "xesam:artist");
         let album_artists = get_string_array(&metadata, "xesam:albumArtist");
@@ -83,5 +83,15 @@ fn get_duration(metadata: &HashMap<String, OwnedValue>, key: &str) -> Duration {
         .and_then(|v| v.downcast_ref::<i64>().ok())
         .map(|v| Duration::microseconds(v))
         .unwrap_or_default()
+}
+
+fn get_object_path(
+    metadata: &HashMap<String, OwnedValue>,
+    key: &str,
+) -> Option<OwnedObjectPath> {
+    metadata
+        .get(key)
+        .and_then(|v| v.downcast_ref::<ObjectPath>().ok())
+        .map(OwnedObjectPath::from)
 }
 

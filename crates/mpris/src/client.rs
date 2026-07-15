@@ -80,8 +80,14 @@ impl MprisClient {
             PlaybackCommand::Seek(offset) => {
                 proxy.seek(offset.num_microseconds().unwrap_or(0)).await?
             },
-            PlaybackCommand::SetPosition(offset) => {
-                proxy.set_position(offset.num_microseconds().unwrap_or(0)).await?
+            PlaybackCommand::SetPosition(position) => {
+                let track = self.get_current_track().await?;
+                let track_id = track.id.as_ref().ok_or_else(|| zbus::Error::Failure("missing track id".into()))?;
+
+                proxy.set_position(
+                    track_id,
+                    position.num_microseconds().unwrap_or(0)
+                ).await?
             },
         }
 

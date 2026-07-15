@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use zbus::{proxy, zvariant::OwnedValue};
+use zbus::{proxy, zvariant::{OwnedObjectPath, OwnedValue}};
 
 #[proxy(
     interface = "org.mpris.MediaPlayer2.Player",
@@ -36,5 +36,5 @@ pub trait Player {
 
     fn seek(&self, offset: i64) -> zbus::Result<()>;
 
-    fn set_position(&self, offset: i64) -> zbus::Result<()>;
+    fn set_position(&self, track_id: &OwnedObjectPath, position: i64) -> zbus::Result<()>;
 }
