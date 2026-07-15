@@ -56,3 +56,14 @@ async fn get_current_track() {
     assert_ne!(current_track.title, String::new());
 }
 
+#[tokio::test]
+async fn get_playback_status() {
+    let player = "cmus";
+    let client = MprisClient::connect(player)
+        .await
+        .expect("failed to connect to cmus");
+
+    let playback_status = client.get_playback_status().await.unwrap();
+
+    assert_eq!(playback_status, PlaybackStatus::Playing);
+}
