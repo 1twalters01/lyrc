@@ -64,9 +64,57 @@ async fn get_playback_status() {
         .await
         .expect("failed to connect to cmus");
 
+    let playback_status = client.get_playback_status().await;
+
+    assert!(playback_status.is_ok());
+}
+
+#[tokio::test]
+#[ignore = "changes playback status"]
+async fn execute_play_track() {
+    let player = "cmus";
+    let client = MprisClient::connect(player)
+        .await
+        .expect("failed to connect to cmus");
+
+    client.execute(PlaybackCommand::Play).await.unwrap();
     let playback_status = client.get_playback_status().await.unwrap();
 
     assert_eq!(playback_status, PlaybackStatus::Playing);
+}
+
+#[tokio::test]
+#[ignore = "changes playback status"]
+async fn execute_pause_track() {
+    let player = "cmus";
+    let client = MprisClient::connect(player)
+        .await
+        .expect("failed to connect to cmus");
+
+    client.execute(PlaybackCommand::Pause).await.unwrap();
+    let playback_status = client.get_playback_status().await.unwrap();
+
+    assert_eq!(playback_status, PlaybackStatus::Paused);
+}
+
+#[tokio::test]
+#[ignore = "changes playback status"]
+async fn execute_toggle_track() {
+    let player = "cmus";
+    let client = MprisClient::connect(player)
+        .await
+        .expect("failed to connect to cmus");
+
+    let playback_status = client.get_playback_status().await.unwrap();
+    client.execute(PlaybackCommand::Toggle).await.unwrap();
+    let new_playback_status = client.get_playback_status().await.unwrap();
+
+    if playback_status == PlaybackStatus::Playing {
+        assert_eq!(new_playback_status, PlaybackStatus::Paused);
+    } else if playback_status == PlaybackStatus::Paused {
+        assert_eq!(new_playback_status, PlaybackStatus::Playing);
+    }
+        
 }
 
 #[tokio::test]
@@ -124,7 +172,7 @@ async fn execute_seek() {
 }
 
 #[tokio::test]
-// #[ignore = "changes current track position"]
+#[ignore = "changes current track position"]
 async fn execute_set_position() {
     let player = "cmus";
     let client = MprisClient::connect(player)

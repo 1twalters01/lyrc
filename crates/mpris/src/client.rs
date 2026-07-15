@@ -72,7 +72,12 @@ impl MprisClient {
         let proxy = self.proxy().await?;
 
         match command {
-            PlaybackCommand::Play => proxy.play().await?,
+            PlaybackCommand::Play => {
+                match self.get_playback_status().await? {
+                    PlaybackStatus::Playing => {},
+                    _ => proxy.play().await?,
+                }
+            },
             PlaybackCommand::Pause => proxy.pause().await?,
             PlaybackCommand::Toggle => proxy.play_pause().await?,
             PlaybackCommand::Next => proxy.next().await?,
