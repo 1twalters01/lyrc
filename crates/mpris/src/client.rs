@@ -28,6 +28,10 @@ impl MprisClient {
         })
     }
 
+    pub fn get_service(&self) -> OwnedWellKnownName {
+        self.service.clone()
+    }
+
     async fn proxy(&self) -> zbus::Result<PlayerProxy<'_>> {
         PlayerProxy::builder(&self.connection)
             .destination(&self.service)?
@@ -46,7 +50,7 @@ impl MprisClient {
         Ok(proxy.metadata().await?)
     }
 
-    pub async fn current_track(&self) -> zbus::Result<Track> {
+    pub async fn get_current_track(&self) -> zbus::Result<Track> {
         let metadata = self.proxy().await?.metadata().await?;
 
         Ok(Track::parse_track(metadata))
@@ -98,7 +102,7 @@ impl MprisClient {
                 let changed = args.changed_properties();
 
                 if changed.contains_key("Metadata") {
-                    if let Ok(track) = self.current_track().await {
+                    if let Ok(track) = self.get_current_track().await {
                         yield PlayerEvent::TrackChanged(track);
                     }
                 }
