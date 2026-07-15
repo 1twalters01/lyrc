@@ -79,7 +79,10 @@ impl MprisClient {
             PlaybackCommand::Previous => proxy.previous().await?,
             PlaybackCommand::Seek(offset) => {
                 proxy.seek(offset.num_microseconds().unwrap_or(0)).await?
-            }
+            },
+            PlaybackCommand::SetPosition(offset) => {
+                proxy.set_position(offset.num_microseconds().unwrap_or(0)).await?
+            },
         }
 
         Ok(())

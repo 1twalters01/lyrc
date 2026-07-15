@@ -18,6 +18,7 @@ pub enum PlaybackCommand {
     Next,
     Previous,
     Seek(Duration),
+    SetPosition(Duration),
 }
 
 #[derive(Debug, Clone)]

@@ -35,4 +35,6 @@ pub trait Player {
     fn previous(&self) -> zbus::Result<()>;
 
     fn seek(&self, offset: i64) -> zbus::Result<()>;
+
+    fn set_position(&self, offset: i64) -> zbus::Result<()>;
 }
