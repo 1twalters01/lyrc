@@ -6,5 +6,13 @@ members = [
 [dependency-groups]
 dev = [
     'pytest>=8.4.1',
+    "pytest-asyncio>=1.4.0",
     'ruff>=0.12.4',
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: tests that require external services or network access",
+]
+addopts = "-m 'not integration'"
+

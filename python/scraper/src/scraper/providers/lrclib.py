@@ -1,26 +1,26 @@
-import httpx
-from urllib.parse import urlencode
 
-from scraper.models.track import Track
+import httpx
 from scraper.models.lyrics import Lyrics, LyricsFormat, LyricsSource
+from scraper.models.track import Track
 
 BASE_URL = "https://lrclib.net"
 
 class LrcLibProvider:
+    def __init__(self, client: httpx.AsyncClient):
+        self.client = client
 
     async def search(self, track: Track) -> Lyrics:
         params = {
-            "track_name": track.track_name,
-            "artist_name": track.artist_name,
-            "album_name": track.album_name,
+            "track_name": track.title,
+            "artist_name": track.artist,
+            "album_name": track.album,
             "duration": int(track.duration.total_seconds()),
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{BASE_URL}/api/get",
-                params=params,
-            )
+        response = await self.client.get(
+            f"{BASE_URL}/api/get",
+            params=params,
+        )
 
         if response.status_code == 404:
             return None

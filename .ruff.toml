@@ -1,0 +1,22 @@
+# run with uv run ruff check --fix
+line-length = 100
+target-version = "py313"
+extend-exclude = [
+    '__pycache__',
+    '*_pb2.py',
+    '*_pb2.pyi',
+]
+
+[lint]
+select = [
+    'E',
+    'F',
+    'I',
+]
+ignore = [
+    'E501',
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"

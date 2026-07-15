@@ -1,4 +1,4 @@
-pub mod subtitles;
-pub mod parser;
-pub mod writer;
 pub mod formats;
+pub mod parser;
+pub mod subtitles;
+pub mod writer;

@@ -1,6 +1,9 @@
 use chrono::Duration;
 
-use crate::{parser::SubtitleParser, subtitles::{SubtitleCue, SubtitleDocument}};
+use crate::{
+    parser::SubtitleParser,
+    subtitles::{SubtitleCue, SubtitleDocument},
+};
 
 pub enum LrcError {
     MissingTagClosingBracket,
@@ -39,7 +42,8 @@ impl SubtitleParser for LrcParser {
     type Error = LrcError;
 
     fn parse(&self, input: &str) -> Result<SubtitleDocument, Self::Error> {
-        let lrc_lines = input.lines()
+        let lrc_lines = input
+            .lines()
             .map(|line| Self::parse_line(line))
             .collect::<Result<Vec<_>, _>>()?;
 
@@ -48,9 +52,7 @@ impl SubtitleParser for LrcParser {
 }
 
 impl LrcParser {
-    fn parse_line(
-        line: &str,
-    ) -> Result<LrcLine, LrcError> {
+    fn parse_line(line: &str) -> Result<LrcLine, LrcError> {
         match Self::get_line_type(line) {
             LrcLineType::Metadata => Self::parse_metadata(line),
             LrcLineType::Lyric => Self::parse_lyric(line),
@@ -87,15 +89,13 @@ impl LrcParser {
         LrcLineType::Unknown
     }
 
-    fn parse_metadata(
-        line: &str,
-    ) -> Result<LrcLine, LrcError> {
+    fn parse_metadata(line: &str) -> Result<LrcLine, LrcError> {
         let tag = line
             .strip_prefix('[')
             .and_then(|s| s.split_once(']'))
             .map(|(tag, _)| tag)
             .ok_or(LrcError::InvalidMetadata)?;
-            
+
         let (key, value) = tag
             .split_once(":")
             .ok_or(LrcError::MissingMetadataSeparator)?;
@@ -106,9 +106,7 @@ impl LrcParser {
         })
     }
 
-    fn parse_lyric(
-        line: &str,
-    ) -> Result<LrcLine, LrcError> {
+    fn parse_lyric(line: &str) -> Result<LrcLine, LrcError> {
         let mut remaining_line = line;
         let mut timestamps = Vec::new();
 
@@ -142,7 +140,7 @@ impl LrcParser {
             Err(_) => return Err(LrcError::InvalidTimestamp),
         };
 
-        let  remainder = &trimmed_input[colon_idx + 1..];
+        let remainder = &trimmed_input[colon_idx + 1..];
         let (seconds, milliseconds) = match remainder.find('.') {
             Some(dot_idx) => {
                 let seconds = match remainder[..dot_idx].parse::<i64>() {
@@ -160,11 +158,11 @@ impl LrcParser {
                         Ok(milliseconds) => Duration::milliseconds(milliseconds),
                         Err(_) => return Err(LrcError::InvalidTimestamp),
                     },
-                    _ => return Err(LrcError::InvalidTimestampMillisecondFormat)
+                    _ => return Err(LrcError::InvalidTimestampMillisecondFormat),
                 };
 
                 (seconds, milliseconds)
-            },
+            }
             None => {
                 let seconds = match remainder.parse::<i64>() {
                     Ok(seconds) => Duration::seconds(seconds),
@@ -183,35 +181,34 @@ impl LrcParser {
 
         for lrc_line in lrc_lines {
             match lrc_line {
-                LrcLine::Metadata { key, value } => {
-                    match key.as_str() {
-                        "ti" => subtitle_document.metadata.title = Some(value),
-                        "ar" => subtitle_document.metadata.artist = Some(value),
-                        "al" => subtitle_document.metadata.album = Some(value),
-                        "la" => subtitle_document.metadata.language = Some(value),
-                        _ => {},
-                    }
+                LrcLine::Metadata { key, value } => match key.as_str() {
+                    "ti" => subtitle_document.metadata.title = Some(value),
+                    "ar" => subtitle_document.metadata.artist = Some(value),
+                    "al" => subtitle_document.metadata.album = Some(value),
+                    "la" => subtitle_document.metadata.language = Some(value),
+                    _ => {}
                 },
                 LrcLine::Lyric { timestamps, text } => {
-                    let cues: Vec<SubtitleCue> = timestamps.into_iter()
-                    .map(|timestamp| SubtitleCue {
-                        id: None,
-                        start: timestamp,
-                        end: None,
-                        text: text.clone(),
-                    }).collect();
+                    let cues: Vec<SubtitleCue> = timestamps
+                        .into_iter()
+                        .map(|timestamp| SubtitleCue {
+                            id: None,
+                            start: timestamp,
+                            end: None,
+                            text: text.clone(),
+                        })
+                        .collect();
                     subtitle_document.cues.extend(cues);
-                },
-                LrcLine::Empty => {},
-                LrcLine::Unknown(_) => {},
+                }
+                LrcLine::Empty => {}
+                LrcLine::Unknown(_) => {}
             }
         }
 
         subtitle_document.cues.sort_by_key(|c| c.start);
 
         for i in 0..subtitle_document.cues.len() - 1 {
-            subtitle_document.cues[i].end =
-            Some(subtitle_document.cues[i + 1].start);
+            subtitle_document.cues[i].end = Some(subtitle_document.cues[i + 1].start);
         }
 
         subtitle_document
