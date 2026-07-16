@@ -205,7 +205,7 @@ async fn execute_set_position() {
 }
 
 #[tokio::test]
-#[ignore = "relies on playback changing"]
+// #[ignore = "relies on playback changing"]
 async fn events_test() {
     let client = MprisClient::connect("cmus").await.unwrap();
 
@@ -220,4 +220,5 @@ async fn events_test() {
             break;
         }
     }
+    assert!(false)
 }

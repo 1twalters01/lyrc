@@ -20,12 +20,7 @@ pub trait Player {
     fn metadata(&self) -> zbus::Result<HashMap<String, OwnedValue>>;
 
     #[zbus(signal)]
-    fn properties_changed(
-        &self,
-        interface_name: &str,
-        changed_properties: std::collections::HashMap<String, zbus::zvariant::OwnedValue>,
-        invalidated_properties: Vec<String>,
-    ) -> zbus::Result<()>;
+    fn seeked(&self, position: i64) -> zbus::Result<()>;
 
     fn play(&self) -> zbus::Result<()>;
 

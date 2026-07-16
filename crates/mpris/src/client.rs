@@ -4,7 +4,12 @@ use async_stream::stream;
 use chrono::Duration;
 use futures_core::Stream;
 use futures_util::StreamExt;
-use zbus::{Connection, fdo::PropertiesProxy, names::OwnedWellKnownName, zvariant::OwnedValue};
+use zbus::{
+    Connection,
+    fdo::PropertiesProxy,
+    names::OwnedWellKnownName,
+    zvariant::OwnedValue
+};
 
 use crate::{
     playback::{PlaybackCommand, PlaybackStatus, PlayerEvent},
@@ -100,32 +105,51 @@ impl MprisClient {
     }
 
     pub async fn events(&self) -> zbus::Result<impl Stream<Item = PlayerEvent>> {
-        let proxy = PropertiesProxy::builder(&self.connection)
+        let properties_proxy = PropertiesProxy::builder(&self.connection)
             .destination(&self.service)?
             .path("/org/mpris/MediaPlayer2")?
             .build()
             .await?;
 
-        let mut signals = proxy.receive_properties_changed().await?;
+        let player_proxy = PlayerProxy::builder(&self.connection)
+            .destination(&self.service)?
+            .path("/org/mpris/MediaPlayer2")?
+            .build()
+            .await?;
+
+
+        let mut properties = properties_proxy.receive_properties_changed().await?;
+        let mut seeked = player_proxy.receive_seeked().await?;
 
         let output = stream! {
-            while let Some(signal) = signals.next().await {
-                let Ok(args) = signal.args() else {
-                    continue;
-                };
+            loop {
+                tokio::select! {
+                    Some(signal) = properties.next() => {
+                        let Ok(args) = signal.args() else {
+                            continue;
+                        };
 
-                let changed = args.changed_properties();
+                        let changed = args.changed_properties();
 
-                if changed.contains_key("Metadata") {
-                    if let Ok(track) = self.get_current_track().await {
-                        yield PlayerEvent::TrackChanged(track);
+                        if changed.contains_key("Metadata") {
+                            yield PlayerEvent::TrackChanged;
+                        }
+
+                        if changed.contains_key("PlaybackStatus") {
+                            yield PlayerEvent::PlaybackChanged;
+                        }
                     }
-                }
 
-                if changed.contains_key("PlaybackStatus") {
-                    if let Ok(status) = self.get_playback_status().await {
-                        yield PlayerEvent::PlaybackChanged(status);
+                    Some(signal) = seeked.next() => {
+                        let Ok(args) = signal.args() else {
+                            continue;
+                        };
+
+                        let position = Duration::microseconds(*args.position());
+                        yield PlayerEvent::Seeked(position);
                     }
+
+                    else => break,
                 }
             }
         };

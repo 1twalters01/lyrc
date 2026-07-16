@@ -1,7 +1,5 @@
 use chrono::Duration;
 
-use crate::track::Track;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlaybackStatus {
     Playing,
@@ -23,7 +21,7 @@ pub enum PlaybackCommand {
 
 #[derive(Debug, Clone)]
 pub enum PlayerEvent {
-    TrackChanged(Track),
-    PositionChanged(Duration),
-    PlaybackChanged(PlaybackStatus),
+    TrackChanged,
+    PlaybackChanged,
+    Seeked(Duration),
 }
