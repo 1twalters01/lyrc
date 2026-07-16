@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
+use tokio::process::Command;
 
 use chrono::Duration;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value};
@@ -14,10 +15,11 @@ pub struct Track {
     pub genres: Vec<String>,
     pub artists: Vec<String>,
     pub album_artists: Vec<String>,
+    pub file_path: Option<PathBuf>,
 }
 
 impl Track {
-    pub fn parse_track(metadata: HashMap<String, OwnedValue>) -> Track {
+    pub async fn parse_track(metadata: HashMap<String, OwnedValue>) -> Track {
         let album = get_optional_string(&metadata, "xesam:album");
         let disc_number = get_optional_i32(&metadata, "xesam:discNumber");
         let title = get_string(&metadata, "xesam:title");
@@ -27,6 +29,8 @@ impl Track {
         let genres = get_string_array(&metadata, "xesam:genre");
         let artists = get_string_array(&metadata, "xesam:artist");
         let album_artists = get_string_array(&metadata, "xesam:albumArtist");
+
+        let file_path = get_current_track_file_path().await.ok().flatten();
 
         Track {
             album,
@@ -38,6 +42,8 @@ impl Track {
             genres,
             artists,
             album_artists,
+
+            file_path,
         }
     }
 }
@@ -88,4 +94,21 @@ fn get_object_path(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<
         .get(key)
         .and_then(|v| v.downcast_ref::<ObjectPath>().ok())
         .map(OwnedObjectPath::from)
+}
+
+async fn get_current_track_file_path() -> Result<Option<PathBuf>, std::io::Error> {
+    let output = Command::new("cmus-remote")
+        .arg("-Q")
+        .output()
+        .await?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    for line in stdout.lines() {
+        if let Some(path) = line.strip_prefix("file ") {
+            return Ok(Some(PathBuf::from(path)));
+        }
+    }
+
+    Ok(None)
 }

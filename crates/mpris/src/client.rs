@@ -53,7 +53,7 @@ impl MprisClient {
     pub async fn get_current_track(&self) -> zbus::Result<Track> {
         let metadata = self.proxy().await?.metadata().await?;
 
-        Ok(Track::parse_track(metadata))
+        Ok(Track::parse_track(metadata).await)
     }
 
     pub async fn get_playback_status(&self) -> zbus::Result<PlaybackStatus> {

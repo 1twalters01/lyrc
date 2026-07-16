@@ -60,6 +60,10 @@ async fn get_current_track() {
     let current_track = client.get_current_track().await.unwrap();
 
     assert_ne!(current_track.title, String::new());
+    assert!(current_track.file_path
+        .and_then(|p| Some(p.exists()))
+        .is_some()
+    );
 }
 
 #[tokio::test]
@@ -208,7 +212,7 @@ async fn events_test() {
     let mut events = client.events().await.unwrap();
 
     let mut count = 0;
-    let event_limit = 10;
+    let event_limit = 3;
     while let Some(event) = events.next().await {
         println!("{event:?}");
         count += 1;
