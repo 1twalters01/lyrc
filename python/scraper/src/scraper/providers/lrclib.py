@@ -2,14 +2,15 @@
 import httpx
 from scraper.models.lyrics import Lyrics, LyricsFormat, LyricsSource
 from scraper.models.track import Track
+from scraper.providers.base import LyricsProvider
 
 BASE_URL = "https://lrclib.net"
 
-class LrcLibProvider:
+class LrcLibProvider(LyricsProvider):
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 
-    async def search(self, track: Track) -> Lyrics:
+    async def search(self, track: Track) -> Lyrics | None:
         params = {
             "track_name": track.title,
             "artist_name": track.artist,

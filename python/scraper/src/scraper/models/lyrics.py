@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 
-
 class LyricsFormat(str, Enum):
     LRC = "lrc"
     TEXT = "text"

@@ -3,6 +3,7 @@ from datetime import timedelta
 import httpx
 import pytest
 from scraper.models.track import Track
+from scraper.service import LyricsService
 from scraper.providers.lrclib import LrcLibProvider
 
 
@@ -17,8 +18,10 @@ async def test_liblrc_search_api():
     )
 
     async with httpx.AsyncClient(timeout=10.0) as client:
-        provider = LrcLibProvider(client)
-        lyrics = await provider.search(track)
+        provider = LyricsService({
+            "lrclib": LrcLibProvider(client),
+        })
+        lyrics = await provider.search(track, "lrclib")
 
         print(lyrics)
 
