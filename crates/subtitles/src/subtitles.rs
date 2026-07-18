@@ -36,5 +36,9 @@ pub struct SubtitleCue {
     pub id: Option<String>,
     pub start: Duration,
     pub end: Option<Duration>,
-    pub text: String,
+    pub content: SubtitleContent,
+}
+
+pub enum SubtitleContent {
+    Text(String),
 }

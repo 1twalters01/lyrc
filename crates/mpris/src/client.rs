@@ -132,6 +132,10 @@ impl MprisClient {
                         let changed = args.changed_properties();
 
                         if changed.contains_key("Metadata") {
+                        // Get the metadata here, create the track and then pass that through to
+                        // avoid another call to get the new track?
+                        
+                        // // print Metadata to see the info for if this is possible
                             yield PlayerEvent::TrackChanged;
                         }
 

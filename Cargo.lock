@@ -250,8 +250,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "config"
+version = "0.1.0"
+
+[[package]]
 name = "core"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "mpris",
+ "subtitles",
+ "synchronizer",
+]
 
 [[package]]
 name = "core-foundation-sys"
@@ -729,6 +739,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "synchronizer"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "subtitles",
 ]
 
 [[package]]

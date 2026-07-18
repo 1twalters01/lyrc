@@ -11,24 +11,24 @@ pub enum LyricsSyncEvent {
 }
 
 pub struct LyricsSynchronizer {
-    lyrics: SubtitleDocument,
     active_cues: Vec<usize>
 }
 
 impl Synchronizer for LyricsSynchronizer {
     type Event = LyricsSyncEvent;
 
-    fn update(&mut self, position: Duration) -> Option<Self::Event> {
-        let new_cues = Self::get_cues_at(&self.lyrics, position);
+    fn update(&mut self, subtitles: SubtitleDocument, position: Duration) -> Option<Self::Event> {
+        let new_cues = Self::get_cues_at(&subtitles, position);
 
         if new_cues != self.active_cues {
             let old_cues = std::mem::replace(&mut self.active_cues, new_cues);
+
             let event = LyricsSyncEvent::Changed {
                 old_cues,
                 new_cues: self.active_cues.clone(),
             };
 
-            Some(event);
+            return Some(event);
         }
 
         None

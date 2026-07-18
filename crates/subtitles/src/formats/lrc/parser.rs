@@ -195,7 +195,7 @@ impl LrcParser {
                             id: None,
                             start: timestamp,
                             end: None,
-                            text: text.clone(),
+                            content: crate::subtitles::SubtitleContent::Text(text.clone()),
                         })
                         .collect();
                     subtitle_document.cues.extend(cues);
