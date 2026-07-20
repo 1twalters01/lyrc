@@ -97,10 +97,7 @@ fn get_object_path(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<
 }
 
 async fn get_current_track_file_path() -> Result<Option<PathBuf>, std::io::Error> {
-    let output = Command::new("cmus-remote")
-        .arg("-Q")
-        .output()
-        .await?;
+    let output = Command::new("cmus-remote").arg("-Q").output().await?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 

@@ -4,12 +4,7 @@ use async_stream::stream;
 use chrono::Duration;
 use futures_core::Stream;
 use futures_util::StreamExt;
-use zbus::{
-    Connection,
-    fdo::PropertiesProxy,
-    names::OwnedWellKnownName,
-    zvariant::OwnedValue
-};
+use zbus::{Connection, fdo::PropertiesProxy, names::OwnedWellKnownName, zvariant::OwnedValue};
 
 use crate::{
     playback::{PlaybackCommand, PlaybackStatus, PlayerEvent},
@@ -117,7 +112,6 @@ impl MprisClient {
             .build()
             .await?;
 
-
         let mut properties = properties_proxy.receive_properties_changed().await?;
         let mut seeked = player_proxy.receive_seeked().await?;
 
@@ -134,7 +128,7 @@ impl MprisClient {
                         if changed.contains_key("Metadata") {
                         // Get the metadata here, create the track and then pass that through to
                         // avoid another call to get the new track?
-                        
+
                         // // print Metadata to see the info for if this is possible
                             yield PlayerEvent::TrackChanged;
                         }

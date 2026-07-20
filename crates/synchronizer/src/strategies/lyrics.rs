@@ -11,7 +11,7 @@ pub enum LyricsSyncEvent {
 }
 
 pub struct LyricsSynchronizer {
-    active_cues: Vec<usize>
+    active_cues: Vec<usize>,
 }
 
 impl Synchronizer for LyricsSynchronizer {
@@ -33,7 +33,6 @@ impl Synchronizer for LyricsSynchronizer {
 
         None
     }
-
 }
 
 impl LyricsSynchronizer {

@@ -26,7 +26,9 @@ enum LrcLine {
         text: String,
     },
     Empty,
-    Unknown(String),
+    Unknown {
+        value: String,
+    },
 }
 
 enum LrcLineType {
@@ -57,7 +59,7 @@ impl LrcParser {
             LrcLineType::Metadata => Self::parse_metadata(line),
             LrcLineType::Lyric => Self::parse_lyric(line),
             LrcLineType::Empty => Ok(LrcLine::Empty),
-            LrcLineType::Unknown => Ok(LrcLine::Unknown(line.into())),
+            LrcLineType::Unknown => Ok(LrcLine::Unknown { value: line.into() }),
         }
     }
 
@@ -201,7 +203,7 @@ impl LrcParser {
                     subtitle_document.cues.extend(cues);
                 }
                 LrcLine::Empty => {}
-                LrcLine::Unknown(_) => {}
+                LrcLine::Unknown { value: _ } => {}
             }
         }
 
