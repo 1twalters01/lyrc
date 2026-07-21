@@ -21,6 +21,9 @@ class LrcLibProvider(LyricsProvider):
         response = await self.client.get(
             f"{BASE_URL}/api/get",
             params=params,
+            headers={
+                "User-Agent": "lyrc/0.1.0 (https://github.com/1twalters01/lyrc)"
+            },
         )
 
         if response.status_code == 404:

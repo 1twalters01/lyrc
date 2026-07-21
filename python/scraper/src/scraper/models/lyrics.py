@@ -6,6 +6,7 @@ class LyricsFormat(str, Enum):
     TEXT = "text"
 
 class LyricsSource(str, Enum):
+    SELF = "self"
     LRCLIB = "lrclib"
 
 @dataclass
