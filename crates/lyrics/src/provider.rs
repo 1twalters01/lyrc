@@ -7,6 +7,7 @@ pub trait LyricsProvider: Send + Sync {
     fn search(&self, track: Track) -> BoxFuture<'_, Result<Option<Lyrics>, LyricsError>>;
 }
 
+#[derive(Debug)]
 pub enum LyricsError {
     PythonError { error: PyErr },
 }

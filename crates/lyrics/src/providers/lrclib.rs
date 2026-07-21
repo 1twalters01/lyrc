@@ -13,7 +13,7 @@ pub struct LrclibProvider;
 impl LyricsProvider for LrclibProvider {
     fn search(&self, track: Track) -> BoxFuture<'static, Result<Option<Lyrics>, LyricsError>> {
         Box::pin(async move {
-            let result = Python::attach(|py| {
+             let py_future = Python::attach(|py| -> PyResult<_> {
                 // import required python packages
                 let httpx = PyModule::import(py, "httpx")?;
                 let datetime = PyModule::import(py, "datetime")?;
@@ -35,14 +35,15 @@ impl LyricsProvider for LrclibProvider {
                 let lyrics_service = service_module
                     .getattr("LyricsService")?
                     .call1((providers,))?;
+                println!("{:#?}", lyrics_service.is_none());
 
                 // get python track class
                 let timedelta = datetime.getattr("timedelta")?.call1((
-                    track.duration.num_days(),
-                    track.duration.num_seconds(),
+                    0,
+                    0,
                     track.duration.num_microseconds().unwrap_or(0),
                 ))?;
-
+                println!("timedelta: {:#?}", timedelta);
                 let py_track = track_module.getattr("Track")?.call1((
                     track.title,
                     track.artists.first(),
@@ -51,21 +52,22 @@ impl LyricsProvider for LrclibProvider {
                 ))?;
 
                 // run service.search(track, "lrclib")
+                // let coroutine = lyrics_service.call_method1("ping", (py_track, "lrclib"))?;
                 let coroutine = lyrics_service.call_method1("search", (py_track, "lrclib"))?;
                 into_future(coroutine)
             })
             .map_err(|e| LyricsError::PythonError { error: e })?;
 
-            let py_result = result
+            let result = py_future
                 .await
                 .map_err(|e| LyricsError::PythonError { error: e })?;
-
+                
             let lyrics: Option<Lyrics> = Python::attach(|py| {
-                if py_result.is_none(py) {
+                if result.is_none(py) {
                     return Ok(None);
                 }
 
-                let lyrics = py_result.bind(py);
+                let lyrics = result.bind(py);
                 let content: String = lyrics.getattr("content")?.extract()?;
                 let py_format: String = lyrics.getattr("format")?.getattr("value")?.extract()?;
                 let py_source: String = lyrics.getattr("source")?.getattr("value")?.extract()?;
@@ -80,6 +82,7 @@ impl LyricsProvider for LrclibProvider {
                     }
                 };
                 let source = match py_source.as_str() {
+                    "self" => LyricsSource::Python,
                     "lrclib" => LyricsSource::Lrclib,
                     _ => {
                         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
