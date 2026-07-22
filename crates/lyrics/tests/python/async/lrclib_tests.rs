@@ -2,6 +2,7 @@ use chrono::Duration;
 use lyrics::{provider::LyricsProvider, providers::lrclib::LrclibProvider};
 use mpris::track::Track;
 
+
 #[pyo3_async_runtimes::tokio::test]
 async fn test_search() -> pyo3::PyResult<()> {
     let track = Track {
