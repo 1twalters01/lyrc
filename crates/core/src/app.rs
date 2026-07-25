@@ -36,9 +36,17 @@ where
         self.renderer.render(&self.state)
     }
 
-    pub async fn handle_tick(&mut self) -> Result<(), String> {
+    pub async fn handle_tick(&mut self) -> Result<(), <R as Renderer>::Error> {
         let current_position = self.mpris.get_current_position().await.unwrap();
         let playback_status = self.mpris.get_playback_status().await.unwrap();
-        self.clock.sync(current_position, playback_status).await
+        self.clock.sync(current_position, playback_status).await.unwrap();
+
+        let subtitle_document = &self.state.subtitle_document;
+        if let Some(subtitles) = subtitle_document {
+            let position = &self.clock.get_position();
+            self.synchronizer.update(subtitles, position);
+        }
+
+        self.renderer.render(&self.state)
     }
 }
