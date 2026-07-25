@@ -1,7 +1,7 @@
 use mpris::{client::MprisClient, playback::PlayerEvent};
 use synchronizer::traits::Synchronizer;
 
-use crate::{clock::PlaybackClock, events::AppEvent, renderer::Renderer, state::AppState};
+use crate::{clock::PlaybackClock, renderer::Renderer, state::AppState};
 
 pub struct App<R, S>
 where
@@ -20,22 +20,24 @@ where
     R: Renderer,
     S: Synchronizer,
 {
-    pub fn handle_event(&mut self, event: PlayerEvent) -> Result<(), <R as Renderer>::Error>{
+    pub fn handle_player_event(&mut self, event: PlayerEvent) -> Result<(), <R as Renderer>::Error>{
         self.state.update(&event);
+        self.clock.update(event);
 
-        let subtitles = &self.state.subtitles;
-        let position = &self.state.playback_state.position;
-        if let Some(subtitles) = subtitles {
+        let subtitle_document = &self.state.subtitle_document;
+        let position = &self.clock.get_position();
+        if let Some(subtitles) = subtitle_document {
             self.synchronizer.update(subtitles, position);
         }
 
-        self.clock.update(&event);
 
         self.renderer.render(&self.state)
     }
 
-    pub fn handle_tick(&mut self) {
+    pub async fn handle_tick(&mut self) -> Result<(), String> {
+        let current_position = self.mpris.get_current_position().await.unwrap();
+        let playback_status = self.mpris.get_playback_status().await.unwrap();
+        self.clock.sync(current_position, playback_status).await
     }
 }
-
 

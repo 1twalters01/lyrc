@@ -8,3 +8,4 @@ chrono = "0.4.45"
 synchronizer = { path = "../synchronizer/" }
 subtitles = { path = "../subtitles/" }
 mpris = { path = "../mpris/" }
+zbus = { version = "5.17.0", features = ["tokio"] }
