@@ -344,6 +344,7 @@ dependencies = [
  "mpris",
  "subtitles",
  "synchronizer",
+ "zbus",
 ]
 
 [[package]]

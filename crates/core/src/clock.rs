@@ -1,8 +1,7 @@
 use std::time::Instant;
 
 use chrono::Duration;
-use mpris::{playback::{PlaybackStatus, PlayerEvent}};
-
+use mpris::playback::{PlaybackStatus, PlayerEvent};
 
 pub struct PlaybackClock {
     last_position: Duration,
@@ -25,7 +24,11 @@ impl PlaybackClock {
     }
 
     // remove unwrap in future
-    pub async fn sync(&mut self, current_position: Duration, playback_status: PlaybackStatus) -> Result<(), String> {
+    pub async fn sync(
+        &mut self,
+        current_position: Duration,
+        playback_status: PlaybackStatus,
+    ) -> Result<(), String> {
         let tick_duration = Duration::from_std(self.last_sync.elapsed()).unwrap();
 
         if self.previous_playback_status == Some(PlaybackStatus::Playing) {

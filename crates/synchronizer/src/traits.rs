@@ -4,5 +4,9 @@ use subtitles::subtitles::SubtitleDocument;
 pub trait Synchronizer {
     type Event;
 
-    fn update(&mut self, subtitles: SubtitleDocument, position: Duration) -> Option<Self::Event>;
+    fn update(
+        &mut self,
+        subtitle_document: &SubtitleDocument,
+        position: &Duration,
+    ) -> Option<Self::Event>;
 }

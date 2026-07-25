@@ -16,20 +16,22 @@ where
 }
 
 impl<R, S> App<R, S>
-where 
+where
     R: Renderer,
     S: Synchronizer,
 {
-    pub fn handle_player_event(&mut self, event: PlayerEvent) -> Result<(), <R as Renderer>::Error>{
+    pub fn handle_player_event(
+        &mut self,
+        event: PlayerEvent,
+    ) -> Result<(), <R as Renderer>::Error> {
         self.state.update(&event);
         self.clock.update(event);
 
         let subtitle_document = &self.state.subtitle_document;
-        let position = &self.clock.get_position();
         if let Some(subtitles) = subtitle_document {
+            let position = &self.clock.get_position();
             self.synchronizer.update(subtitles, position);
         }
-
 
         self.renderer.render(&self.state)
     }
@@ -40,4 +42,3 @@ where
         self.clock.sync(current_position, playback_status).await
     }
 }
-

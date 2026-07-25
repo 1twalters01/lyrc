@@ -4,7 +4,12 @@ use async_stream::stream;
 use chrono::Duration;
 use futures_core::Stream;
 use futures_util::StreamExt;
-use zbus::{Connection, fdo::PropertiesProxy, names::OwnedWellKnownName, zvariant::OwnedValue};
+use zbus::{
+    Connection,
+    fdo::PropertiesProxy,
+    names::OwnedWellKnownName,
+    zvariant::{OwnedValue, Value},
+};
 
 use crate::{
     playback::{PlaybackCommand, PlaybackStatus, PlayerEvent},
@@ -60,12 +65,7 @@ impl MprisClient {
         let proxy = self.proxy().await?;
         let status = proxy.playback_status().await?;
 
-        Ok(match status.as_str() {
-            "Playing" => PlaybackStatus::Playing,
-            "Paused" => PlaybackStatus::Paused,
-            "Stopped" => PlaybackStatus::Stopped,
-            _ => PlaybackStatus::Unknown,
-        })
+        Ok(PlaybackStatus::parse(&status))
     }
 
     pub async fn execute(&self, command: PlaybackCommand) -> zbus::Result<()> {
@@ -126,15 +126,22 @@ impl MprisClient {
                         let changed = args.changed_properties();
 
                         if changed.contains_key("Metadata") {
-                        // Get the metadata here, create the track and then pass that through to
-                        // avoid another call to get the new track?
-
-                        // // print Metadata to see the info for if this is possible
-                            yield PlayerEvent::TrackChanged;
+                            let owned_metadata: HashMap<String, OwnedValue> = changed
+                                .iter()
+                                .map(|(k, v)| {
+                                    (
+                                        (*k).to_string(),
+                                        OwnedValue::try_from(v.clone()).unwrap(),
+                                    )
+                                })
+                                .collect();
+                            let track = Track::parse_track(owned_metadata).await;
+                            yield PlayerEvent::TrackChanged(track);
                         }
 
-                        if changed.contains_key("PlaybackStatus") {
-                            yield PlayerEvent::PlaybackChanged;
+                        if let Some(Value::Str(status)) = changed.get("PlaybackStatus") {
+                            let playback_status = PlaybackStatus::parse(status);
+                            yield PlayerEvent::PlaybackChanged(playback_status);
                         }
                     }
 

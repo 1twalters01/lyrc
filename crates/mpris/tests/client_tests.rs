@@ -216,6 +216,7 @@ async fn events_test() {
     let mut count = 0;
     let event_limit = 3;
     while let Some(event) = events.next().await {
+        println!("count: {:#?}", count);
         println!("{event:?}");
         count += 1;
         if count == event_limit {

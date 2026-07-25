@@ -13,7 +13,7 @@ pub struct LrclibProvider;
 impl LyricsProvider for LrclibProvider {
     fn search(&self, track: Track) -> BoxFuture<'static, Result<Option<Lyrics>, LyricsError>> {
         Box::pin(async move {
-             let py_future = Python::attach(|py| -> PyResult<_> {
+            let py_future = Python::attach(|py| -> PyResult<_> {
                 // import required python packages
                 let httpx = PyModule::import(py, "httpx")?;
                 let datetime = PyModule::import(py, "datetime")?;
@@ -61,7 +61,7 @@ impl LyricsProvider for LrclibProvider {
             let result = py_future
                 .await
                 .map_err(|e| LyricsError::PythonError { error: e })?;
-                
+
             let lyrics: Option<Lyrics> = Python::attach(|py| {
                 if result.is_none(py) {
                     return Ok(None);
