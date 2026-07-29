@@ -19,5 +19,4 @@ pub enum Command {
 #[derive(Subcommand)]
 pub enum Frontend {
     Tui,
-    Cli,
 }

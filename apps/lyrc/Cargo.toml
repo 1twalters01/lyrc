@@ -4,5 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+chrono = "0.4.45"
 clap = { version = "4.6.4", features = ["derive"] }
 tokio = { version = "1.52.3", features = ["sync", "macros", "rt-multi-thread"] }
+futures-util = "0.3.32"
+crossterm = { version = "0.29.0", features = ["event-stream"] }
+synchronizer = { path = "../../crates/synchronizer/" }
+mpris = { path = "../../crates/mpris/" }
+lyrc_core = { path = "../../crates/core/" }
+tui = { path = "../../ui/tui/" }

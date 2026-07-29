@@ -4,7 +4,7 @@ mod args;
 mod run;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = args::Args::parse();
-    run::run(args).await;
+    run::run(args).await
 }
