@@ -17,6 +17,7 @@ use crate::{
     track::Track,
 };
 
+#[derive(Clone)]
 pub struct MprisClient {
     connection: Connection,
     service: OwnedWellKnownName,
@@ -125,16 +126,19 @@ impl MprisClient {
 
                         let changed = args.changed_properties();
 
-                        if changed.contains_key("Metadata") {
-                            let owned_metadata: HashMap<String, OwnedValue> = changed
+                        if let Some(Value::Dict(metadata)) = changed.get("Metadata") {
+                            let owned_metadata: HashMap<String, OwnedValue> = metadata
                                 .iter()
-                                .map(|(k, v)| {
-                                    (
-                                        (*k).to_string(),
-                                        OwnedValue::try_from(v.clone()).unwrap(),
-                                    )
+                                .filter_map(|(k, v)| {
+                                    let key = match k {
+                                        Value::Str(s) => s.to_string(),
+                                        _ => return None,
+                                    };
+                                    let value = OwnedValue::try_from(v.clone()).ok()?;
+                                    Some((key, value))
                                 })
                                 .collect();
+
                             let track = Track::parse_track(owned_metadata).await;
                             yield PlayerEvent::TrackChanged(track);
                         }

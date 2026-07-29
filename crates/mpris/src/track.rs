@@ -73,11 +73,24 @@ fn get_string_array(metadata: &HashMap<String, OwnedValue>, key: &str) -> Vec<St
     let value: &Value = value;
 
     match value {
+        Value::Value(boxed) => match boxed.as_ref() {
+            Value::Array(array) => array
+                .iter()
+                .filter_map(|v| match v {
+                    Value::Str(s) => Some(s.to_string()),
+                    _ => None,
+                })
+                .collect(),
+            _ => Vec::new(),
+        },
         Value::Array(array) => array
             .iter()
-            .filter_map(|v| String::try_from(v).ok())
+            .filter_map(|v| match v {
+                Value::Str(s) => Some(s.to_string()),
+                _ => None,
+            })
             .collect(),
-        _ => vec![],
+        _ => Vec::new(),
     }
 }
 
