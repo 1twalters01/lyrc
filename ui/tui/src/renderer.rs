@@ -1,0 +1,52 @@
+use chrono::Duration;
+use lyrc_core::{renderer::Renderer, state::AppState};
+use std::io::{self, Stdout};
+
+use ratatui::{
+    Terminal,
+    crossterm::{
+        execute,
+        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    },
+    prelude::CrosstermBackend,
+};
+
+use crate::draw::draw;
+
+pub struct TuiRenderer {
+    terminal: Terminal<CrosstermBackend<Stdout>>,
+}
+
+impl TuiRenderer {
+    pub fn new() -> io::Result<Self> {
+        enable_raw_mode()?;
+
+        let mut stdout = std::io::stdout();
+
+        execute!(stdout, EnterAlternateScreen,)?;
+
+        let backend = CrosstermBackend::new(std::io::stdout());
+        let terminal = Terminal::new(backend)?;
+
+        Ok(Self { terminal })
+    }
+}
+
+impl Renderer for TuiRenderer {
+    type Error = std::io::Error;
+
+    fn render(&mut self, state: &AppState, position: Duration) -> Result<(), Self::Error> {
+        self.terminal.draw(|frame| {
+            draw(frame, state, position);
+        })?;
+
+        Ok(())
+    }
+}
+
+impl Drop for TuiRenderer {
+    fn drop(&mut self) {
+        let _ = disable_raw_mode();
+        let _ = execute!(self.terminal.backend_mut(), LeaveAlternateScreen,);
+    }
+}

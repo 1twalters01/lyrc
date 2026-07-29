@@ -40,7 +40,13 @@ impl Synchronizer for LyricsSynchronizer {
 }
 
 impl LyricsSynchronizer {
-    fn get_cues_at(subtitle_document: &SubtitleDocument, position: &Duration) -> Vec<usize> {
+    pub fn new() -> Self {
+        Self {
+            active_cues: Vec::new(),
+        }
+    }
+
+    pub fn get_cues_at(subtitle_document: &SubtitleDocument, position: &Duration) -> Vec<usize> {
         let start = subtitle_document
             .cues
             .partition_point(|cue| &cue.start <= position);

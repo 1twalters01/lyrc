@@ -1,5 +1,6 @@
 use chrono::Duration;
 
+#[derive(Clone)]
 pub struct SubtitleDocument {
     pub metadata: SubtitleMetadata,
     pub cues: Vec<SubtitleCue>,
@@ -14,6 +15,7 @@ impl Default for SubtitleDocument {
     }
 }
 
+#[derive(Clone)]
 pub struct SubtitleMetadata {
     pub title: Option<String>,
     pub artist: Option<String>,
@@ -32,6 +34,7 @@ impl Default for SubtitleMetadata {
     }
 }
 
+#[derive(Clone)]
 pub struct SubtitleCue {
     pub id: Option<String>,
     pub start: Duration,
@@ -39,6 +42,7 @@ pub struct SubtitleCue {
     pub content: SubtitleContent,
 }
 
+#[derive(Clone)]
 pub enum SubtitleContent {
     Text(String),
 }
