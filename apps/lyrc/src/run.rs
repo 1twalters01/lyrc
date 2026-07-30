@@ -16,6 +16,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
     // println!("Initialisation code");
     let hz = 60;
+    let player = "cmus";
     let clock_offset = Duration::milliseconds(0);
     let rewind_duration = Duration::milliseconds(-5000);
     let fast_forward_duration = Duration::milliseconds(5000);
@@ -24,10 +25,9 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         Command::Daemon => {
             println!("daemon");
             Ok(())
-        }
+        },
         Command::App { frontend } => {
             let synchronizer = LyricsSynchronizer::new();
-            let player = "cmus";
 
             let renderer = match frontend {
                 Frontend::Tui => TuiRenderer::new().unwrap(),
@@ -59,14 +59,16 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
                         if key.code == KeyCode::Char('q') {
                             break Ok(());
+                        } else if key.code == KeyCode::Char(' ') {
+                            mpris.execute(PlaybackCommand::Toggle).await?
                         } else if key.code == KeyCode::Left {
                             mpris.execute(PlaybackCommand::Seek(rewind_duration)).await?
-                        } else if key.code == KeyCode::Right {
+                        } else if key.code == KeyCode::Right || key.code == KeyCode::Esc {
                             mpris.execute(PlaybackCommand::Seek(fast_forward_duration)).await?
                         }
                     }
                 }
             }
-        }
+        },
     }
 }
