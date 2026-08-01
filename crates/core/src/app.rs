@@ -45,7 +45,22 @@ where
         self.state.update(&event);
         self.update_subtitles();
         self.clock.update(event);
-        self.renderer.render(&self.state, self.clock.get_position())
+
+        // Store current position in app state?
+        // If so, have the current position in app state?
+        // Have both as option type
+        let lyrics_sync_event = match self.get_current_position {
+            Some(position) => Some(self.synchronizer.update(
+                self.state.subtitle_document,
+                position,
+            )),
+            None => None,
+        };
+
+        self.renderer.render(
+            &self.state,
+            self.clock.get_position(),
+        )
     }
 
     pub fn handle_tick(
@@ -57,7 +72,10 @@ where
         if let Some(position) = current_position {
             self.clock.sync(position, playback_status).unwrap();
         }
-        self.renderer.render(&self.state, self.clock.get_position())
+        self.renderer.render(
+            &self.state,
+            self.clock.get_position(),
+        )
     }
 
     fn update_subtitles(&mut self) {

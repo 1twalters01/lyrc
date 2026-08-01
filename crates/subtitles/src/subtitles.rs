@@ -17,19 +17,21 @@ impl Default for SubtitleDocument {
 
 #[derive(Clone)]
 pub struct SubtitleMetadata {
-    pub title: Option<String>,
-    pub artist: Option<String>,
     pub album: Option<String>,
+    pub title: Option<String>,
+    pub artists: Vec<String>,
     pub language: Option<String>,
+    pub file_path: Option<PathBuf>,
 }
 
 impl Default for SubtitleMetadata {
     fn default() -> Self {
         Self {
-            title: None,
-            artist: None,
             album: None,
+            title: None,
+            artists: Vec::new(),
             language: None,
+            file_path: None,
         }
     }
 }

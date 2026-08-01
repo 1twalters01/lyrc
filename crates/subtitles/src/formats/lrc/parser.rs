@@ -185,9 +185,11 @@ impl LrcParser {
             match lrc_line {
                 LrcLine::Metadata { key, value } => match key.as_str() {
                     "ti" => subtitle_document.metadata.title = Some(value),
-                    "ar" => subtitle_document.metadata.artist = Some(value),
                     "al" => subtitle_document.metadata.album = Some(value),
                     "la" => subtitle_document.metadata.language = Some(value),
+                    "ar" => {
+                        subtitle_document.metadata.artists.push(value)
+                    },
                     _ => {}
                 },
                 LrcLine::Lyric { timestamps, text } => {

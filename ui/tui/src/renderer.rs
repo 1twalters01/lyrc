@@ -35,9 +35,14 @@ impl TuiRenderer {
 impl Renderer for TuiRenderer {
     type Error = std::io::Error;
 
-    fn render(&mut self, state: &AppState, position: Duration) -> Result<(), Self::Error> {
+    fn render(
+        &mut self,
+        state: &AppState,
+        position: Duration,
+        subtitle_document: &SubtitleDocument
+    ) -> Result<(), Self::Error> {
         self.terminal.draw(|frame| {
-            draw(frame, state, position);
+            draw(frame, state, position, subtitle_document);
         })?;
 
         Ok(())
