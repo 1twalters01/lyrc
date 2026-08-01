@@ -1,9 +1,29 @@
 use chrono::Duration;
+use crate::parser::Parser;
+use std::{
+    ffi::OsStr,
+    path::PathBuf
+};
 
 #[derive(Clone)]
 pub struct SubtitleDocument {
     pub metadata: SubtitleMetadata,
     pub cues: Vec<SubtitleCue>,
+}
+
+impl SubtitleDocument {
+    pub fn from_pathbuf(path: PathBuf) -> Result<SubtitleDocument, <P as Parser>::Error> {
+        let extension: Option<OsStr> = path.extension();
+        match extension {
+            Some(extension) => match extension {
+                "lrc" => {
+                    // read file
+                    // pass to lrc parser
+                }
+            },
+            None => return Err() // How to express this error?
+        }
+    }
 }
 
 impl Default for SubtitleDocument {

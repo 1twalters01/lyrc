@@ -39,7 +39,21 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
             let mpris = app.mpris.clone();
 
-            app.state.track = Some(mpris.get_current_track().await?);
+            // app.state.track is defo wrong - What if nothing is playing?
+            // don't want to just use .ok()
+            // as the error isn't necessarily just that nothing is playing 
+            // or that there is no client using mpris at the moment
+            // I can imagine that other errors could occur
+            app.state.track = mpris.get_current_track().await?.ok();
+            app.state.subtitle_document = match app.state.track {
+                Some(track) => match track.file_path {
+                    // Need to make this function
+                    Some(file_path) => SubtitleDocument.from_pathbuf(),
+                    None => None,
+                },
+                None => None,
+            };
+            app.state.subtitle_document.from_path(app.state.track.file_path)
 
             let mut keyboard = EventStream::new();
             let mut events = mpris.events().await?;

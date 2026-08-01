@@ -39,7 +39,7 @@ impl Renderer for TuiRenderer {
         &mut self,
         state: &AppState,
         position: Duration,
-        subtitle_document: &SubtitleDocument
+        active_cues: [&usize],
     ) -> Result<(), Self::Error> {
         self.terminal.draw(|frame| {
             draw(frame, state, position, subtitle_document);

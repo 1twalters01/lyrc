@@ -9,4 +9,6 @@ pub trait Synchronizer {
         subtitle_document: &SubtitleDocument,
         position: &Duration,
     ) -> Option<Self::Event>;
+
+    fn get_active_cues(&self) -> &[usize];
 }

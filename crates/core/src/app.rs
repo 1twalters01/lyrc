@@ -45,21 +45,15 @@ where
         self.state.update(&event);
         self.update_subtitles();
         self.clock.update(event);
-
-        // Store current position in app state?
-        // If so, have the current position in app state?
-        // Have both as option type
-        let lyrics_sync_event = match self.get_current_position {
-            Some(position) => Some(self.synchronizer.update(
-                self.state.subtitle_document,
-                position,
-            )),
-            None => None,
-        };
+        self.synchronizer.update(
+            self.state.subtitle_document,
+            self.get_current_position()
+        );
 
         self.renderer.render(
             &self.state,
             self.clock.get_position(),
+            self.synchronizer.get_active_cues(),
         )
     }
 
@@ -75,6 +69,7 @@ where
         self.renderer.render(
             &self.state,
             self.clock.get_position(),
+            self.synchronizer.get_active_cues(),
         )
     }
 

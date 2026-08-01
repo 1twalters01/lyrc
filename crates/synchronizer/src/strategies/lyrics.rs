@@ -35,8 +35,12 @@ impl Synchronizer for LyricsSynchronizer {
             return Some(event);
         }
 
-        None
+        fn active_cues(&self) -> &[usize] {
+            &self.active_cues
+        }
     }
+
+    fn active_cues(&self) -> &[usize];
 }
 
 impl LyricsSynchronizer {
@@ -46,7 +50,12 @@ impl LyricsSynchronizer {
         }
     }
 
-    pub fn get_cues_at(subtitle_document: &SubtitleDocument, position: &Duration) -> Vec<usize> {
+    pub fn get_cues_at(subtitle_document: &SubtitleDocument, position: Option<&Duration>) -> Vec<usize> {
+        let position = match position {
+            Some(position) => position,
+            None => return Vec::new(),
+        };
+        
         let start = subtitle_document
             .cues
             .partition_point(|cue| &cue.start <= position);

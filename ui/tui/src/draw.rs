@@ -86,12 +86,12 @@ fn draw_body(
     current_cue_index: usize,
 ) {
     let subtitle_document = state.subtitle_document.as_ref();
-    Todo!
+    todo!()
 }
 
 fn draw_footer(
     frame: &mut Frame,
     area: Rect,
 ) {
-    Todo!
+    todo!()
 }
