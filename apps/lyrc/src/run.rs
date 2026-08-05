@@ -83,7 +83,6 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                                 .execute(PlaybackCommand::Seek(fast_forward_duration))
                             .await?,
 
-                            KeyCode::Char('h') => app.state.manual_scroll_offset = None,
                             KeyCode::Char('k') => {
                                 let offset = app.state.manual_scroll_offset
                                     .get_or_insert(app.state.automatic_scroll_offset);
@@ -94,6 +93,28 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                                     .get_or_insert(app.state.automatic_scroll_offset);
                                 *offset += 1;
                             }
+
+                            KeyCode::Up => {
+                                let selected_line = app.state.selected_line
+                                    .get_or_insert(
+                                        *app.state.manual_scroll_offset
+                                            .get_or_insert(app.state.automatic_scroll_offset)
+                                    );
+                                *selected_line = selected_line.saturating_sub(1);
+                            },
+                            KeyCode::Down => {
+                                let selected_line = app.state.selected_line
+                                    .get_or_insert(
+                                        *app.state.manual_scroll_offset
+                                            .get_or_insert(app.state.automatic_scroll_offset)
+                                    );
+                                *selected_line += 1;
+                            },
+
+                            KeyCode::Char('h') => {
+                                app.state.manual_scroll_offset = None;
+                                app.state.selected_line = None;
+                            },
 
                             _ => {},
                         }

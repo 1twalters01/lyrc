@@ -43,15 +43,19 @@ pub fn draw_body(
         })
         .unwrap_or_default();
 
-    let mut lines: Vec<Line> = active_cues_str.into_iter().map(Line::from).collect();
-    highlight_line(&mut lines, active_cue_indices);
-
     let visible_height = area.height as usize;
+    let selected_line_indices = match state.selected_line {
+        None => &Vec::new(),
+        Some(index) => &Vec::from([index.saturating_add(visible_height / 2)]),
+    };
+
+    let mut lines: Vec<Line> = active_cues_str.into_iter().map(Line::from).collect();
+    highlight_lines(&mut lines, active_cue_indices, selected_line_indices);
 
     let automatic_scroll_offset = active_cue_indices
         .first()
         .unwrap_or(&0usize)
-        .saturating_sub(visible_height / 2) as u16;
+        .saturating_sub(visible_height / 2);
     state.automatic_scroll_offset = automatic_scroll_offset;
 
     let scroll_offset = match state.manual_scroll_offset {
@@ -59,15 +63,26 @@ pub fn draw_body(
         None => automatic_scroll_offset,
     };
 
-    frame.render_widget(Paragraph::new(lines).scroll((scroll_offset, 0)), area);
+    frame.render_widget(
+        Paragraph::new(lines).scroll((scroll_offset as u16, 0)),
+        area,
+    );
 }
 
-fn highlight_line(lines: &mut Vec<Line>, indices: &[usize]) {
-    for &index in indices {
+fn highlight_lines(lines: &mut Vec<Line>, bold_indices: &[usize], reverse_indices: &[usize]) {
+    for &index in bold_indices {
         if let Some(line) = lines.get_mut(index) {
             *line = line
                 .clone()
                 .style(Style::default().add_modifier(Modifier::BOLD));
+        }
+    }
+
+    for &index in reverse_indices {
+        if let Some(line) = lines.get_mut(index) {
+            *line = line
+                .clone()
+                .style(Style::default().add_modifier(Modifier::REVERSED));
         }
     }
 }

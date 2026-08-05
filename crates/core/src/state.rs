@@ -17,8 +17,9 @@ pub struct AppState {
     pub playback_speed: f64,
 
     /* other app state */
-    pub automatic_scroll_offset: u16,
-    pub manual_scroll_offset: Option<u16>,
+    pub automatic_scroll_offset: usize,
+    pub manual_scroll_offset: Option<usize>,
+    pub selected_line: Option<usize>,
 }
 
 impl AppState {
@@ -32,6 +33,7 @@ impl AppState {
 
             automatic_scroll_offset: 0,
             manual_scroll_offset: None,
+            selected_line: None,
         }
     }
 
