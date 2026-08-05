@@ -15,7 +15,10 @@ pub struct AppState {
 
     /* Add event for change in playback speed */
     pub playback_speed: f64,
+
     /* other app state */
+    pub automatic_scroll_offset: u16,
+    pub manual_scroll_offset: Option<u16>,
 }
 
 impl AppState {
@@ -26,6 +29,9 @@ impl AppState {
             playback_state: PlaybackStatus::Unknown,
             last_updated: None,
             playback_speed: 1f64,
+
+            automatic_scroll_offset: 0,
+            manual_scroll_offset: None,
         }
     }
 

@@ -48,7 +48,7 @@ where
         self.clock.update(event);
 
         self.renderer.render(
-            &self.state,
+            &mut self.state,
             self.clock.get_position(),
             self.synchronizer.get_active_cues(),
         )
@@ -63,7 +63,7 @@ where
             .update(&self.state.subtitle_document, &self.clock.get_position());
         self.clock.sync(current_position, playback_status).unwrap();
         self.renderer.render(
-            &self.state,
+            &mut self.state,
             self.clock.get_position(),
             self.synchronizer.get_active_cues(),
         )

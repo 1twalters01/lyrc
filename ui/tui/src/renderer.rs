@@ -37,7 +37,7 @@ impl Renderer for TuiRenderer {
 
     fn render(
         &mut self,
-        state: &AppState,
+        state: &mut AppState,
         position: Option<Duration>,
         active_cues: &[usize],
     ) -> Result<(), Self::Error> {

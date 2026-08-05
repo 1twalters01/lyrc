@@ -8,7 +8,7 @@ use subtitles::subtitles::SubtitleDocument;
 use synchronizer::strategies::lyrics::LyricsSynchronizer;
 use tui::renderer::TuiRenderer;
 
-use crossterm::event::{Event, EventStream, KeyCode};
+use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
 
 pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     let command = args.command.unwrap_or(Command::App {
@@ -69,14 +69,33 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     }
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
-                        if key.code == KeyCode::Char('q') {
-                            break Ok(());
-                        } else if key.code == KeyCode::Char(' ') {
-                            mpris.execute(PlaybackCommand::Toggle).await?
-                        } else if key.code == KeyCode::Left {
-                            mpris.execute(PlaybackCommand::Seek(rewind_duration)).await?
-                        } else if key.code == KeyCode::Right || key.code == KeyCode::Esc {
-                            mpris.execute(PlaybackCommand::Seek(fast_forward_duration)).await?
+                        match key.code {
+                            KeyCode::Char('q') | KeyCode::Esc => break Ok(()),
+                            KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => break Ok(()),
+
+                            KeyCode::Char(' ') => mpris
+                                .execute(PlaybackCommand::Toggle)
+                                .await?,
+                            KeyCode::Left => mpris
+                                .execute(PlaybackCommand::Seek(rewind_duration))
+                            .await?,
+                            KeyCode::Right => mpris
+                                .execute(PlaybackCommand::Seek(fast_forward_duration))
+                            .await?,
+
+                            KeyCode::Char('h') => app.state.manual_scroll_offset = None,
+                            KeyCode::Char('k') => {
+                                let offset = app.state.manual_scroll_offset
+                                    .get_or_insert(app.state.automatic_scroll_offset);
+                                *offset = offset.saturating_sub(1);
+                            }
+                            KeyCode::Char('j') => {
+                                let offset = app.state.manual_scroll_offset
+                                    .get_or_insert(app.state.automatic_scroll_offset);
+                                *offset += 1;
+                            }
+
+                            _ => {},
                         }
                     }
                 }

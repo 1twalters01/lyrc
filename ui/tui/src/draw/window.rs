@@ -10,7 +10,7 @@ use crate::draw::{body::draw_body, footer::draw_footer, header::draw_header};
 
 pub fn draw_window(
     frame: &mut Frame,
-    state: &AppState,
+    state: &mut AppState,
     position: Option<Duration>,
     active_cues: &[usize],
 ) {
