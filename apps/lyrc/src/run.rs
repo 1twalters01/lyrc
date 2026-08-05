@@ -100,13 +100,23 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                                             }
                                             else {
                                                 Some(line)
-                                                // None
                                             }
                                             None => None,
                                         };
                                     },
                                     None => app.state.selected_line = app.synchronizer.get_active_cues().first().copied(),
                                 };
+                            }
+                            KeyCode::Enter => {
+                                if let Some(selected_line) = app.state.selected_line {
+                                    if let Some(ref document) = app.state.subtitle_document {
+                                        let cue = &document.cues[selected_line];
+                                        let duration = cue.start;
+                                        mpris
+                                        .execute(PlaybackCommand::SetPosition(duration))
+                                        .await?;
+                                    }
+                                }
                             }
                             KeyCode::Char('h') => {
                                 app.state.selected_line = None;
