@@ -13,8 +13,8 @@ where
     S: Synchronizer,
 {
     renderer: R,
-    synchronizer: S,
-    clock: PlaybackClock,
+    pub synchronizer: S,
+    pub clock: PlaybackClock,
     pub state: AppState,
     pub mpris: MprisClient,
 }

@@ -18,7 +18,6 @@ pub struct AppState {
 
     /* other app state */
     pub automatic_scroll_offset: usize,
-    pub manual_scroll_offset: Option<usize>,
     pub selected_line: Option<usize>,
 }
 
@@ -32,7 +31,6 @@ impl AppState {
             playback_speed: 1f64,
 
             automatic_scroll_offset: 0,
-            manual_scroll_offset: None,
             selected_line: None,
         }
     }
@@ -53,6 +51,8 @@ impl AppState {
                     },
                     None => None,
                 };
+
+                self.selected_line = None;
             }
             PlayerEvent::PlaybackChanged(playback) => self.playback_state = playback.clone(),
             PlayerEvent::Seeked(_duration) => {}

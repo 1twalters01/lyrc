@@ -5,7 +5,7 @@ use lyrc_core::app::App;
 use mpris::playback::PlaybackCommand;
 use std::time::Duration as std_duration;
 use subtitles::subtitles::SubtitleDocument;
-use synchronizer::strategies::lyrics::LyricsSynchronizer;
+use synchronizer::{strategies::lyrics::LyricsSynchronizer, traits::Synchronizer};
 use tui::renderer::TuiRenderer;
 
 use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
@@ -84,35 +84,31 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                             .await?,
 
                             KeyCode::Char('k') => {
-                                let offset = app.state.manual_scroll_offset
-                                    .get_or_insert(app.state.automatic_scroll_offset);
-                                *offset = offset.saturating_sub(1);
+                                match app.state.selected_line {
+                                    Some(line) => { 
+                                        app.state.selected_line = Some(line.saturating_sub(1));
+                                    },
+                                    None => app.state.selected_line = app.synchronizer.get_active_cues().first().copied(),
+                                };
                             }
                             KeyCode::Char('j') => {
-                                let offset = app.state.manual_scroll_offset
-                                    .get_or_insert(app.state.automatic_scroll_offset);
-                                *offset += 1;
+                                match app.state.selected_line {
+                                    Some(line) => { 
+                                        app.state.selected_line = match app.state.subtitle_document {
+                                            Some(ref document) => if line < document.cues.len() - 1 {
+                                                Some(line + 1)
+                                            }
+                                            else {
+                                                Some(line)
+                                                // None
+                                            }
+                                            None => None,
+                                        };
+                                    },
+                                    None => app.state.selected_line = app.synchronizer.get_active_cues().first().copied(),
+                                };
                             }
-
-                            KeyCode::Up => {
-                                let selected_line = app.state.selected_line
-                                    .get_or_insert(
-                                        *app.state.manual_scroll_offset
-                                            .get_or_insert(app.state.automatic_scroll_offset)
-                                    );
-                                *selected_line = selected_line.saturating_sub(1);
-                            },
-                            KeyCode::Down => {
-                                let selected_line = app.state.selected_line
-                                    .get_or_insert(
-                                        *app.state.manual_scroll_offset
-                                            .get_or_insert(app.state.automatic_scroll_offset)
-                                    );
-                                *selected_line += 1;
-                            },
-
                             KeyCode::Char('h') => {
-                                app.state.manual_scroll_offset = None;
                                 app.state.selected_line = None;
                             },
 

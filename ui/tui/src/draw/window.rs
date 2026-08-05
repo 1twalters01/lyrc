@@ -17,7 +17,7 @@ pub fn draw_window(
     let layout = Layout::vertical([
         Constraint::Length(3),
         Constraint::Min(1),
-        Constraint::Length(3),
+        Constraint::Length(5),
     ])
     .split(frame.area());
 
@@ -25,5 +25,5 @@ pub fn draw_window(
 
     draw_body(frame, layout[1], state, active_cues);
 
-    draw_footer(frame, layout[2]);
+    draw_footer(frame, layout[2], state, active_cues);
 }

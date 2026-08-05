@@ -16,14 +16,7 @@ pub fn draw_body(
 ) {
     let subtitle_document = state.subtitle_document.as_ref();
     let cues = subtitle_document.map(|document| document.cues.clone());
-    let active_cues = cues.map(|cues| {
-        cues.iter()
-            .enumerate()
-            // .filter(|(idx, _)| active_cue_indices.contains(idx))
-            .map(|(_, cue)| cue.clone())
-            .collect::<Vec<_>>()
-    });
-    let active_cues_str: Vec<String> = active_cues
+    let cues_str: Vec<String> = cues
         .map(|cues| {
             cues.iter()
                 .map(|cue| {
@@ -37,6 +30,7 @@ pub fn draw_body(
                     let content = match &cue.content.clone() {
                         SubtitleContent::Text(content) => content.clone(),
                     };
+
                     format!("{} {}", timestamp, content)
                 })
                 .collect::<Vec<_>>()
@@ -44,22 +38,28 @@ pub fn draw_body(
         .unwrap_or_default();
 
     let visible_height = area.height as usize;
+    let middle = visible_height / 2;
+
     let selected_line_indices = match state.selected_line {
         None => &Vec::new(),
-        Some(index) => &Vec::from([index.saturating_add(visible_height / 2)]),
+        Some(index) => &Vec::from([index]),
     };
 
-    let mut lines: Vec<Line> = active_cues_str.into_iter().map(Line::from).collect();
+    let mut lines: Vec<Line> = cues_str.into_iter().map(Line::from).collect();
     highlight_lines(&mut lines, active_cue_indices, selected_line_indices);
 
     let automatic_scroll_offset = active_cue_indices
         .first()
         .unwrap_or(&0usize)
-        .saturating_sub(visible_height / 2);
+        .saturating_sub(middle);
     state.automatic_scroll_offset = automatic_scroll_offset;
 
-    let scroll_offset = match state.manual_scroll_offset {
-        Some(offset) => offset,
+    let scroll_offset = match state.selected_line {
+        Some(offset) => if offset > middle {
+            offset - middle
+        } else {
+            0
+        },
         None => automatic_scroll_offset,
     };
 
