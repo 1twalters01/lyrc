@@ -11,7 +11,7 @@ use ratatui::{
     prelude::CrosstermBackend,
 };
 
-use crate::draw::draw;
+use crate::draw::window::draw_window;
 
 pub struct TuiRenderer {
     terminal: Terminal<CrosstermBackend<Stdout>>,
@@ -38,11 +38,11 @@ impl Renderer for TuiRenderer {
     fn render(
         &mut self,
         state: &AppState,
-        position: Duration,
-        active_cues: [&usize],
+        position: Option<Duration>,
+        active_cues: &[usize],
     ) -> Result<(), Self::Error> {
         self.terminal.draw(|frame| {
-            draw(frame, state, position, subtitle_document);
+            draw_window(frame, state, position, active_cues);
         })?;
 
         Ok(())

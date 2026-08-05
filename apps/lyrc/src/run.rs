@@ -4,6 +4,7 @@ use futures_util::stream::StreamExt;
 use lyrc_core::app::App;
 use mpris::playback::PlaybackCommand;
 use std::time::Duration as std_duration;
+use subtitles::subtitles::SubtitleDocument;
 use synchronizer::strategies::lyrics::LyricsSynchronizer;
 use tui::renderer::TuiRenderer;
 
@@ -25,7 +26,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         Command::Daemon => {
             println!("daemon");
             Ok(())
-        },
+        }
         Command::App { frontend } => {
             let synchronizer = LyricsSynchronizer::new();
 
@@ -39,21 +40,18 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
             let mpris = app.mpris.clone();
 
-            // app.state.track is defo wrong - What if nothing is playing?
-            // don't want to just use .ok()
-            // as the error isn't necessarily just that nothing is playing 
-            // or that there is no client using mpris at the moment
-            // I can imagine that other errors could occur
-            app.state.track = mpris.get_current_track().await?.ok();
+            app.state.track = mpris.get_current_track().await.ok();
             app.state.subtitle_document = match app.state.track {
-                Some(track) => match track.file_path {
-                    // Need to make this function
-                    Some(file_path) => SubtitleDocument.from_pathbuf(),
+                Some(ref track) => match &track.file_path {
+                    Some(file_path) => {
+                        let mut lyrics_path = file_path.to_path_buf();
+                        lyrics_path.set_extension("lrc");
+                        SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                    }
                     None => None,
                 },
                 None => None,
             };
-            app.state.subtitle_document.from_path(app.state.track.file_path)
 
             let mut keyboard = EventStream::new();
             let mut events = mpris.events().await?;
@@ -61,7 +59,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             loop {
                 tokio::select! {
                     Some(event) = events.next() => {
-                        app.handle_player_event(event)?
+                        app.handle_player_event(event).await?
                     }
 
                     _ = tick.tick() => {
@@ -83,6 +81,6 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-        },
+        }
     }
 }

@@ -38,17 +38,14 @@ where
         }
     }
 
-    pub fn handle_player_event(
+    pub async fn handle_player_event(
         &mut self,
         event: PlayerEvent,
     ) -> Result<(), <R as Renderer>::Error> {
         self.state.update(&event);
-        self.update_subtitles();
+        self.synchronizer
+            .update(&self.state.subtitle_document, &self.clock.get_position());
         self.clock.update(event);
-        self.synchronizer.update(
-            self.state.subtitle_document,
-            self.get_current_position()
-        );
 
         self.renderer.render(
             &self.state,
@@ -62,23 +59,14 @@ where
         current_position: Option<Duration>,
         playback_status: PlaybackStatus,
     ) -> Result<(), <R as Renderer>::Error> {
-        self.update_subtitles();
-        if let Some(position) = current_position {
-            self.clock.sync(position, playback_status).unwrap();
-        }
+        self.synchronizer
+            .update(&self.state.subtitle_document, &self.clock.get_position());
+        self.clock.sync(current_position, playback_status).unwrap();
         self.renderer.render(
             &self.state,
             self.clock.get_position(),
             self.synchronizer.get_active_cues(),
         )
-    }
-
-    fn update_subtitles(&mut self) {
-        let subtitle_document = &self.state.subtitle_document;
-        if let Some(subtitles) = subtitle_document {
-            let position = &self.clock.get_position();
-            self.synchronizer.update(subtitles, position);
-        }
     }
 
     pub async fn get_current_position(&self) -> Option<Duration> {

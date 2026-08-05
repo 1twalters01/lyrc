@@ -9,6 +9,8 @@ clap = { version = "4.6.4", features = ["derive"] }
 tokio = { version = "1.52.3", features = ["sync", "macros", "rt-multi-thread"] }
 futures-util = "0.3.32"
 crossterm = { version = "0.29.0", features = ["event-stream"] }
+
+subtitles = { path = "../../crates/subtitles/" }
 synchronizer = { path = "../../crates/synchronizer/" }
 mpris = { path = "../../crates/mpris/" }
 lyrc_core = { path = "../../crates/core/" }

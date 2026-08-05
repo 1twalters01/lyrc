@@ -187,9 +187,7 @@ impl LrcParser {
                     "ti" => subtitle_document.metadata.title = Some(value),
                     "al" => subtitle_document.metadata.album = Some(value),
                     "la" => subtitle_document.metadata.language = Some(value),
-                    "ar" => {
-                        subtitle_document.metadata.artists.push(value)
-                    },
+                    "ar" => subtitle_document.metadata.artists.push(value),
                     _ => {}
                 },
                 LrcLine::Lyric { timestamps, text } => {

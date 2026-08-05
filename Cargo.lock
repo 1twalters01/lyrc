@@ -1140,6 +1140,7 @@ dependencies = [
  "futures-util",
  "lyrc_core",
  "mpris",
+ "subtitles",
  "synchronizer",
  "tokio",
  "tui",
@@ -2283,6 +2284,7 @@ dependencies = [
  "chrono",
  "lyrc_core",
  "ratatui",
+ "subtitles",
 ]
 
 [[package]]

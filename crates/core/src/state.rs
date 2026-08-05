@@ -32,8 +32,19 @@ impl AppState {
     pub fn update(&mut self, event: &PlayerEvent) {
         match event {
             PlayerEvent::TrackChanged(track) => {
-                self.track = Some(track.clone())
-                // need to change subtitle document
+                self.track = Some(track.clone());
+
+                self.subtitle_document = match self.track {
+                    Some(ref track) => match &track.file_path {
+                        Some(file_path) => {
+                            let mut lyrics_path = file_path.to_path_buf();
+                            lyrics_path.set_extension("lrc");
+                            SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                        }
+                        None => None,
+                    },
+                    None => None,
+                };
             }
             PlayerEvent::PlaybackChanged(playback) => self.playback_state = playback.clone(),
             PlayerEvent::Seeked(_duration) => {}

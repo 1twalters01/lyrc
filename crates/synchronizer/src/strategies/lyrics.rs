@@ -19,10 +19,15 @@ impl Synchronizer for LyricsSynchronizer {
 
     fn update(
         &mut self,
-        subtitle_document: &SubtitleDocument,
-        position: &Duration,
+        subtitle_document: &Option<SubtitleDocument>,
+        position: &Option<Duration>,
     ) -> Option<Self::Event> {
-        let new_cues = Self::get_cues_at(&subtitle_document, position);
+        let (subtitle_document, position) = match (subtitle_document, position) {
+            (Some(subtitle_document), Some(position)) => (subtitle_document, position),
+            (_, _) => return None,
+        };
+
+        let new_cues = Self::get_cues_at(&subtitle_document, Some(position));
 
         if new_cues != self.active_cues {
             let old_cues = std::mem::replace(&mut self.active_cues, new_cues);
@@ -35,12 +40,12 @@ impl Synchronizer for LyricsSynchronizer {
             return Some(event);
         }
 
-        fn active_cues(&self) -> &[usize] {
-            &self.active_cues
-        }
+        None
     }
 
-    fn active_cues(&self) -> &[usize];
+    fn get_active_cues(&self) -> &[usize] {
+        &self.active_cues
+    }
 }
 
 impl LyricsSynchronizer {
@@ -50,12 +55,15 @@ impl LyricsSynchronizer {
         }
     }
 
-    pub fn get_cues_at(subtitle_document: &SubtitleDocument, position: Option<&Duration>) -> Vec<usize> {
+    pub fn get_cues_at(
+        subtitle_document: &SubtitleDocument,
+        position: Option<&Duration>,
+    ) -> Vec<usize> {
         let position = match position {
             Some(position) => position,
             None => return Vec::new(),
         };
-        
+
         let start = subtitle_document
             .cues
             .partition_point(|cue| &cue.start <= position);
