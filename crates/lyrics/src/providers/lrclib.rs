@@ -35,7 +35,7 @@ impl LyricsProvider for LrclibProvider {
                 let lyrics_service = service_module
                     .getattr("LyricsService")?
                     .call1((providers,))?;
-                println!("{:#?}", lyrics_service.is_none());
+                println!("lyrics service: {:#?}", lyrics_service.is_none());
 
                 // get python track class
                 let timedelta = datetime.getattr("timedelta")?.call1((

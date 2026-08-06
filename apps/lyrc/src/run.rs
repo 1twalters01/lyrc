@@ -2,10 +2,15 @@ use crate::args::{Args, Command, Frontend};
 use chrono::Duration;
 use futures_util::stream::StreamExt;
 use lyrc_core::app::App;
-use mpris::playback::PlaybackCommand;
+use lyrics::{
+    models::{Lyrics, LyricsFormat},
+    service::LyricsService,
+};
 use std::time::Duration as std_duration;
-use subtitles::subtitles::SubtitleDocument;
-use synchronizer::{strategies::lyrics::LyricsSynchronizer, traits::Synchronizer};
+use subtitles::{
+    formats::lrc::parser::LrcParser, parser::SubtitleParser, subtitles::SubtitleDocument,
+};
+use synchronizer::strategies::lyrics::LyricsSynchronizer;
 use tui::renderer::TuiRenderer;
 
 use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
@@ -17,7 +22,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
     // println!("Initialisation code");
     let hz = 60;
-    let player = "cmus";
+    let player = "cmus"; // also want to be able to automatically find a player
     let clock_offset = Duration::milliseconds(0);
     let rewind_duration = Duration::milliseconds(-5000);
     let fast_forward_duration = Duration::milliseconds(5000);
@@ -58,73 +63,58 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
             loop {
                 tokio::select! {
-                    Some(event) = events.next() => {
-                        app.handle_player_event(event).await?
-                    }
+                    Some(event) = events.next() => app.handle_player_event(event).await?,
 
-                    _ = tick.tick() => {
-                        let current_position = app.get_current_position().await;
-                        let playback_status = app.get_playback_status().await;
-                        app.handle_tick(current_position, playback_status)?
-                    }
+                    _ = tick.tick() => app.tick().await?,
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
                         match key.code {
+                            // Quit
                             KeyCode::Char('q') | KeyCode::Esc => break Ok(()),
                             KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => break Ok(()),
 
-                            KeyCode::Char(' ') => mpris
-                                .execute(PlaybackCommand::Toggle)
-                                .await?,
-                            KeyCode::Left => mpris
-                                .execute(PlaybackCommand::Seek(rewind_duration))
-                            .await?,
-                            KeyCode::Right => mpris
-                                .execute(PlaybackCommand::Seek(fast_forward_duration))
-                            .await?,
+                            // playback control
+                            KeyCode::Char(' ') => app.toggle_play_pause().await?,
+                            KeyCode::Left => app.seek_by_duration(rewind_duration).await?,
+                            KeyCode::Right => app.seek_by_duration(fast_forward_duration).await?,
 
-                            KeyCode::Char('k') => {
-                                match app.state.selected_line {
-                                    Some(line) => { 
-                                        app.state.selected_line = Some(line.saturating_sub(1));
-                                    },
-                                    None => app.state.selected_line = app.synchronizer.get_active_cues().first().copied(),
-                                };
-                            }
-                            KeyCode::Char('j') => {
-                                match app.state.selected_line {
-                                    Some(line) => { 
-                                        app.state.selected_line = match app.state.subtitle_document {
-                                            Some(ref document) => if line < document.cues.len() - 1 {
-                                                Some(line + 1)
+                            // line control
+                            KeyCode::Char('k') => app.select_previous_line(),
+                            KeyCode::Char('j') => app.select_next_line(),
+                            KeyCode::Char('h') => app.clear_line_selection(),
+                            KeyCode::Enter => app.seek_to_selected_line().await?,
+
+                            // download lyrics
+                            KeyCode::Char('d') => {
+                                if app.state.subtitle_document.is_none() {
+                                    // store in app? and have app.lyrics_service or something?
+                                    let lyrics_service = LyricsService::default();
+                                    let lyrics_provider = lyrics_service.providers.get("lrclib");
+                                    let track = app.state.track.clone();
+                                    let lyrics: Option<Lyrics> = match (lyrics_provider, track) {
+                                        (Some(provider), Some(track)) => {
+                                            provider.search(track).await?
+                                        },
+                                        (_, _) => None,
+                                    };
+
+                                    app.state.subtitle_document = match lyrics {
+                                        Some(lyrics) => {
+                                            match lyrics.format {
+                                                LyricsFormat::Lrc => Some(LrcParser.parse(&lyrics.content)?),
+                                                LyricsFormat::Text => None,
+
                                             }
-                                            else {
-                                                Some(line)
-                                            }
-                                            None => None,
-                                        };
-                                    },
-                                    None => app.state.selected_line = app.synchronizer.get_active_cues().first().copied(),
-                                };
-                            }
-                            KeyCode::Enter => {
-                                if let Some(selected_line) = app.state.selected_line {
-                                    if let Some(ref document) = app.state.subtitle_document {
-                                        let cue = &document.cues[selected_line];
-                                        let duration = cue.start;
-                                        mpris
-                                        .execute(PlaybackCommand::SetPosition(duration))
-                                        .await?;
-                                    }
+                                        },
+                                        None => None,
+                                    };
                                 }
+
                             }
-                            KeyCode::Char('h') => {
-                                app.state.selected_line = None;
-                            },
 
                             _ => {},
                         }
-                    }
+                    },
                 }
             }
         }

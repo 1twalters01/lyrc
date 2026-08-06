@@ -30,6 +30,8 @@ impl Track {
         let artists = get_string_array(&metadata, "xesam:artist");
         let album_artists = get_string_array(&metadata, "xesam:albumArtist");
 
+        // println!("\n\n\n{:?}", metadata.get("xesam:albumArtist"));
+        // println!("\n{:?}", metadata.get("xesam:url"));
         let file_path = get_current_track_file_path().await.ok().flatten();
 
         Track {

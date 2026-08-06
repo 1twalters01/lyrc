@@ -55,11 +55,13 @@ pub fn draw_body(
     state.automatic_scroll_offset = automatic_scroll_offset;
 
     let scroll_offset = match state.selected_line {
-        Some(offset) => if offset > middle {
-            offset - middle
-        } else {
-            0
-        },
+        Some(offset) => {
+            if offset > middle {
+                offset - middle
+            } else {
+                0
+            }
+        }
         None => automatic_scroll_offset,
     };
 
@@ -69,12 +71,12 @@ pub fn draw_body(
     );
 }
 
-fn highlight_lines(lines: &mut Vec<Line>, bold_indices: &[usize], reverse_indices: &[usize]) {
+fn highlight_lines(lines: &mut [Line], bold_indices: &[usize], reverse_indices: &[usize]) {
     for &index in bold_indices {
         if let Some(line) = lines.get_mut(index) {
             *line = line
                 .clone()
-                .style(Style::default().add_modifier(Modifier::BOLD));
+                .patch_style(Style::default().add_modifier(Modifier::BOLD));
         }
     }
 
@@ -82,7 +84,7 @@ fn highlight_lines(lines: &mut Vec<Line>, bold_indices: &[usize], reverse_indice
         if let Some(line) = lines.get_mut(index) {
             *line = line
                 .clone()
-                .style(Style::default().add_modifier(Modifier::REVERSED));
+                .patch_style(Style::default().add_modifier(Modifier::REVERSED));
         }
     }
 }
