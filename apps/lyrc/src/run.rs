@@ -91,25 +91,30 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                                     let lyrics_service = LyricsService::default();
                                     let lyrics_provider = lyrics_service.providers.get("lrclib");
                                     let track = app.state.track.clone();
-                                    let lyrics: Option<Lyrics> = match (lyrics_provider, track) {
+                                    let subtitle_document = match (lyrics_provider, track) {
                                         (Some(provider), Some(track)) => {
-                                            provider.search(track).await?
+                                            let lyrics = provider.search(track.clone()).await?;
+                                            if let Some(lyrics) = lyrics {
+                                                match lyrics.format {
+                                                    LyricsFormat::Lrc => {
+                                                        if let Some(file_path) = track.file_path {
+                                                            let mut lrc_path = file_path.to_path_buf();
+                                                            lrc_path.set_extension("lrc");
+                                                            println!("lrc path: {:?}", lrc_path);
+
+                                                            std::fs::write(&lrc_path, &lyrics.content)?;
+                                                        }
+                                                        Some(LrcParser.parse(&lyrics.content)?)
+                                                    },
+                                                    LyricsFormat::Text => None,
+                                                }
+                                            } else { None }
                                         },
                                         (_, _) => None,
                                     };
 
-                                    app.state.subtitle_document = match lyrics {
-                                        Some(lyrics) => {
-                                            match lyrics.format {
-                                                LyricsFormat::Lrc => Some(LrcParser.parse(&lyrics.content)?),
-                                                LyricsFormat::Text => None,
-
-                                            }
-                                        },
-                                        None => None,
-                                    };
+                                    app.state.subtitle_document = subtitle_document;
                                 }
-
                             }
 
                             _ => {},
