@@ -3,7 +3,7 @@ use chrono::Duration;
 use futures_util::stream::StreamExt;
 use lyrc_core::app::App;
 use lyrics::{
-    models::{Lyrics, LyricsFormat},
+    models::LyricsFormat,
     service::LyricsService,
 };
 use std::time::Duration as std_duration;
@@ -26,6 +26,8 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     let clock_offset = Duration::milliseconds(0);
     let rewind_duration = Duration::milliseconds(-5000);
     let fast_forward_duration = Duration::milliseconds(5000);
+    let forwards_cue_increment = Duration::milliseconds(20000);
+    let backwards_cue_increment = Duration::milliseconds(20000);
 
     match command {
         Command::Daemon => {
@@ -89,35 +91,38 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                                 match (&mut app.state.subtitle_document, &mut app.state.selected_line, &app.state.track) {
                                     (Some(document), Some(line_idx), Some(track)) => {
                                         let current_cue = &mut document.cues[*line_idx];
-                                        let new_start_duration = current_cue.start + Duration::milliseconds(10);
-                                        if new_start_duration <= track.duration {
-                                            current_cue.start = new_start_duration;
+                                        let new_start = current_cue.start + forwards_cue_increment;
 
-                                            if &document.cues[*line_idx].start > &document.cues[*line_idx+1].start {
-                                                document.cues.sort_by_key(|c| c.start);
+                                        if new_start <= track.duration {
+                                            current_cue.start = new_start;
+
+                                            while *line_idx + 1 < document.cues.len()
+                                            && &document.cues[*line_idx].start > &document.cues[*line_idx+1].start {
+                                                document.cues.swap(*line_idx, *line_idx + 1);
                                                 *line_idx += 1;
                                             }
                                         }
 
                                     },
-                                    (_, _, _) => {},
+                                    _ => {},
                                 }
                             }
                             KeyCode::Char('<') => {
                                 match (&mut app.state.subtitle_document, &mut app.state.selected_line) {
                                     (Some(document), Some(line_idx)) => {
                                         let current_cue = &mut document.cues[*line_idx];
-                                        let new_start_duration = current_cue.start - Duration::milliseconds(10);
-                                        if new_start_duration >= Duration::milliseconds(0) {
-                                            current_cue.start = new_start_duration;
+                                        let new_start = current_cue.start - backwards_cue_increment;
+                                        if new_start >= Duration::zero() {
+                                            current_cue.start = new_start;
 
-                                            if &document.cues[*line_idx].start < &document.cues[*line_idx-1].start {
-                                                document.cues.sort_by_key(|c| c.start);
+                                            while *line_idx > 0 
+                                            && &document.cues[*line_idx].start < &document.cues[*line_idx-1].start {
+                                                document.cues.swap(*line_idx, *line_idx - 1);
                                                 *line_idx -= 1;
                                             }
                                         }
                                     },
-                                    (_, _) => {},
+                                    _ => {},
                                 }
                             }
 
