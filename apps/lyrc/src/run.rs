@@ -84,6 +84,43 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                             KeyCode::Char('h') => app.clear_line_selection(),
                             KeyCode::Enter => app.seek_to_selected_line().await?,
 
+                            // increment time on subtitle cue
+                            KeyCode::Char('>') => {
+                                match (&mut app.state.subtitle_document, &mut app.state.selected_line, &app.state.track) {
+                                    (Some(document), Some(line_idx), Some(track)) => {
+                                        let current_cue = &mut document.cues[*line_idx];
+                                        let new_start_duration = current_cue.start + Duration::milliseconds(10);
+                                        if new_start_duration <= track.duration {
+                                            current_cue.start = new_start_duration;
+
+                                            if &document.cues[*line_idx].start > &document.cues[*line_idx+1].start {
+                                                document.cues.sort_by_key(|c| c.start);
+                                                *line_idx += 1;
+                                            }
+                                        }
+
+                                    },
+                                    (_, _, _) => {},
+                                }
+                            }
+                            KeyCode::Char('<') => {
+                                match (&mut app.state.subtitle_document, &mut app.state.selected_line) {
+                                    (Some(document), Some(line_idx)) => {
+                                        let current_cue = &mut document.cues[*line_idx];
+                                        let new_start_duration = current_cue.start - Duration::milliseconds(10);
+                                        if new_start_duration >= Duration::milliseconds(0) {
+                                            current_cue.start = new_start_duration;
+
+                                            if &document.cues[*line_idx].start < &document.cues[*line_idx-1].start {
+                                                document.cues.sort_by_key(|c| c.start);
+                                                *line_idx -= 1;
+                                            }
+                                        }
+                                    },
+                                    (_, _) => {},
+                                }
+                            }
+
                             // download lyrics
                             KeyCode::Char('d') => {
                                 if app.state.subtitle_document.is_none() {

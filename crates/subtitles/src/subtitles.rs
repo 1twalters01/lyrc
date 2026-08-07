@@ -60,7 +60,7 @@ impl Default for SubtitleMetadata {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SubtitleCue {
     pub id: Option<String>,
     pub start: Duration,
@@ -68,7 +68,7 @@ pub struct SubtitleCue {
     pub content: SubtitleContent,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SubtitleContent {
     Text(String),
 }

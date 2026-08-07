@@ -104,7 +104,12 @@ where
     pub fn select_previous_line(&mut self) {
         match self.state.selected_line {
             Some(line) => self.state.selected_line = Some(line.saturating_sub(1)),
-            None => self.state.selected_line = self.synchronizer.get_active_cues().first().copied(),
+            None => {
+                self.state.selected_line = match self.synchronizer.get_active_cues().first() {
+                    Some(line_idx) => Some(line_idx.clone()),
+                    None => Some(0),
+                }
+            }
         };
     }
 
@@ -122,7 +127,12 @@ where
                     None => None,
                 };
             }
-            None => self.state.selected_line = self.synchronizer.get_active_cues().first().copied(),
+            None => {
+                self.state.selected_line = match self.synchronizer.get_active_cues().first() {
+                    Some(line_idx) => Some(line_idx.clone()),
+                    None => Some(0),
+                }
+            }
         };
     }
 

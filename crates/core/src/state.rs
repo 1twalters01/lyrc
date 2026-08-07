@@ -38,6 +38,9 @@ impl AppState {
     pub fn update(&mut self, event: &PlayerEvent) {
         match event {
             PlayerEvent::TrackChanged(track) => {
+                if self.track.as_ref() != Some(track) {
+                    self.selected_line = None;
+                }
                 self.track = Some(track.clone());
 
                 self.subtitle_document = match self.track {
@@ -51,8 +54,6 @@ impl AppState {
                     },
                     None => None,
                 };
-
-                self.selected_line = None;
             }
             PlayerEvent::PlaybackChanged(playback) => self.playback_state = playback.clone(),
             PlayerEvent::Seeked(_duration) => {}
