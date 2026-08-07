@@ -18,7 +18,7 @@ pub struct AppState {
 
     /* other app state */
     pub automatic_scroll_offset: usize,
-    pub selected_line: Option<usize>,
+    pub selected_cue: Option<usize>,
 }
 
 impl AppState {
@@ -31,7 +31,7 @@ impl AppState {
             playback_speed: 1f64,
 
             automatic_scroll_offset: 0,
-            selected_line: None,
+            selected_cue: None,
         }
     }
 
@@ -39,7 +39,7 @@ impl AppState {
         match event {
             PlayerEvent::TrackChanged(track) => {
                 if self.track.as_ref() != Some(track) {
-                    self.selected_line = None;
+                    self.selected_cue = None;
                 }
                 self.track = Some(track.clone());
 

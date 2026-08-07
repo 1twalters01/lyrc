@@ -102,10 +102,10 @@ where
     }
 
     pub fn select_previous_line(&mut self) {
-        match self.state.selected_line {
-            Some(line) => self.state.selected_line = Some(line.saturating_sub(1)),
+        match self.state.selected_cue {
+            Some(line) => self.state.selected_cue = Some(line.saturating_sub(1)),
             None => {
-                self.state.selected_line = match self.synchronizer.get_active_cues().first() {
+                self.state.selected_cue = match self.synchronizer.get_active_cues().first() {
                     Some(line_idx) => Some(line_idx.clone()),
                     None => Some(0),
                 }
@@ -114,9 +114,9 @@ where
     }
 
     pub fn select_next_line(&mut self) {
-        match self.state.selected_line {
+        match self.state.selected_cue {
             Some(line) => {
-                self.state.selected_line = match self.state.subtitle_document {
+                self.state.selected_cue = match self.state.subtitle_document {
                     Some(ref document) => {
                         if line < document.cues.len() - 1 {
                             Some(line + 1)
@@ -128,7 +128,7 @@ where
                 };
             }
             None => {
-                self.state.selected_line = match self.synchronizer.get_active_cues().first() {
+                self.state.selected_cue = match self.synchronizer.get_active_cues().first() {
                     Some(line_idx) => Some(line_idx.clone()),
                     None => Some(0),
                 }
@@ -137,13 +137,13 @@ where
     }
 
     pub fn clear_line_selection(&mut self) {
-        self.state.selected_line = None;
+        self.state.selected_cue = None;
     }
 
     pub async fn seek_to_selected_line(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(selected_line) = self.state.selected_line {
+        if let Some(selected_cue) = self.state.selected_cue {
             if let Some(ref document) = self.state.subtitle_document {
-                let cue = &document.cues[selected_line];
+                let cue = &document.cues[selected_cue];
                 let duration = cue.start;
                 self.mpris
                     .execute(PlaybackCommand::SetPosition(duration))
@@ -155,7 +155,11 @@ where
     }
 
     pub fn adjust_selected_cue_start_forwards(&mut self, forwards_cue_increment: Duration) {
-        match (&mut self.state.subtitle_document, &mut self.state.selected_line, &self.state.track) {
+        if self.state.selected_cue == None {
+            self.state.selected_cue = self.synchronizer.get_active_cues().first().copied();
+        }
+
+        match (&mut self.state.subtitle_document, &mut self.state.selected_cue, &self.state.track) {
             (Some(document), Some(line_idx), Some(track)) => {
                 let current_cue = &mut document.cues[*line_idx];
                 let new_start = current_cue.start + forwards_cue_increment;
@@ -175,7 +179,11 @@ where
         }
     }
     pub fn adjust_selected_cue_start_backwards(&mut self, backwards_cue_increment: Duration) {
-        match (&mut self.state.subtitle_document, &mut self.state.selected_line) {
+        if self.state.selected_cue == None {
+            self.state.selected_cue = self.synchronizer.get_active_cues().first().copied();
+        }
+
+        match (&mut self.state.subtitle_document, &mut self.state.selected_cue) {
             (Some(document), Some(line_idx)) => {
                 let current_cue = &mut document.cues[*line_idx];
                 let new_start = current_cue.start - backwards_cue_increment;

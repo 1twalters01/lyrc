@@ -40,7 +40,7 @@ pub fn draw_body(
     let visible_height = area.height as usize;
     let middle = visible_height / 2;
 
-    let selected_line_indices = match state.selected_line {
+    let selected_line_indices = match state.selected_cue {
         None => &Vec::new(),
         Some(index) => &Vec::from([index]),
     };
@@ -54,7 +54,7 @@ pub fn draw_body(
         .saturating_sub(middle);
     state.automatic_scroll_offset = automatic_scroll_offset;
 
-    let scroll_offset = match state.selected_line {
+    let scroll_offset = match state.selected_cue {
         Some(offset) => {
             if offset > middle {
                 offset - middle
