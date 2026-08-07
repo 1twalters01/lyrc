@@ -153,4 +153,43 @@ where
 
         Ok(())
     }
+
+    pub fn adjust_selected_cue_start_forwards(&mut self, forwards_cue_increment: Duration) {
+        match (&mut self.state.subtitle_document, &mut self.state.selected_line, &self.state.track) {
+            (Some(document), Some(line_idx), Some(track)) => {
+                let current_cue = &mut document.cues[*line_idx];
+                let new_start = current_cue.start + forwards_cue_increment;
+
+                if new_start <= track.duration {
+                    current_cue.start = new_start;
+
+                    while *line_idx + 1 < document.cues.len()
+                    && &document.cues[*line_idx].start > &document.cues[*line_idx+1].start {
+                        document.cues.swap(*line_idx, *line_idx + 1);
+                        *line_idx += 1;
+                    }
+                }
+
+            },
+            _ => {},
+        }
+    }
+    pub fn adjust_selected_cue_start_backwards(&mut self, backwards_cue_increment: Duration) {
+        match (&mut self.state.subtitle_document, &mut self.state.selected_line) {
+            (Some(document), Some(line_idx)) => {
+                let current_cue = &mut document.cues[*line_idx];
+                let new_start = current_cue.start - backwards_cue_increment;
+                if new_start >= Duration::zero() {
+                    current_cue.start = new_start;
+
+                    while *line_idx > 0 
+                    && &document.cues[*line_idx].start < &document.cues[*line_idx-1].start {
+                        document.cues.swap(*line_idx, *line_idx - 1);
+                        *line_idx -= 1;
+                    }
+                }
+            },
+            _ => {},
+        }
+    }
 }
