@@ -14,8 +14,8 @@ pub async fn handle_normal_key<R: Renderer, S: Synchronizer>(
     match key.code {
         // Quit
         KeyCode::Esc => app.state.quit = true,
-        KeyCode::Char('q') => app.state.quit = true,
         KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.state.quit = true,
+        KeyCode::Char('q') => app.state.quit = true,
 
         // playback control
         KeyCode::Char(' ') => app.toggle_play_pause().await?,
@@ -29,17 +29,10 @@ pub async fn handle_normal_key<R: Renderer, S: Synchronizer>(
         KeyCode::Enter => app.seek_to_selected_line().await?,
 
         // Edit subtitle cue
+        KeyCode::Tab => app.switch_to_edit_mode(),
         KeyCode::Char('>') => app.adjust_selected_cue_start_forwards(config.forwards_cue_increment),
         KeyCode::Char('<') => {
             app.adjust_selected_cue_start_backwards(config.backwards_cue_increment)
-        }
-        // KeyCode::Tab => app.edit_cue_text(keyboard),
-        KeyCode::Tab => {
-            if app.state.selected_cue.is_none() {
-                app.state.selected_cue = app.synchronizer.get_active_cues().first().copied();
-            }
-
-            app.switch_to_edit_mode();
         }
 
         // download lyrics
@@ -95,6 +88,9 @@ pub fn handle_edit_key<R: Renderer, S: Synchronizer>(
         (Some(document), Some(line_idx)) => {
             let current_cue = &mut document.cues[*line_idx];
             match key.code {
+                KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => {
+                    app.state.quit = true
+                }
                 KeyCode::Tab | KeyCode::Esc => app.switch_to_normal_mode(),
                 KeyCode::Char(char) => match &mut current_cue.content {
                     SubtitleContent::Text(text) => text.push(char),

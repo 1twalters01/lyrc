@@ -1,21 +1,15 @@
-use crate::{
-    args::{Args, Command, Frontend},
-    keyboard,
-};
-use chrono::Duration;
-use futures_util::stream::StreamExt;
-use lyrc_core::{app::App, state::AppMode};
-use lyrics::{models::LyricsFormat, service::LyricsService};
 use std::time::Duration as std_duration;
-use subtitles::{
-    formats::lrc::parser::LrcParser,
-    parser::SubtitleParser,
-    subtitles::{SubtitleContent, SubtitleDocument},
-};
-use synchronizer::{strategies::lyrics::LyricsSynchronizer, traits::Synchronizer};
+
+use crate::args::{Args, Command, Frontend};
+
+use lyrc_core::{app::App, state::AppMode};
+use subtitles::subtitles::SubtitleDocument;
+use synchronizer::strategies::lyrics::LyricsSynchronizer;
 use tui::renderer::TuiRenderer;
 
-use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
+use chrono::Duration;
+use crossterm::event::{Event, EventStream};
+use futures_util::stream::StreamExt;
 
 pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     let command = args.command.unwrap_or(Command::App {
@@ -79,36 +73,10 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     _ = tick.tick() => app.tick().await?,
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
-                        // if app.state.is_editing_cue {
-                        //     if key.code == KeyCode::Tab || key.code == KeyCode::Esc {
-                        //         app.state.is_editing_cue = false;
-                        //     } else {
-                        //         match (&mut app.state.subtitle_document, &mut app.state.selected_cue) {
-                        //             (Some(document), Some(line_idx)) => {
-                        //                 let current_cue = &mut document.cues[*line_idx];
-                        //                 match key.code {
-                        //                     KeyCode::Char(c) => {
-                        //                         match &mut current_cue.content{
-                        //                             SubtitleContent::Text(text) => text.push(c),
-                        //                         }
-                        //                     }
-                        //                     KeyCode::Backspace => match &mut current_cue.content {
-                        //                         SubtitleContent::Text(text) => {
-                        //                             text.pop();
-                        //                         },
-                        //                     },
-                        //                     _ => {},
-                        //                 }
-                        //             },
-                        //             _ => {},
-                        //         }
-                        //     }
-                        // } else {
                         match app.state.app_mode {
                             AppMode::Normal => crate::keyboard::handle_normal_key(&mut app, key, &config).await?,
                             AppMode::Edit => crate::keyboard::handle_edit_key(&mut app, key, &config),
                         }
-                        // }
                     },
                 }
 
