@@ -1,16 +1,18 @@
-use crate::args::{Args, Command, Frontend};
+use crate::{
+    args::{Args, Command, Frontend},
+    keyboard,
+};
 use chrono::Duration;
 use futures_util::stream::StreamExt;
-use lyrc_core::app::App;
-use lyrics::{
-    models::LyricsFormat,
-    service::LyricsService,
-};
+use lyrc_core::{app::App, state::AppMode};
+use lyrics::{models::LyricsFormat, service::LyricsService};
 use std::time::Duration as std_duration;
 use subtitles::{
-    formats::lrc::parser::LrcParser, parser::SubtitleParser, subtitles::SubtitleDocument,
+    formats::lrc::parser::LrcParser,
+    parser::SubtitleParser,
+    subtitles::{SubtitleContent, SubtitleDocument},
 };
-use synchronizer::strategies::lyrics::LyricsSynchronizer;
+use synchronizer::{strategies::lyrics::LyricsSynchronizer, traits::Synchronizer};
 use tui::renderer::TuiRenderer;
 
 use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
@@ -21,13 +23,20 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // println!("Initialisation code");
-    let hz = 60;
+    let fps = 60;
     let player = "cmus"; // also want to be able to automatically find a player
     let clock_offset = Duration::milliseconds(0);
     let rewind_duration = Duration::milliseconds(-5000);
     let fast_forward_duration = Duration::milliseconds(5000);
     let forwards_cue_increment = Duration::milliseconds(10);
     let backwards_cue_increment = Duration::milliseconds(10);
+
+    let config = crate::config::Config {
+        rewind_duration,
+        fast_forward_duration,
+        forwards_cue_increment,
+        backwards_cue_increment,
+    };
 
     match command {
         Command::Daemon => {
@@ -43,7 +52,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
             let mut app = App::new(renderer, synchronizer, clock_offset, player).await;
 
-            let mut tick = tokio::time::interval(std_duration::from_secs_f64(1.0 / hz as f64));
+            let mut tick = tokio::time::interval(std_duration::from_secs_f64(1.0 / fps as f64));
 
             let mpris = app.mpris.clone();
 
@@ -70,64 +79,45 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     _ = tick.tick() => app.tick().await?,
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
-                        match key.code {
-                            // Quit
-                            KeyCode::Char('q') | KeyCode::Esc => break Ok(()),
-                            KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => break Ok(()),
-
-                            // playback control
-                            KeyCode::Char(' ') => app.toggle_play_pause().await?,
-                            KeyCode::Left => app.seek_by_duration(rewind_duration).await?,
-                            KeyCode::Right => app.seek_by_duration(fast_forward_duration).await?,
-
-                            // line control
-                            KeyCode::Char('k') => app.select_previous_line(),
-                            KeyCode::Char('j') => app.select_next_line(),
-                            KeyCode::Char('h') => app.clear_line_selection(),
-                            KeyCode::Enter => app.seek_to_selected_line().await?,
-
-                            // shift selected subtitle cue
-                            KeyCode::Char('>') => app.adjust_selected_cue_start_forwards(forwards_cue_increment),
-                            KeyCode::Char('<') => app.adjust_selected_cue_start_backwards(backwards_cue_increment),
-
-                            // download lyrics
-                            KeyCode::Char('d') => {
-                                if app.state.subtitle_document.is_none() {
-                                    // store in app? and have app.lyrics_service or something?
-                                    let lyrics_service = LyricsService::default();
-                                    let lyrics_provider = lyrics_service.providers.get("lrclib");
-                                    let track = app.state.track.clone();
-                                    let subtitle_document = match (lyrics_provider, track) {
-                                        (Some(provider), Some(track)) => {
-                                            let lyrics = provider.search(track.clone()).await?;
-                                            if let Some(lyrics) = lyrics {
-                                                match lyrics.format {
-                                                    LyricsFormat::Lrc => {
-                                                        if let Some(file_path) = track.file_path {
-                                                            let mut lrc_path = file_path.to_path_buf();
-                                                            lrc_path.set_extension("lrc");
-                                                            println!("lrc path: {:?}", lrc_path);
-
-                                                            std::fs::write(&lrc_path, &lyrics.content)?;
-                                                        }
-                                                        Some(LrcParser.parse(&lyrics.content)?)
-                                                    },
-                                                    LyricsFormat::Text => None,
-                                                }
-                                            } else { None }
-                                        },
-                                        (_, _) => None,
-                                    };
-
-                                    app.state.subtitle_document = subtitle_document;
-                                }
-                            }
-
-                            _ => {},
+                        // if app.state.is_editing_cue {
+                        //     if key.code == KeyCode::Tab || key.code == KeyCode::Esc {
+                        //         app.state.is_editing_cue = false;
+                        //     } else {
+                        //         match (&mut app.state.subtitle_document, &mut app.state.selected_cue) {
+                        //             (Some(document), Some(line_idx)) => {
+                        //                 let current_cue = &mut document.cues[*line_idx];
+                        //                 match key.code {
+                        //                     KeyCode::Char(c) => {
+                        //                         match &mut current_cue.content{
+                        //                             SubtitleContent::Text(text) => text.push(c),
+                        //                         }
+                        //                     }
+                        //                     KeyCode::Backspace => match &mut current_cue.content {
+                        //                         SubtitleContent::Text(text) => {
+                        //                             text.pop();
+                        //                         },
+                        //                     },
+                        //                     _ => {},
+                        //                 }
+                        //             },
+                        //             _ => {},
+                        //         }
+                        //     }
+                        // } else {
+                        match app.state.app_mode {
+                            AppMode::Normal => crate::keyboard::handle_normal_key(&mut app, key, &config).await?,
+                            AppMode::Edit => crate::keyboard::handle_edit_key(&mut app, key, &config),
                         }
+                        // }
                     },
                 }
+
+                if app.state.quit == true {
+                    break;
+                }
             }
+
+            Ok(())
         }
     }
 }

@@ -2,7 +2,10 @@ use clap::Parser;
 use pyo3::PyResult;
 
 mod args;
+mod keyboard;
 mod run;
+// move to config crate and improve
+mod config;
 
 #[pyo3_async_runtimes::tokio::main]
 async fn main() -> PyResult<()> {

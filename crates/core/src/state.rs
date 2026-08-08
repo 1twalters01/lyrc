@@ -6,6 +6,12 @@ use mpris::{
 };
 use subtitles::subtitles::SubtitleDocument;
 
+#[derive(Clone, PartialEq)]
+pub enum AppMode {
+    Normal,
+    Edit,
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub track: Option<Track>,
@@ -17,8 +23,10 @@ pub struct AppState {
     pub playback_speed: f64,
 
     /* other app state */
+    pub quit: bool,
     pub automatic_scroll_offset: usize,
     pub selected_cue: Option<usize>,
+    pub app_mode: AppMode,
 }
 
 impl AppState {
@@ -30,8 +38,10 @@ impl AppState {
             last_updated: None,
             playback_speed: 1f64,
 
+            quit: false,
             automatic_scroll_offset: 0,
             selected_cue: None,
+            app_mode: AppMode::Normal,
         }
     }
 
@@ -58,5 +68,12 @@ impl AppState {
             PlayerEvent::PlaybackChanged(playback) => self.playback_state = playback.clone(),
             PlayerEvent::Seeked(_duration) => {}
         }
+    }
+
+    pub fn is_normal_mode(&self) -> bool {
+        self.app_mode == AppMode::Normal
+    }
+    pub fn is_edit_mode(&self) -> bool {
+        self.app_mode == AppMode::Edit
     }
 }

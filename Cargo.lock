@@ -1154,6 +1154,7 @@ name = "lyrc_core"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "crossterm",
  "mpris",
  "subtitles",
  "synchronizer",
