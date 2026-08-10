@@ -78,9 +78,9 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
                         match app.state.app_mode {
-                            AppMode::Normal => crate::keyboard::handle_normal_key(&mut app, key, &config).await?,
-                            AppMode::Edit => crate::keyboard::handle_edit_key(&mut app, key, &config),
-                            AppMode::Select => crate::keyboard::handle_select_key(&mut app, key, &config),
+                            AppMode::Normal => crate::keyboards::normal::handle_key(&mut app, key, &config).await?,
+                            AppMode::Select { cue_index } => crate::keyboards::select::handle_key(&mut app, key, cue_index, &config).await?,
+                            AppMode::Edit { cue_index } => crate::keyboards::edit::handle_key(&mut app, key, cue_index, &config)?,
                         }
                     },
                 }

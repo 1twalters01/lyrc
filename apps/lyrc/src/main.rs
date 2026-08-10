@@ -2,7 +2,7 @@ use clap::Parser;
 use pyo3::PyResult;
 
 mod args;
-mod keyboard;
+mod keyboards;
 mod run;
 // move to config crate and improve
 mod config;

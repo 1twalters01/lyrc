@@ -105,112 +105,135 @@ where
         Ok(())
     }
 
-    pub fn select_previous_line(&mut self) {
-        match self.state.selected_cue {
-            Some(line) => self.state.selected_cue = Some(line.saturating_sub(1)),
-            None => {
-                self.state.selected_cue = match self.synchronizer.get_active_cues().first() {
-                    Some(line_idx) => Some(line_idx.clone()),
-                    None => Some(0),
+    pub fn get_first_cue(&self) -> Option<usize> {
+        match &self.state.subtitle_document {
+            Some(_document) => match self.synchronizer.get_active_cues().first() {
+                Some(line_idx) => Some(line_idx.clone()),
+                None => Some(0),
+            },
+            None => None,
+        }
+    }
+
+    pub fn select_previous_line(&mut self, cue_index: usize) {
+        if self.state.track.is_none() 
+        || self.state.subtitle_document.is_none() {
+            self.switch_to_normal_mode();
+        }
+
+        self.state.app_mode = AppMode::Select { cue_index: cue_index.saturating_sub(1) };
+    }
+
+    pub fn select_next_line(&mut self, cue_index: usize) {
+        if self.state.track.is_none() {
+            self.switch_to_normal_mode();
+        }
+
+        match &self.state.subtitle_document {
+            Some(subtitle_document) => {
+                if cue_index < subtitle_document.cues.len() - 1 {
+                    self.state.app_mode = AppMode::Select { cue_index: cue_index + 1 }
                 }
-            }
-        };
+            },
+            None => self.switch_to_normal_mode(),
+        }
     }
 
-    pub fn select_next_line(&mut self) {
-        match self.state.selected_cue {
-            Some(line) => {
-                self.state.selected_cue = match self.state.subtitle_document {
-                    Some(ref document) => {
-                        if line < document.cues.len() - 1 {
-                            Some(line + 1)
-                        } else {
-                            Some(line)
-                        }
-                    }
-                    None => None,
-                };
-            }
-            None => {
-                self.state.selected_cue = match self.synchronizer.get_active_cues().first() {
-                    Some(line_idx) => Some(line_idx.clone()),
-                    None => Some(0),
-                }
-            }
-        };
-    }
+    pub async fn seek_to_selected_line(&mut self, cue_index: usize) -> Result<(), Box<dyn std::error::Error>> {
+        if self.state.track.is_none() {
+            self.switch_to_normal_mode();
+        }
 
-    pub fn clear_line_selection(&mut self) {
-        self.state.selected_cue = None;
-    }
-
-    pub async fn seek_to_selected_line(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(selected_cue) = self.state.selected_cue {
-            if let Some(ref document) = self.state.subtitle_document {
-                let cue = &document.cues[selected_cue];
-                let duration = cue.start;
-                self.mpris
-                    .execute(PlaybackCommand::SetPosition(duration))
-                    .await?;
-            }
+        if let Some(ref document) = self.state.subtitle_document {
+            let cue = &document.cues[cue_index];
+            let duration = cue.start;
+            self.mpris
+                .execute(PlaybackCommand::SetPosition(duration))
+            .await?;
         }
 
         Ok(())
     }
 
-    pub fn adjust_selected_cue_start_forwards(&mut self, forwards_cue_increment: Duration) {
-        if self.state.selected_cue.is_none() {
-            self.state.selected_cue = self.synchronizer.get_active_cues().first().copied();
+    pub fn adjust_selected_cue_start_forwards(&mut self, forwards_cue_increment: Duration) -> Result<(), String> {
+        fn increase_cue_index(
+            document: &mut subtitles::subtitles::SubtitleDocument,
+            cue_index: usize,
+            forwards_cue_increment: Duration,
+            track: &mpris::track::Track
+        ) -> usize {
+            let current_cue = &mut document.cues[cue_index];
+            let new_start = current_cue.start + forwards_cue_increment;
+            let mut new_index = cue_index;
+
+            if new_start <= track.duration {
+                current_cue.start = new_start;
+
+                while new_index + 1 < document.cues.len()
+                && &document.cues[new_index].start > &document.cues[new_index + 1].start
+                {
+                    document.cues.swap(new_index, new_index + 1);
+                    new_index += 1;
+                }
+            }
+
+            new_index
         }
 
         match (
             &mut self.state.subtitle_document,
-            &mut self.state.selected_cue,
             &self.state.track,
         ) {
-            (Some(document), Some(line_idx), Some(track)) => {
-                let current_cue = &mut document.cues[*line_idx];
-                let new_start = current_cue.start + forwards_cue_increment;
+            (Some(document), Some(track)) => {
+                match self.state.app_mode {
+                    AppMode::Normal => return Err(String::from("Cannot be in normal mode")),
+                    AppMode::Select { cue_index } => AppMode::Select { cue_index: increase_cue_index(document, cue_index, forwards_cue_increment, track) },
+                    AppMode::Edit { cue_index } => AppMode::Edit { cue_index: increase_cue_index(document, cue_index, forwards_cue_increment, track) },
+                };
 
-                if new_start <= track.duration {
-                    current_cue.start = new_start;
+                Ok(())
 
-                    while *line_idx + 1 < document.cues.len()
-                        && &document.cues[*line_idx].start > &document.cues[*line_idx + 1].start
-                    {
-                        document.cues.swap(*line_idx, *line_idx + 1);
-                        *line_idx += 1;
-                    }
-                }
             }
-            _ => {}
+            _ => Err(String::from("No subtitle document found"))
         }
     }
 
-    pub fn adjust_selected_cue_start_backwards(&mut self, backwards_cue_increment: Duration) {
-        if self.state.selected_cue.is_none() {
-            self.state.selected_cue = self.synchronizer.get_active_cues().first().copied();
-        }
+    pub fn adjust_selected_cue_start_backwards(&mut self, backwards_cue_increment: Duration) -> Result<(), String> {
+        fn decrease_cue_index(
+            document: &mut subtitles::subtitles::SubtitleDocument,
+            cue_index: usize,
+            backwards_cue_increment: Duration,
+        ) -> usize {
+            let current_cue = &mut document.cues[cue_index];
+            let new_start = current_cue.start - backwards_cue_increment;
+            let mut new_index = cue_index;
 
-        match (
-            &mut self.state.subtitle_document,
-            &mut self.state.selected_cue,
-        ) {
-            (Some(document), Some(line_idx)) => {
-                let current_cue = &mut document.cues[*line_idx];
-                let new_start = current_cue.start - backwards_cue_increment;
-                if new_start >= Duration::zero() {
-                    current_cue.start = new_start;
+            if new_start >= Duration::zero() {
+                current_cue.start = new_start;
 
-                    while *line_idx > 0
-                        && &document.cues[*line_idx].start < &document.cues[*line_idx - 1].start
-                    {
-                        document.cues.swap(*line_idx, *line_idx - 1);
-                        *line_idx -= 1;
-                    }
+                    while new_index > 0
+                    && &document.cues[new_index].start < &document.cues[new_index - 1].start
+                {
+                    document.cues.swap(new_index, new_index - 1);
+                    new_index -= 1;
                 }
             }
-            _ => {}
+
+            new_index
+        }
+
+        match &mut self.state.subtitle_document {
+            Some(document) => {
+                match self.state.app_mode {
+                    AppMode::Normal => return Err(String::from("Cannot be in normal mode")),
+                    AppMode::Select { cue_index } => AppMode::Select { cue_index: decrease_cue_index(document, cue_index, backwards_cue_increment) },
+                    AppMode::Edit { cue_index } => AppMode::Edit { cue_index: decrease_cue_index(document, cue_index, backwards_cue_increment) },
+                };
+
+                Ok(())
+
+            }
+            _ => Err(String::from("No subtitle document found"))
         }
     }
 
@@ -254,13 +277,37 @@ where
         self.state.app_mode = AppMode::Normal;
     }
 
-    pub fn switch_to_edit_mode(&mut self) {
-        if self.state.selected_cue.is_none() {
-            self.state.selected_cue = self.synchronizer.get_active_cues().first().copied();
+    pub fn switch_to_select_mode(&mut self) -> Result<(), String> {
+        if self.state.subtitle_document.is_none() {
+            return Err(String::from("No subtitle document found"))
         }
 
-        if self.state.selected_cue.is_some() {
-            self.state.app_mode = AppMode::Edit;
+        let cue_index = match self.state.app_mode {
+            AppMode::Normal => *self.synchronizer.get_active_cues().first().unwrap_or(&0),
+            AppMode::Select { cue_index } => cue_index,
+            AppMode::Edit { cue_index } => cue_index,
+
+        };
+
+        self.state.app_mode = AppMode::Select { cue_index };
+
+        Ok(())
+    }
+
+    pub fn switch_to_edit_mode(&mut self) -> Result<(), String> {
+        if self.state.subtitle_document.is_none() {
+            return Err(String::from("No subtitle document found"))
         }
+
+        let cue_index = match self.state.app_mode {
+            AppMode::Normal => *self.synchronizer.get_active_cues().first().unwrap_or(&0),
+            AppMode::Select { cue_index } => cue_index,
+            AppMode::Edit { cue_index } => cue_index,
+
+        };
+
+        self.state.app_mode = AppMode::Edit { cue_index };
+
+        Ok(())
     }
 }

@@ -40,7 +40,13 @@ pub fn draw_body(
     let visible_height = area.height as usize;
     let middle = visible_height / 2;
 
-    let selected_line_indices = match state.selected_cue {
+    let selected_cue = match state.app_mode {
+        lyrc_core::state::AppMode::Normal => None,
+        lyrc_core::state::AppMode::Select { cue_index } => Some(cue_index),
+        lyrc_core::state::AppMode::Edit { cue_index } => Some(cue_index),
+    };
+
+    let selected_line_indices = match selected_cue {
         None => &Vec::new(),
         Some(index) => &Vec::from([index]),
     };
@@ -54,7 +60,7 @@ pub fn draw_body(
         .saturating_sub(middle);
     state.automatic_scroll_offset = automatic_scroll_offset;
 
-    let scroll_offset = match state.selected_cue {
+    let scroll_offset = match selected_cue {
         Some(offset) => {
             if offset > middle {
                 offset - middle

@@ -9,16 +9,16 @@ use subtitles::subtitles::SubtitleDocument;
 #[derive(Clone, PartialEq)]
 pub enum AppMode {
     Normal,
-    Edit,
-    Select,
+    Select { cue_index: usize },
+    Edit { cue_index: usize },
 }
 
 impl Display for AppMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Normal => write!(f, "normal"),
-            Self::Edit => write!(f, "edit"),
-            Self::Select => write!(f, "select"),
+            Self::Select { cue_index } => write!(f, "select cue: {:?}", cue_index),
+            Self::Edit { cue_index } => write!(f, "edit cue: {:?}", cue_index),
         }
     }
 }
@@ -36,7 +36,6 @@ pub struct AppState {
     /* other app state */
     pub quit: bool,
     pub automatic_scroll_offset: usize,
-    pub selected_cue: Option<usize>,
     pub app_mode: AppMode,
 }
 
@@ -51,7 +50,6 @@ impl AppState {
 
             quit: false,
             automatic_scroll_offset: 0,
-            selected_cue: None,
             app_mode: AppMode::Normal,
         }
     }
@@ -60,7 +58,7 @@ impl AppState {
         match event {
             PlayerEvent::TrackChanged(track) => {
                 if self.track.as_ref() != Some(track) {
-                    self.selected_cue = None;
+                    self.app_mode = AppMode::Normal
                 }
                 self.track = Some(track.clone());
 
@@ -82,9 +80,21 @@ impl AppState {
     }
 
     pub fn is_normal_mode(&self) -> bool {
-        self.app_mode == AppMode::Normal
+        match self.app_mode {
+            AppMode::Normal => true,
+            _ => false,
+        }
+    }
+    pub fn is_select_mode(&self) -> bool {
+        match self.app_mode {
+            AppMode::Select { cue_index: _ } => true,
+            _ => false,
+        }
     }
     pub fn is_edit_mode(&self) -> bool {
-        self.app_mode == AppMode::Edit
+        match self.app_mode {
+            AppMode::Edit { cue_index: _ } => true,
+            _ => false,
+        }
     }
 }
