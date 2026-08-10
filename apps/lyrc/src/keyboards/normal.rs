@@ -13,7 +13,6 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         // Quit
         KeyCode::Esc => app.state.quit = true,
         KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.state.quit = true,
-        KeyCode::Char('q') => app.state.quit = true,
 
         // playback control
         KeyCode::Char(' ') => app.toggle_play_pause().await?,
@@ -21,26 +20,28 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         KeyCode::Right => app.seek_by_duration(config.fast_forward_duration).await?,
 
         // line control
-        KeyCode::Up => match app.get_first_cue() {
+        KeyCode::Up => match app.get_first_active_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
             None => {}
         },
-        KeyCode::Char('k') => match app.get_first_cue() {
+        KeyCode::Down => match app.get_first_active_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
             None => {}
         },
-        KeyCode::Down => match app.get_first_cue() {
+        KeyCode::Char('k') => match app.get_first_active_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
             None => {}
         },
-        KeyCode::Char('j') => match app.get_first_cue() {
+        KeyCode::Char('j') => match app.get_first_active_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
             None => {}
         },
 
         // Change modes
+        KeyCode::Enter => app.switch_to_select_mode()?,
         KeyCode::Tab => app.switch_to_select_mode()?,
 
+        // Bulk adjust cue times
         KeyCode::Char(',') => {
             app.adjust_all_cues_start_backwards(config.backwards_cue_increment_small)
         }

@@ -105,7 +105,7 @@ where
         Ok(())
     }
 
-    pub fn get_first_cue(&self) -> Option<usize> {
+    pub fn get_first_active_cue(&self) -> Option<usize> {
         match &self.state.subtitle_document {
             Some(_document) => match self.synchronizer.get_active_cues().first() {
                 Some(line_idx) => Some(line_idx.clone()),

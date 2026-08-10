@@ -10,25 +10,35 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &mut app.state.subtitle_document {
         Some(_document) => match key.code {
+            // Quit
             KeyCode::Char('q') => app.state.quit = true,
             KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => {
                 app.state.quit = true;
             }
 
+            // Mode change
             KeyCode::Esc => app.switch_to_normal_mode(),
             KeyCode::Tab => app.switch_to_edit_mode()?,
-            KeyCode::Enter => app.seek_to_selected_line(cue_index).await?,
+            KeyCode::Enter => {
+                if Some(cue_index) == app.get_first_active_cue() {
+                    app.switch_to_edit_mode()?
+                } else {
+                    app.seek_to_selected_line(cue_index).await?
+                }
+            }
 
-            // playback control
+            // Playback control
             KeyCode::Char(' ') => app.toggle_play_pause().await?,
             KeyCode::Left => app.seek_by_duration(config.rewind_duration).await?,
             KeyCode::Right => app.seek_by_duration(config.fast_forward_duration).await?,
 
+            // Line control
             KeyCode::Up => app.select_previous_line(cue_index),
             KeyCode::Char('k') => app.select_previous_line(cue_index),
             KeyCode::Down => app.select_next_line(cue_index),
             KeyCode::Char('j') => app.select_next_line(cue_index),
 
+            // Adjust cue time
             KeyCode::Char(',') => {
                 app.adjust_selected_cue_start_backwards(config.backwards_cue_increment_small)?
             }
