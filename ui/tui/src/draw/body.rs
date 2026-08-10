@@ -43,7 +43,10 @@ pub fn draw_body(
     let selected_cue = match state.app_mode {
         lyrc_core::state::AppMode::Normal => None,
         lyrc_core::state::AppMode::Select { cue_index } => Some(cue_index),
-        lyrc_core::state::AppMode::Edit { cue_index } => Some(cue_index),
+        lyrc_core::state::AppMode::Edit {
+            cue_index,
+            original_content: _,
+        } => Some(cue_index),
     };
 
     let selected_line_indices = match selected_cue {

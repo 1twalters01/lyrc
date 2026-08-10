@@ -5,7 +5,10 @@ pub fn draw_footer(frame: &mut Frame, area: Rect, state: &mut AppState, active_c
     let selected_cue = match state.app_mode {
         lyrc_core::state::AppMode::Normal => None,
         lyrc_core::state::AppMode::Select { cue_index } => Some(cue_index),
-        lyrc_core::state::AppMode::Edit { cue_index } => Some(cue_index),
+        lyrc_core::state::AppMode::Edit {
+            cue_index,
+            original_content: _,
+        } => Some(cue_index),
     };
 
     let automatic_scroll_offset = state.automatic_scroll_offset;

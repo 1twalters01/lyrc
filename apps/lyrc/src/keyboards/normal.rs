@@ -1,9 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use lyrc_core::{app::App, renderer::Renderer, state::AppMode};
 use lyrics::{models::LyricsFormat, service::LyricsService};
-use subtitles::{
-    formats::lrc::parser::LrcParser, parser::SubtitleParser,
-};
+use subtitles::{formats::lrc::parser::LrcParser, parser::SubtitleParser};
 use synchronizer::traits::Synchronizer;
 
 pub async fn handle_key<R: Renderer, S: Synchronizer>(
@@ -25,19 +23,19 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         // line control
         KeyCode::Up => match app.get_first_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
-            None => {},
+            None => {}
         },
         KeyCode::Char('k') => match app.get_first_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
-            None => {},
+            None => {}
         },
         KeyCode::Down => match app.get_first_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
-            None => {},
+            None => {}
         },
         KeyCode::Char('j') => match app.get_first_cue() {
             Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
-            None => {},
+            None => {}
         },
 
         // Change modes
@@ -55,7 +53,6 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         KeyCode::Char('>') => {
             app.adjust_all_cues_start_forwards(config.forwards_cue_increment_large)
         }
-
 
         // download lyrics
         KeyCode::Char('d') => {
@@ -99,4 +96,3 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
 
     Ok(())
 }
-

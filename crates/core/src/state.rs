@@ -4,13 +4,18 @@ use mpris::{
     playback::{PlaybackStatus, PlayerEvent},
     track::Track,
 };
-use subtitles::subtitles::SubtitleDocument;
+use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
 
 #[derive(Clone, PartialEq)]
 pub enum AppMode {
     Normal,
-    Select { cue_index: usize },
-    Edit { cue_index: usize },
+    Select {
+        cue_index: usize,
+    },
+    Edit {
+        cue_index: usize,
+        original_content: SubtitleContent,
+    },
 }
 
 impl Display for AppMode {
@@ -18,7 +23,10 @@ impl Display for AppMode {
         match self {
             Self::Normal => write!(f, "normal"),
             Self::Select { cue_index } => write!(f, "select cue: {:?}", cue_index),
-            Self::Edit { cue_index } => write!(f, "edit cue: {:?}", cue_index),
+            Self::Edit {
+                cue_index,
+                original_content: _,
+            } => write!(f, "edit cue: {:?}", cue_index),
         }
     }
 }
@@ -93,7 +101,10 @@ impl AppState {
     }
     pub fn is_edit_mode(&self) -> bool {
         match self.app_mode {
-            AppMode::Edit { cue_index: _ } => true,
+            AppMode::Edit {
+                cue_index: _,
+                original_content: _,
+            } => true,
             _ => false,
         }
     }

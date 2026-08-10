@@ -1,3 +1,3 @@
+pub mod edit;
 pub mod normal;
 pub mod select;
-pub mod edit;

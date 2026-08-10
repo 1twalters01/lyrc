@@ -7,18 +7,22 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
     app: &mut App<R, S>,
     key: KeyEvent,
     cue_index: usize,
+    original_content: SubtitleContent,
     _config: &crate::config::Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &mut app.state.subtitle_document {
         Some(document) => {
             let current_cue = &mut document.cues[cue_index];
             match key.code {
-                KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.state.quit = true,
+                KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => {
+                    app.state.quit = true
+                }
 
                 KeyCode::Esc => {
+                    document.cues[cue_index].content = original_content;
                     // undo all changes as well
-                    app.switch_to_normal_mode()
-                },
+                    app.switch_to_select_mode()?
+                }
 
                 KeyCode::Tab => app.switch_to_normal_mode(),
                 KeyCode::Enter => app.switch_to_select_mode()?,
@@ -33,10 +37,9 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                 },
                 _ => {}
             }
-        },
+        }
         None => app.switch_to_normal_mode(),
     }
 
     Ok(())
 }
-

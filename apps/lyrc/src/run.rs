@@ -1,6 +1,9 @@
 use std::time::Duration as std_duration;
 
-use crate::args::{Args, Command, Frontend};
+use crate::{
+    args::{Args, Command, Frontend},
+    keyboards,
+};
 
 use lyrc_core::{app::App, state::AppMode};
 use subtitles::subtitles::SubtitleDocument;
@@ -77,10 +80,16 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     _ = tick.tick() => app.tick().await?,
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
-                        match app.state.app_mode {
-                            AppMode::Normal => crate::keyboards::normal::handle_key(&mut app, key, &config).await?,
-                            AppMode::Select { cue_index } => crate::keyboards::select::handle_key(&mut app, key, cue_index, &config).await?,
-                            AppMode::Edit { cue_index } => crate::keyboards::edit::handle_key(&mut app, key, cue_index, &config)?,
+                        let mode = &match app.state.app_mode {
+                            AppMode::Normal => AppMode::Normal,
+                            AppMode::Select { cue_index } => AppMode::Select { cue_index },
+                            AppMode::Edit { cue_index, ref original_content } => AppMode::Edit { cue_index, original_content: original_content.clone() },
+                        };
+
+                        match mode {
+                            AppMode::Normal => keyboards::normal::handle_key(&mut app, key, &config).await?,
+                            AppMode::Select { cue_index } => keyboards::select::handle_key(&mut app, key, *cue_index, &config).await?,
+                            AppMode::Edit { cue_index, original_content } => keyboards::edit::handle_key(&mut app, key, *cue_index, original_content.clone(), &config)?,
                         }
                     },
                 }
