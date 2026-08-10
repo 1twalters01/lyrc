@@ -3,6 +3,7 @@ use mpris::{
     client::MprisClient,
     playback::{PlaybackCommand, PlaybackStatus, PlayerEvent},
 };
+use subtitles::subtitles::SubtitleDocument;
 use synchronizer::traits::Synchronizer;
 
 use crate::{
@@ -364,6 +365,15 @@ where
             cue_index,
             original_content,
         };
+
+        Ok(())
+    }
+
+    pub fn save_document(&mut self, document: SubtitleDocument) -> Result<(), String> {
+        match document.metadata.file_path {
+            Some(file_path) => {},
+            None => {},
+        }
 
         Ok(())
     }

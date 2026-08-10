@@ -1,5 +1,5 @@
 use crate::{
-    formats::lrc::parser::{LrcError, LrcParser},
+    formats::lrc::parser::LrcParser,
     parser::SubtitleParser,
 };
 use chrono::Duration;
@@ -12,22 +12,24 @@ pub struct SubtitleDocument {
 }
 
 impl SubtitleDocument {
-    pub fn from_pathbuf(path: PathBuf) -> Result<SubtitleDocument, LrcError> {
-        let content = match fs::read_to_string(&path) {
-            Ok(content) => content,
-            Err(_) => return Err(LrcError::InvalidMetadata),
-        };
+    pub fn from_pathbuf(path: PathBuf) -> Result<SubtitleDocument, Box<dyn std::error::Error>> {
+    // pub fn from_pathbuf(path: PathBuf) -> Result<SubtitleDocument, LrcError> {
+        let content = fs::read_to_string(&path)?;
         match &path.extension() {
-            None => panic!("error"),
+            // Make this an actual error type
+            None => Err(String::from("File does not have an extension").into()),
             Some(os_str) => match os_str.to_str() {
                 Some("lrc") => {
                     let lrc_parser = LrcParser;
-                    lrc_parser.parse(&content)
+                    let mut subtitle_document = lrc_parser.parse(&content)?;
+                    subtitle_document.metadata.file_path = Some(path);
+                    Ok(subtitle_document)
                 }
-                _ => panic!("error"),
+                _ => Err(String::from("os str cannot be turned into a &str").into()),
             },
         }
     }
+
 }
 
 impl Default for SubtitleDocument {

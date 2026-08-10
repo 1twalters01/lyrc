@@ -35,6 +35,8 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                         text.pop();
                     }
                 },
+
+
                 _ => {}
             }
         }
