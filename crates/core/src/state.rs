@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{fmt::Display, time::Instant};
 
 use mpris::{
     playback::{PlaybackStatus, PlayerEvent},
@@ -10,6 +10,17 @@ use subtitles::subtitles::SubtitleDocument;
 pub enum AppMode {
     Normal,
     Edit,
+    Select,
+}
+
+impl Display for AppMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Normal => write!(f, "normal"),
+            Self::Edit => write!(f, "edit"),
+            Self::Select => write!(f, "select"),
+        }
+    }
 }
 
 #[derive(Clone)]

@@ -186,6 +186,7 @@ where
             _ => {}
         }
     }
+
     pub fn adjust_selected_cue_start_backwards(&mut self, backwards_cue_increment: Duration) {
         if self.state.selected_cue.is_none() {
             self.state.selected_cue = self.synchronizer.get_active_cues().first().copied();
@@ -212,9 +213,47 @@ where
             _ => {}
         }
     }
+
+    pub fn adjust_all_cues_start_forwards(&mut self, forwards_cue_increment: Duration) {
+        match (&mut self.state.subtitle_document, &self.state.track) {
+            (Some(document), Some(track)) => {
+                for cue in &mut document.cues {
+                    let new_start = cue.start + forwards_cue_increment;
+
+                    if new_start <= track.duration {
+                        cue.start = new_start;
+                    }
+                }
+
+                document.cues.sort_by_key(|cue| cue.start);
+            }
+
+            _ => {}
+        }
+    }
+
+    pub fn adjust_all_cues_start_backwards(&mut self, backwards_cue_increment: Duration) {
+        match &mut self.state.subtitle_document {
+            Some(document) => {
+                for cue in &mut document.cues {
+                    let new_start = cue.start - backwards_cue_increment;
+
+                    if new_start >= Duration::zero() {
+                        cue.start = new_start;
+                    }
+                }
+
+                document.cues.sort_by_key(|cue| cue.start);
+            }
+
+            _ => {}
+        }
+    }
+
     pub fn switch_to_normal_mode(&mut self) {
         self.state.app_mode = AppMode::Normal;
     }
+
     pub fn switch_to_edit_mode(&mut self) {
         if self.state.selected_cue.is_none() {
             self.state.selected_cue = self.synchronizer.get_active_cues().first().copied();

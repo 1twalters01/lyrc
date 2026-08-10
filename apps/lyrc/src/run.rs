@@ -22,14 +22,18 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     let clock_offset = Duration::milliseconds(0);
     let rewind_duration = Duration::milliseconds(-5000);
     let fast_forward_duration = Duration::milliseconds(5000);
-    let forwards_cue_increment = Duration::milliseconds(10);
-    let backwards_cue_increment = Duration::milliseconds(10);
+    let forwards_cue_increment_small = Duration::milliseconds(10);
+    let backwards_cue_increment_small = Duration::milliseconds(10);
+    let forwards_cue_increment_large = Duration::milliseconds(500);
+    let backwards_cue_increment_large = Duration::milliseconds(500);
 
     let config = crate::config::Config {
         rewind_duration,
         fast_forward_duration,
-        forwards_cue_increment,
-        backwards_cue_increment,
+        forwards_cue_increment_small,
+        backwards_cue_increment_small,
+        forwards_cue_increment_large,
+        backwards_cue_increment_large,
     };
 
     match command {
@@ -76,6 +80,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                         match app.state.app_mode {
                             AppMode::Normal => crate::keyboard::handle_normal_key(&mut app, key, &config).await?,
                             AppMode::Edit => crate::keyboard::handle_edit_key(&mut app, key, &config),
+                            AppMode::Select => crate::keyboard::handle_select_key(&mut app, key, &config),
                         }
                     },
                 }

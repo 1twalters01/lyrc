@@ -13,7 +13,7 @@ pub async fn handle_normal_key<R: Renderer, S: Synchronizer>(
 ) -> Result<(), Box<dyn std::error::Error>> {
     match key.code {
         // Quit
-        KeyCode::Esc => app.state.quit = true,
+        KeyCode::Esc => if app.state.selected_cue.is_some() { app.clear_line_selection(); } else { app.state.quit = true },
         KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.state.quit = true,
         KeyCode::Char('q') => app.state.quit = true,
 
@@ -25,14 +25,36 @@ pub async fn handle_normal_key<R: Renderer, S: Synchronizer>(
         // line control
         KeyCode::Char('k') => app.select_previous_line(),
         KeyCode::Char('j') => app.select_next_line(),
-        KeyCode::Char('h') => app.clear_line_selection(),
+        KeyCode::Char('u') => app.clear_line_selection(),
         KeyCode::Enter => app.seek_to_selected_line().await?,
 
         // Edit subtitle cue
         KeyCode::Tab => app.switch_to_edit_mode(),
-        KeyCode::Char('>') => app.adjust_selected_cue_start_forwards(config.forwards_cue_increment),
+
+        KeyCode::Char('m') => {
+            app.adjust_all_cues_start_backwards(config.backwards_cue_increment_small)
+        }
+        KeyCode::Char('/') => {
+            app.adjust_all_cues_start_forwards(config.forwards_cue_increment_small)
+        }
+        KeyCode::Char('M') => {
+            app.adjust_all_cues_start_backwards(config.backwards_cue_increment_large)
+        }
+        KeyCode::Char('?') => {
+            app.adjust_all_cues_start_forwards(config.forwards_cue_increment_large)
+        }
+
+        KeyCode::Char(',') => {
+            app.adjust_selected_cue_start_backwards(config.backwards_cue_increment_small)
+        }
+        KeyCode::Char('.') => {
+            app.adjust_selected_cue_start_forwards(config.forwards_cue_increment_small)
+        }
         KeyCode::Char('<') => {
-            app.adjust_selected_cue_start_backwards(config.backwards_cue_increment)
+            app.adjust_selected_cue_start_backwards(config.backwards_cue_increment_large)
+        }
+        KeyCode::Char('>') => {
+            app.adjust_selected_cue_start_forwards(config.forwards_cue_increment_large)
         }
 
         // download lyrics
@@ -70,7 +92,9 @@ pub async fn handle_normal_key<R: Renderer, S: Synchronizer>(
             }
         }
 
-        _ => {}
+        _ => eprintln!("{:?}", key),
+        // _ => panic!("{:?}", key),
+        // _ => {}
     }
 
     Ok(())
@@ -105,4 +129,12 @@ pub fn handle_edit_key<R: Renderer, S: Synchronizer>(
         }
         _ => app.switch_to_normal_mode(),
     }
+}
+
+
+pub fn handle_select_key<R: Renderer, S: Synchronizer>(
+    app: &mut App<R, S>,
+    key: KeyEvent,
+    _config: &crate::config::Config,
+) {
 }
