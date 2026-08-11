@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use lyrc_core::{app::App, renderer::Renderer};
-use subtitles::subtitles::SubtitleContent;
+use lyrc_core::{app::App, renderer::Renderer, state::AppMode};
+use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
 use synchronizer::traits::Synchronizer;
 
 pub fn handle_key<R: Renderer, S: Synchronizer>(
@@ -18,9 +18,50 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                     app.state.quit = true
                 }
 
+                KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
+                    match &app.state.subtitle_document {
+                        Some(document) => {
+                            app.save_document(document.clone())?;
+                            app.state.unsaved_changes = false;
+                            app.state.subtitle_document = match app.state.track {
+                                Some(ref track) => match &track.file_path {
+                                    Some(file_path) => {
+                                        let mut lyrics_path = file_path.to_path_buf();
+                                        lyrics_path.set_extension("lrc");
+                                        let subtitle_document =
+                                            SubtitleDocument::from_pathbuf(lyrics_path)?;
+
+                                        let original_content =
+                                            subtitle_document.cues[cue_index].content.clone();
+                                        app.state.app_mode = AppMode::Edit {
+                                            cue_index,
+                                            original_content,
+                                        };
+                                        Some(subtitle_document)
+                                    }
+                                    None => None,
+                                },
+                                None => None,
+                            };
+                        }
+                        None => {}
+                    }
+                }
+
                 KeyCode::Esc => {
                     document.cues[cue_index].content = original_content;
-                    // undo all changes as well
+                    app.state.unsaved_changes = false;
+                    app.state.subtitle_document = match app.state.track {
+                        Some(ref track) => match &track.file_path {
+                            Some(file_path) => {
+                                let mut lyrics_path = file_path.to_path_buf();
+                                lyrics_path.set_extension("lrc");
+                                SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                            }
+                            None => None,
+                        },
+                        None => None,
+                    };
                     app.switch_to_select_mode()?
                 }
 
@@ -28,14 +69,17 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                 KeyCode::Enter => app.switch_to_select_mode()?,
 
                 KeyCode::Char(char) => match &mut current_cue.content {
-                    SubtitleContent::Text(text) => text.push(char),
+                    SubtitleContent::Text(text) => {
+                        app.state.unsaved_changes = true;
+                        text.push(char);
+                    }
                 },
                 KeyCode::Backspace => match &mut current_cue.content {
                     SubtitleContent::Text(text) => {
+                        app.state.unsaved_changes = true;
                         text.pop();
                     }
                 },
-
 
                 _ => {}
             }

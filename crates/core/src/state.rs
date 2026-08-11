@@ -45,6 +45,7 @@ pub struct AppState {
     pub quit: bool,
     pub automatic_scroll_offset: usize,
     pub app_mode: AppMode,
+    pub unsaved_changes: bool,
 }
 
 impl AppState {
@@ -59,6 +60,7 @@ impl AppState {
             quit: false,
             automatic_scroll_offset: 0,
             app_mode: AppMode::Normal,
+            unsaved_changes: false,
         }
     }
 

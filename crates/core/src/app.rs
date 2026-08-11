@@ -1,3 +1,5 @@
+use std::fs;
+
 use chrono::Duration;
 use mpris::{
     client::MprisClient,
@@ -369,12 +371,16 @@ where
         Ok(())
     }
 
-    pub fn save_document(&mut self, document: SubtitleDocument) -> Result<(), String> {
-        match document.metadata.file_path {
-            Some(file_path) => {},
-            None => {},
+    pub fn save_document(
+        &mut self,
+        document: SubtitleDocument,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match &document.metadata.file_path {
+            Some(file_path) => {
+                let file = SubtitleDocument::write(document.clone())?;
+                Ok(fs::write(file_path, file)?)
+            }
+            None => Ok(()),
         }
-
-        Ok(())
     }
 }

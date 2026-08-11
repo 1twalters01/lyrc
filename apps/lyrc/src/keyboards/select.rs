@@ -1,5 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use lyrc_core::{app::App, renderer::Renderer};
+use subtitles::subtitles::SubtitleDocument;
 use synchronizer::traits::Synchronizer;
 
 pub async fn handle_key<R: Renderer, S: Synchronizer>(
@@ -16,8 +17,44 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
                 app.state.quit = true;
             }
 
+            // Save
+            KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
+                match &app.state.subtitle_document {
+                    Some(document) => {
+                        app.save_document(document.clone())?;
+                        app.state.unsaved_changes = false;
+                        app.state.subtitle_document = match app.state.track {
+                            Some(ref track) => match &track.file_path {
+                                Some(file_path) => {
+                                    let mut lyrics_path = file_path.to_path_buf();
+                                    lyrics_path.set_extension("lrc");
+                                    SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                                }
+                                None => None,
+                            },
+                            None => None,
+                        };
+                    }
+                    None => {}
+                }
+            }
+
             // Mode change
-            KeyCode::Esc => app.switch_to_normal_mode(),
+            KeyCode::Esc => {
+                app.state.unsaved_changes = false;
+                app.state.subtitle_document = match app.state.track {
+                    Some(ref track) => match &track.file_path {
+                        Some(file_path) => {
+                            let mut lyrics_path = file_path.to_path_buf();
+                            lyrics_path.set_extension("lrc");
+                            SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                        }
+                        None => None,
+                    },
+                    None => None,
+                };
+                app.switch_to_normal_mode()
+            }
             KeyCode::Tab => app.switch_to_edit_mode()?,
             KeyCode::Enter => {
                 if Some(cue_index) == app.get_first_active_cue() {
@@ -40,15 +77,19 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
 
             // Adjust cue time
             KeyCode::Char(',') => {
+                app.state.unsaved_changes = true;
                 app.adjust_selected_cue_start_backwards(config.backwards_cue_increment_small)?
             }
             KeyCode::Char('.') => {
+                app.state.unsaved_changes = true;
                 app.adjust_selected_cue_start_forwards(config.forwards_cue_increment_small)?
             }
             KeyCode::Char('<') => {
+                app.state.unsaved_changes = true;
                 app.adjust_selected_cue_start_backwards(config.backwards_cue_increment_large)?
             }
             KeyCode::Char('>') => {
+                app.state.unsaved_changes = true;
                 app.adjust_selected_cue_start_forwards(config.forwards_cue_increment_large)?
             }
 

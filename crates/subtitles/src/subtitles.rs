@@ -1,6 +1,7 @@
 use crate::{
-    formats::lrc::parser::LrcParser,
+    formats::lrc::{parser::LrcParser, writer::LrcWriter},
     parser::SubtitleParser,
+    writer::SubtitleWriter,
 };
 use chrono::Duration;
 use std::{fs, path::PathBuf};
@@ -13,7 +14,6 @@ pub struct SubtitleDocument {
 
 impl SubtitleDocument {
     pub fn from_pathbuf(path: PathBuf) -> Result<SubtitleDocument, Box<dyn std::error::Error>> {
-    // pub fn from_pathbuf(path: PathBuf) -> Result<SubtitleDocument, LrcError> {
         let content = fs::read_to_string(&path)?;
         match &path.extension() {
             // Make this an actual error type
@@ -25,11 +25,31 @@ impl SubtitleDocument {
                     subtitle_document.metadata.file_path = Some(path);
                     Ok(subtitle_document)
                 }
-                _ => Err(String::from("os str cannot be turned into a &str").into()),
+                Some(_) => Err(String::from("unknown file type").into()),
+                None => Err(String::from("os str cannot be turned into a &str").into()),
             },
         }
     }
 
+    pub fn write(
+        subtitle_document: SubtitleDocument,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        match &subtitle_document.metadata.file_path {
+            Some(file_path) => match file_path.extension() {
+                Some(os_str) => match os_str.to_str() {
+                    Some("lrc") => {
+                        let lrc_writer = LrcWriter;
+                        let lrc_file = lrc_writer.write(&subtitle_document.clone())?;
+                        Ok(lrc_file)
+                    }
+                    Some(_) => Err(String::from("unknown file type").into()),
+                    None => Err(String::from("os str cannot be turned into a &str").into()),
+                },
+                None => Err(String::from("File does not have an extension").into()),
+            },
+            None => Err(String::from("File path does not exist").into()),
+        }
+    }
 }
 
 impl Default for SubtitleDocument {
@@ -46,7 +66,7 @@ pub struct SubtitleMetadata {
     pub album: Option<String>,
     pub title: Option<String>,
     pub artists: Vec<String>,
-    pub language: Option<String>,
+    pub languages: Vec<String>,
     pub file_path: Option<PathBuf>,
 }
 
@@ -56,7 +76,7 @@ impl Default for SubtitleMetadata {
             album: None,
             title: None,
             artists: Vec::new(),
-            language: None,
+            languages: Vec::new(),
             file_path: None,
         }
     }

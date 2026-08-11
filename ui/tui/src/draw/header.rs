@@ -33,7 +33,10 @@ pub fn draw_header(frame: &mut Frame, area: Rect, state: &AppState, position: Op
         None => String::from("Not Playing"),
     };
 
-    let header = format!("{} - {} - {}/{}", title, artist, position_str, duration);
+    let mut header = format!("{} - {} - {}/{}", title, artist, position_str, duration);
+    if state.unsaved_changes {
+        header.push_str("\nunsaved changes");
+    }
 
     frame.render_widget(Paragraph::new(header), area);
 }

@@ -4,10 +4,8 @@ Add cue before current line
 Add cue after current line
 Undo change
 Redo change
-Save changes to document (add a param to app state that says if a change was made?)
 Need to validate the subtitle document
-Need to create a subtitle writer to go from SubtitleDocument to lrc file
-Press button to add/change timestamp of cue to the current one
+Press button to add/change timestamp of cue to the current time of a song
 Have more download providers (maybe 2 more)
 Delete multiple cues
 
