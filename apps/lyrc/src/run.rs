@@ -5,7 +5,7 @@ use crate::{
     keyboards,
 };
 
-use lyrc_core::{app::App, state::AppMode};
+use lyrc_core::{app::App, mode::AppMode};
 use subtitles::subtitles::SubtitleDocument;
 use synchronizer::strategies::lyrics::LyricsSynchronizer;
 use tui::renderer::TuiRenderer;

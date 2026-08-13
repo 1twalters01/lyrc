@@ -1,11 +1,11 @@
-use lyrc_core::state::AppState;
+use lyrc_core::{mode::AppMode, state::AppState};
 use ratatui::{Frame, layout::Rect, widgets::Paragraph};
 
 pub fn draw_footer(frame: &mut Frame, area: Rect, state: &mut AppState, active_cues: &[usize]) {
     let selected_cue = match state.app_mode {
-        lyrc_core::state::AppMode::Normal => None,
-        lyrc_core::state::AppMode::Select { cue_index } => Some(cue_index),
-        lyrc_core::state::AppMode::Edit {
+        AppMode::Normal => None,
+        AppMode::Select { cue_index } => Some(cue_index),
+        AppMode::Edit {
             cue_index,
             original_content: _,
         } => Some(cue_index),

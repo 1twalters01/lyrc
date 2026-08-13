@@ -11,7 +11,8 @@ use synchronizer::traits::Synchronizer;
 use crate::{
     clock::PlaybackClock,
     renderer::Renderer,
-    state::{AppMode, AppState},
+    state::AppState,
+    mode::AppMode,
 };
 
 pub struct App<R, S>

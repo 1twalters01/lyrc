@@ -1,35 +1,13 @@
-use std::{fmt::Display, time::Instant};
+use std::time::Instant;
 
 use mpris::{
     playback::{PlaybackStatus, PlayerEvent},
     track::Track,
 };
-use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
+use subtitles::subtitles::SubtitleDocument;
 
-#[derive(Clone, PartialEq)]
-pub enum AppMode {
-    Normal,
-    Select {
-        cue_index: usize,
-    },
-    Edit {
-        cue_index: usize,
-        original_content: SubtitleContent,
-    },
-}
+use crate::mode::AppMode;
 
-impl Display for AppMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Normal => write!(f, "normal"),
-            Self::Select { cue_index } => write!(f, "select cue: {:?}", cue_index),
-            Self::Edit {
-                cue_index,
-                original_content: _,
-            } => write!(f, "edit cue: {:?}", cue_index),
-        }
-    }
-}
 
 #[derive(Clone)]
 pub struct AppState {

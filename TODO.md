@@ -2,12 +2,12 @@ Fix downloading
 Delete cue
 Add cue before current line
 Add cue after current line
+Delete multiple cues
 Undo change
 Redo change
 Need to validate the subtitle document
 Press button to add/change timestamp of cue to the current time of a song
 Have more download providers (maybe 2 more)
-Delete multiple cues
 
 
 Allow completely empty lines (no timestamps or words) - maybe have it as an option to show blank lines or not?
