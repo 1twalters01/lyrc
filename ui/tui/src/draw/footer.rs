@@ -4,7 +4,10 @@ use ratatui::{Frame, layout::Rect, widgets::Paragraph};
 pub fn draw_footer(frame: &mut Frame, area: Rect, state: &mut AppState, active_cues: &[usize]) {
     let selected_cue = match state.app_mode {
         AppMode::Normal => None,
-        AppMode::Select { cue_index } => Some(cue_index),
+        AppMode::Select {
+            cue_index,
+            selected_cues: _,
+        } => Some(cue_index),
         AppMode::Edit {
             cue_index,
             original_content: _,

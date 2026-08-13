@@ -8,7 +8,6 @@ use subtitles::subtitles::SubtitleDocument;
 
 use crate::mode::AppMode;
 
-
 #[derive(Clone)]
 pub struct AppState {
     pub track: Option<Track>,
@@ -75,7 +74,10 @@ impl AppState {
     }
     pub fn is_select_mode(&self) -> bool {
         match self.app_mode {
-            AppMode::Select { cue_index: _ } => true,
+            AppMode::Select {
+                cue_index: _,
+                selected_cues: _,
+            } => true,
             _ => false,
         }
     }

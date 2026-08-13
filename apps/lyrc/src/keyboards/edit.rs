@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use lyrc_core::{app::App, renderer::Renderer, mode::AppMode};
+use lyrc_core::{app::App, mode::AppMode, renderer::Renderer};
 use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
 use synchronizer::traits::Synchronizer;
 

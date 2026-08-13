@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use lyrc_core::{app::App, renderer::Renderer, mode::AppMode};
+use lyrc_core::{app::App, mode::AppMode, renderer::Renderer};
 use lyrics::{models::LyricsFormat, service::LyricsService};
 use subtitles::{
     formats::lrc::parser::LrcParser, parser::SubtitleParser, subtitles::SubtitleDocument,
@@ -61,20 +61,41 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         KeyCode::Right => app.seek_by_duration(config.fast_forward_duration).await?,
 
         // line control
+        // Use the app.select_next_line and app.select_next_line
         KeyCode::Up => match app.get_first_active_cue() {
-            Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
+            Some(cue_index) => {
+                app.state.app_mode = AppMode::Select {
+                    cue_index,
+                    selected_cues: Vec::new(),
+                }
+            }
             None => {}
         },
         KeyCode::Down => match app.get_first_active_cue() {
-            Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
+            Some(cue_index) => {
+                app.state.app_mode = AppMode::Select {
+                    cue_index,
+                    selected_cues: Vec::new(),
+                }
+            }
             None => {}
         },
         KeyCode::Char('k') => match app.get_first_active_cue() {
-            Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
+            Some(cue_index) => {
+                app.state.app_mode = AppMode::Select {
+                    cue_index,
+                    selected_cues: Vec::new(),
+                }
+            }
             None => {}
         },
         KeyCode::Char('j') => match app.get_first_active_cue() {
-            Some(cue_index) => app.state.app_mode = AppMode::Select { cue_index },
+            Some(cue_index) => {
+                app.state.app_mode = AppMode::Select {
+                    cue_index,
+                    selected_cues: Vec::new(),
+                }
+            }
             None => {}
         },
 

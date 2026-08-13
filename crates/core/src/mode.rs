@@ -7,6 +7,7 @@ pub enum AppMode {
     Normal,
     Select {
         cue_index: usize,
+        selected_cues: Vec<usize>,
     },
     Edit {
         cue_index: usize,
@@ -18,7 +19,10 @@ impl Display for AppMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Normal => write!(f, "normal"),
-            Self::Select { cue_index } => write!(f, "select cue: {:?}", cue_index),
+            Self::Select {
+                cue_index,
+                selected_cues: _,
+            } => write!(f, "select cue: {:?}", cue_index),
             Self::Edit {
                 cue_index,
                 original_content: _,
@@ -26,4 +30,3 @@ impl Display for AppMode {
         }
     }
 }
-

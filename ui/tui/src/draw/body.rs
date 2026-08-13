@@ -40,13 +40,16 @@ pub fn draw_body(
     let visible_height = area.height as usize;
     let middle = visible_height / 2;
 
-    let selected_cue = match state.app_mode {
-        AppMode::Normal => None,
-        AppMode::Select { cue_index } => Some(cue_index),
+    let (selected_cue, selected_cues) = match &state.app_mode {
+        AppMode::Normal => (None, Vec::new()),
+        AppMode::Select {
+            cue_index,
+            selected_cues,
+        } => (Some(*cue_index), selected_cues.clone()),
         AppMode::Edit {
             cue_index,
             original_content: _,
-        } => Some(cue_index),
+        } => (Some(*cue_index), Vec::new()),
     };
 
     let selected_line_indices = match selected_cue {
@@ -55,7 +58,12 @@ pub fn draw_body(
     };
 
     let mut lines: Vec<Line> = cues_str.into_iter().map(Line::from).collect();
-    highlight_lines(&mut lines, active_cue_indices, selected_line_indices);
+    highlight_lines(
+        &mut lines,
+        active_cue_indices,
+        selected_line_indices,
+        &selected_cues,
+    );
 
     let automatic_scroll_offset = active_cue_indices
         .first()
@@ -80,7 +88,12 @@ pub fn draw_body(
     );
 }
 
-fn highlight_lines(lines: &mut [Line], bold_indices: &[usize], reverse_indices: &[usize]) {
+fn highlight_lines(
+    lines: &mut [Line],
+    bold_indices: &[usize],
+    reverse_indices: &[usize],
+    selected_indices: &[usize],
+) {
     for &index in bold_indices {
         if let Some(line) = lines.get_mut(index) {
             *line = line
@@ -94,6 +107,14 @@ fn highlight_lines(lines: &mut [Line], bold_indices: &[usize], reverse_indices: 
             *line = line
                 .clone()
                 .patch_style(Style::default().add_modifier(Modifier::REVERSED));
+        }
+    }
+
+    for &index in selected_indices {
+        if let Some(line) = lines.get_mut(index) {
+            *line = line
+                .clone()
+                .patch_style(Style::default().add_modifier(Modifier::UNDERLINED));
         }
     }
 }

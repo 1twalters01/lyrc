@@ -82,13 +82,13 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
                         let mode = &match app.state.app_mode {
                             AppMode::Normal => AppMode::Normal,
-                            AppMode::Select { cue_index, ref selected_cues } => AppMode::Select { cue_index, selected_cues: selected_cues.clone() },
+                            AppMode::Select { cue_index, selected_cues } => AppMode::Select { cue_index, selected_cues },
                             AppMode::Edit { cue_index, ref original_content } => AppMode::Edit { cue_index, original_content: original_content.clone() },
                         };
 
                         match mode {
                             AppMode::Normal => keyboards::normal::handle_key(&mut app, key, &config).await?,
-                            AppMode::Select { cue_index, selected_cues: _ } => keyboards::select::handle_key(&mut app, key, *cue_index, &config).await?,
+                            AppMode::Select { cue_index, selected_cues } => keyboards::select::handle_key(&mut app, key, *cue_index, &config).await?,
                             AppMode::Edit { cue_index, original_content } => keyboards::edit::handle_key(&mut app, key, *cue_index, original_content.clone(), &config)?,
                         }
                     },
