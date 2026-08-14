@@ -48,8 +48,11 @@ pub fn draw_body(
         } => (Some(*cue_index), selected_cues.clone()),
         AppMode::Edit {
             cue_index,
-            original_content: _,
-        } => (Some(*cue_index), Vec::new()),
+            selected_cues,
+        } => (
+            Some(*cue_index),
+            selected_cues.iter().map(|c| c.index).collect(),
+        ),
     };
 
     let selected_line_indices = match selected_cue {

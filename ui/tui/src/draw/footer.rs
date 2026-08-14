@@ -10,7 +10,7 @@ pub fn draw_footer(frame: &mut Frame, area: Rect, state: &mut AppState, active_c
         } => Some(cue_index),
         AppMode::Edit {
             cue_index,
-            original_content: _,
+            selected_cues: _,
         } => Some(cue_index),
     };
 

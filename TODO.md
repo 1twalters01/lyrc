@@ -9,7 +9,6 @@ Have more download providers (maybe 2 more)
 
 
 Allow completely empty lines (no timestamps or words) - maybe have it as an option to show blank lines or not?
-Button to remove all modifications
 Confirm quit if there are unsaved changes
 Signify that you are editing a cue (maybe add a cursor?)
 Improve keyboard commands

@@ -62,15 +62,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
 
         // line control
         // Use the app.select_next_line and app.select_next_line
-        KeyCode::Up => match app.get_first_active_cue() {
-            Some(cue_index) => {
-                app.state.app_mode = AppMode::Select {
-                    cue_index,
-                    selected_cues: Vec::new(),
-                }
-            }
-            None => {}
-        },
+        KeyCode::Up => app.go_to_previous_line(),
         KeyCode::Down => match app.get_first_active_cue() {
             Some(cue_index) => {
                 app.state.app_mode = AppMode::Select {
@@ -80,15 +72,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             }
             None => {}
         },
-        KeyCode::Char('k') => match app.get_first_active_cue() {
-            Some(cue_index) => {
-                app.state.app_mode = AppMode::Select {
-                    cue_index,
-                    selected_cues: Vec::new(),
-                }
-            }
-            None => {}
-        },
+        KeyCode::Char('k') => app.go_to_previous_line(),
         KeyCode::Char('j') => match app.get_first_active_cue() {
             Some(cue_index) => {
                 app.state.app_mode = AppMode::Select {

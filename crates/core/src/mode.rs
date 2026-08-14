@@ -3,6 +3,12 @@ use std::fmt::Display;
 use subtitles::subtitles::SubtitleContent;
 
 #[derive(Clone, PartialEq)]
+pub struct EditCue {
+    pub index: usize,
+    pub original_content: SubtitleContent,
+}
+
+#[derive(Clone, PartialEq)]
 pub enum AppMode {
     Normal,
     Select {
@@ -11,7 +17,7 @@ pub enum AppMode {
     },
     Edit {
         cue_index: usize,
-        original_content: SubtitleContent,
+        selected_cues: Vec<EditCue>,
     },
 }
 
@@ -25,7 +31,7 @@ impl Display for AppMode {
             } => write!(f, "select cue: {:?}", cue_index),
             Self::Edit {
                 cue_index,
-                original_content: _,
+                selected_cues: _,
             } => write!(f, "edit cue: {:?}", cue_index),
         }
     }

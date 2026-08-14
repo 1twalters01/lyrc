@@ -1,5 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use lyrc_core::{app::App, mode::AppMode, renderer::Renderer};
+use lyrc_core::{
+    app::App,
+    mode::{AppMode, EditCue},
+    renderer::Renderer,
+};
 use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
 use synchronizer::traits::Synchronizer;
 
@@ -7,7 +11,7 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
     app: &mut App<R, S>,
     key: KeyEvent,
     cue_index: usize,
-    original_content: SubtitleContent,
+    selected_cues: Vec<EditCue>,
     _config: &crate::config::Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &mut app.state.subtitle_document {
@@ -31,11 +35,19 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                                         let subtitle_document =
                                             SubtitleDocument::from_pathbuf(lyrics_path)?;
 
-                                        let original_content =
-                                            subtitle_document.cues[cue_index].content.clone();
+                                        let selected_cues = selected_cues
+                                            .iter()
+                                            .map(|c| EditCue {
+                                                index: c.index,
+                                                original_content: subtitle_document.cues[c.index]
+                                                    .content
+                                                    .clone(),
+                                            })
+                                            .collect();
+
                                         app.state.app_mode = AppMode::Edit {
                                             cue_index,
-                                            original_content,
+                                            selected_cues,
                                         };
                                         Some(subtitle_document)
                                     }
@@ -49,7 +61,10 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                 }
 
                 KeyCode::Esc => {
-                    document.cues[cue_index].content = original_content;
+                    for cue in selected_cues {
+                        document.cues[cue.index].content = cue.original_content;
+                    }
+
                     app.state.unsaved_changes = false;
                     app.state.subtitle_document = match app.state.track {
                         Some(ref track) => match &track.file_path {

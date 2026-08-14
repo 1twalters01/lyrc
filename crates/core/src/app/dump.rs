@@ -5,14 +5,18 @@ use mpris::playback::{PlaybackCommand, PlaybackStatus};
 use subtitles::subtitles::SubtitleDocument;
 use synchronizer::traits::Synchronizer;
 
-use crate::{app::App, mode::AppMode, renderer::Renderer};
+use crate::{
+    app::App,
+    mode::{AppMode, EditCue},
+    renderer::Renderer,
+};
 
 impl<R, S> App<R, S>
 where
     R: Renderer,
     S: Synchronizer,
 {
-    pub async fn update_track_information(&mut self) {
+    pub async fn update_track_and_subtitle_document_information(&mut self) {
         self.state.track = self.mpris.get_current_track().await.ok();
         self.state.subtitle_document = match self.state.track {
             Some(ref track) => match &track.file_path {
@@ -63,61 +67,88 @@ where
         }
     }
 
-    // rename to go_to_previous_line
-    // remove cue_index parameter?
-    pub fn select_previous_line(&mut self, cue_index: usize) {
+    // Edit should go to previous edit line rather than previous line
+    pub fn go_to_previous_line(&mut self) {
         if self.state.track.is_none() || self.state.subtitle_document.is_none() {
             self.switch_to_normal_mode();
         }
 
-        let selected_cues = match &self.state.app_mode {
-            AppMode::Normal => Vec::new(),
+        let app_mode = match &self.state.app_mode {
+            AppMode::Normal => match self.get_first_active_cue() {
+                Some(index) => AppMode::Select {
+                    cue_index: index,
+                    selected_cues: Vec::new(),
+                },
+                None => AppMode::Normal,
+            },
             AppMode::Select {
                 cue_index,
                 selected_cues,
-            } => selected_cues.clone(),
+            } => AppMode::Select {
+                cue_index: cue_index.saturating_sub(1),
+                selected_cues: selected_cues.clone(),
+            },
             AppMode::Edit {
                 cue_index,
-                original_content,
-            } => Vec::new(),
+                selected_cues,
+            } => AppMode::Edit {
+                cue_index: cue_index.saturating_sub(1),
+                selected_cues: selected_cues.clone(),
+            },
         };
 
-        self.state.app_mode = AppMode::Select {
-            cue_index: cue_index.saturating_sub(1),
-            selected_cues,
-        };
+        self.state.app_mode = app_mode;
     }
 
-    // rename to go_to_next_line
-    // remove cue_index parameter?
-    pub fn select_next_line(&mut self, cue_index: usize) {
+    // Edit should go to next edit line rather than next line
+    pub fn go_to_next_line(&mut self) {
         if self.state.track.is_none() {
             self.switch_to_normal_mode();
         }
 
-        let selected_cues = match &self.state.app_mode {
-            AppMode::Normal => Vec::new(),
+        let app_mode = match &self.state.app_mode {
+            AppMode::Normal => match self.get_first_active_cue() {
+                Some(index) => AppMode::Select {
+                    cue_index: index,
+                    selected_cues: Vec::new(),
+                },
+                None => AppMode::Normal,
+            },
             AppMode::Select {
                 cue_index,
                 selected_cues,
-            } => selected_cues.clone(),
-            AppMode::Edit {
-                cue_index,
-                original_content,
-            } => Vec::new(),
-        };
-
-        match &self.state.subtitle_document {
-            Some(subtitle_document) => {
-                if cue_index < subtitle_document.cues.len() - 1 {
-                    self.state.app_mode = AppMode::Select {
-                        cue_index: cue_index + 1,
-                        selected_cues,
+            } => match &self.state.subtitle_document {
+                Some(subtitle_document) => {
+                    let mut index = *cue_index;
+                    if index < subtitle_document.cues.len() - 1 {
+                        index += 1
+                    }
+                    AppMode::Select {
+                        cue_index: index,
+                        selected_cues: selected_cues.clone(),
                     }
                 }
-            }
-            None => self.switch_to_normal_mode(),
-        }
+                None => AppMode::Normal,
+            },
+            AppMode::Edit {
+                cue_index,
+                selected_cues,
+            } => match &self.state.subtitle_document {
+                Some(subtitle_document) => {
+                    let mut index = *cue_index;
+                    if index < subtitle_document.cues.len() - 1 {
+                        index += 1
+                    }
+                    AppMode::Edit {
+                        cue_index: index,
+                        selected_cues: selected_cues.clone(),
+                    }
+                }
+                None => AppMode::Normal,
+            },
+        };
+
+        self.state.app_mode = app_mode;
     }
 
     pub fn toggle_select_line(&mut self) {
@@ -141,7 +172,7 @@ where
                 }
                 AppMode::Edit {
                     cue_index,
-                    original_content,
+                    selected_cues,
                 } => {}
             },
             None => self.switch_to_normal_mode(),
@@ -167,7 +198,7 @@ where
                 }
                 AppMode::Edit {
                     cue_index,
-                    original_content,
+                    selected_cues,
                 } => {}
             },
             None => self.switch_to_normal_mode(),
@@ -194,7 +225,7 @@ where
                 }
                 AppMode::Edit {
                     cue_index,
-                    original_content,
+                    selected_cues,
                 } => {}
             },
             None => self.switch_to_normal_mode(),
@@ -224,7 +255,7 @@ where
                 }
                 AppMode::Edit {
                     cue_index,
-                    original_content,
+                    selected_cues,
                 } => {}
             },
             None => {
@@ -303,7 +334,7 @@ where
                     },
                     AppMode::Edit {
                         cue_index,
-                        original_content,
+                        selected_cues,
                     } => AppMode::Edit {
                         cue_index: increase_cue_index(
                             document,
@@ -311,7 +342,7 @@ where
                             forwards_cue_increment,
                             track,
                         ),
-                        original_content: original_content.clone(),
+                        selected_cues: selected_cues.clone(),
                     },
                 };
 
@@ -367,14 +398,14 @@ where
                     },
                     AppMode::Edit {
                         cue_index,
-                        original_content,
+                        selected_cues,
                     } => AppMode::Edit {
                         cue_index: decrease_cue_index(
                             document,
                             *cue_index,
                             backwards_cue_increment,
                         ),
-                        original_content: original_content.clone(),
+                        selected_cues: selected_cues.clone(),
                     },
                 };
 
@@ -440,8 +471,14 @@ where
             } => (*cue_index, selected_cues.clone()),
             AppMode::Edit {
                 cue_index,
-                original_content: _,
-            } => (*cue_index, Vec::new()),
+                selected_cues,
+            } => (
+                *cue_index,
+                selected_cues
+                    .iter()
+                    .map(|edit_cue| edit_cue.index)
+                    .collect(),
+            ),
         };
 
         self.state.app_mode = AppMode::Select {
@@ -458,29 +495,39 @@ where
             None => return Err(String::from("No subtitle document found")),
         };
 
-        let (cue_index, original_content) = match &self.state.app_mode {
+        let (cue_index, selected_cues) = match &self.state.app_mode {
             AppMode::Normal => {
-                let cue_index = *self.synchronizer.get_active_cues().first().unwrap_or(&0);
-                let original_content = &subtitle_document.cues[cue_index].content;
-                (cue_index, original_content.clone())
+                let index = *self.synchronizer.get_active_cues().first().unwrap_or(&0);
+                let original_content = subtitle_document.cues[index].content.clone();
+                let selected_edit_cues = Vec::from([EditCue {
+                    index,
+                    original_content,
+                }]);
+                (index, selected_edit_cues.clone())
             }
             AppMode::Select {
                 cue_index,
                 selected_cues,
             } => {
-                let original_content = &subtitle_document.cues[*cue_index].content;
-                (*cue_index, original_content.clone())
+                let selected_edit_cues = selected_cues
+                    .iter()
+                    .map(|index| EditCue {
+                        index: *index,
+                        original_content: subtitle_document.cues[*index].content.clone(),
+                    })
+                    .collect::<Vec<EditCue>>();
+                (*cue_index, selected_edit_cues.clone())
             }
 
             AppMode::Edit {
                 cue_index,
-                original_content,
-            } => (*cue_index, original_content.clone()),
+                selected_cues,
+            } => (*cue_index, selected_cues.clone()),
         };
 
         self.state.app_mode = AppMode::Edit {
             cue_index,
-            original_content,
+            selected_cues,
         };
 
         Ok(())

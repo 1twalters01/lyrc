@@ -51,7 +51,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             };
 
             let mut app = App::new(renderer, synchronizer, clock_offset, player).await;
-            app.update_track_information().await;
+            app.update_track_and_subtitle_document_information().await;
 
             let mpris = app.mpris.clone();
             let mut events = mpris.events().await?;

@@ -64,10 +64,10 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Right => app.seek_by_duration(config.fast_forward_duration).await?,
 
             // Line control
-            KeyCode::Up => app.select_previous_line(cue_index),
-            KeyCode::Char('k') => app.select_previous_line(cue_index),
-            KeyCode::Down => app.select_next_line(cue_index),
-            KeyCode::Char('j') => app.select_next_line(cue_index),
+            KeyCode::Up => app.go_to_previous_line(),
+            KeyCode::Char('k') => app.go_to_previous_line(),
+            KeyCode::Down => app.go_to_next_line(),
+            KeyCode::Char('j') => app.go_to_next_line(),
             KeyCode::Char('H') => app.toggle_select_all_lines()?,
             KeyCode::Char('h') => app.toggle_select_line(),
             KeyCode::Char('D') => app.delete_selected_lines(),

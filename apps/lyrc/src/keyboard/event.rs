@@ -20,10 +20,10 @@ pub async fn handle_keyboard_event<R: Renderer, S: Synchronizer>(
         },
         AppMode::Edit {
             cue_index,
-            ref original_content,
+            ref selected_cues,
         } => AppMode::Edit {
             cue_index,
-            original_content: original_content.clone(),
+            selected_cues: selected_cues.clone(),
         },
     };
 
@@ -35,7 +35,7 @@ pub async fn handle_keyboard_event<R: Renderer, S: Synchronizer>(
         } => keyboard::select::handle_key(app, key, *cue_index, &config).await,
         AppMode::Edit {
             cue_index,
-            original_content,
-        } => keyboard::edit::handle_key(app, key, *cue_index, original_content.clone(), &config),
+            selected_cues,
+        } => keyboard::edit::handle_key(app, key, *cue_index, selected_cues.clone(), &config),
     }
 }

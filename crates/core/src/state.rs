@@ -85,7 +85,7 @@ impl AppState {
         match self.app_mode {
             AppMode::Edit {
                 cue_index: _,
-                original_content: _,
+                selected_cues: _,
             } => true,
             _ => false,
         }
