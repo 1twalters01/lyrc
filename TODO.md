@@ -2,7 +2,6 @@ Fix downloading
 Delete cue
 Add cue before current line
 Add cue after current line
-Delete multiple cues
 Undo change
 Redo change
 Need to validate the subtitle document

@@ -56,13 +56,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
                 app.switch_to_normal_mode()
             }
             KeyCode::Tab => app.switch_to_edit_mode()?,
-            KeyCode::Enter => {
-                if Some(cue_index) == app.get_first_active_cue() {
-                    app.switch_to_edit_mode()?
-                } else {
-                    app.seek_to_selected_line(cue_index).await?
-                }
-            }
+            KeyCode::Enter => app.seek_to_selected_line(cue_index).await?,
 
             // Playback control
             KeyCode::Char(' ') => app.toggle_play_pause().await?,
@@ -76,6 +70,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Char('j') => app.select_next_line(cue_index),
             KeyCode::Char('H') => app.toggle_select_all_lines()?,
             KeyCode::Char('h') => app.toggle_select_line(),
+            KeyCode::Char('D') => app.delete_selected_lines(),
 
             // Adjust cue time
             KeyCode::Char(',') => {

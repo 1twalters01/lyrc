@@ -199,6 +199,32 @@ where
         }
     }
 
+    pub fn delete_selected_lines(&mut self) {
+        if self.state.track.is_none() {
+            self.switch_to_normal_mode();
+        }
+
+        match &mut self.state.subtitle_document {
+            Some(subtitle_document) => match &mut self.state.app_mode {
+                AppMode::Normal => {}
+                AppMode::Select {
+                    cue_index,
+                    selected_cues,
+                } => {
+                    for index in selected_cues.iter().rev() {
+                        subtitle_document.cues.remove(*index);
+                    }
+                    *selected_cues = Vec::new();
+                }
+                AppMode::Edit {
+                    cue_index,
+                    original_content,
+                } => {}
+            },
+            None => self.switch_to_normal_mode(),
+        }
+    }
+
     pub fn toggle_select_all_lines(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         if self.state.track.is_none() {
             self.switch_to_normal_mode();
