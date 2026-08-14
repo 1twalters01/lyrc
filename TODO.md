@@ -1,5 +1,5 @@
 Fix downloading
-allow multiple cues to be highlighted
+Represent changes live on screen
 Move upwards by half/whole page
 Undo change
 Redo change

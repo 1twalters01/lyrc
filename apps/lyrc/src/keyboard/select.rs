@@ -10,7 +10,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
     config: &crate::config::Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &mut app.state.subtitle_document {
-        Some(_document) => match key.code {
+        Some(document) => match key.code {
             // Quit
             KeyCode::Char('q') => app.state.quit = true,
             KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => {
@@ -72,8 +72,6 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Char('d') => app.delete_current_line(),
             KeyCode::Char('k') => app.add_cue_before_current_cue(),
             KeyCode::Char('j') => app.add_cue_after_current_cue(),
-
-            KeyCode::Char('w') => println!("cues: {:?}", app.synchronizer.get_active_cue_indices()),
 
             // Adjust cue time
             KeyCode::Char(',') => {

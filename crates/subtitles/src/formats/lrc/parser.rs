@@ -206,7 +206,14 @@ impl LrcParser {
         subtitle_document.cues.sort_by_key(|c| c.start);
 
         for i in 0..subtitle_document.cues.len() - 1 {
-            subtitle_document.cues[i].end = Some(subtitle_document.cues[i + 1].start);
+            let start = subtitle_document.cues[i].start;
+
+            if let Some(next) = subtitle_document.cues[i + 1..]
+                .iter()
+                .find(|cue| cue.start > start)
+            {
+                subtitle_document.cues[i].end = Some(next.start);
+            }
         }
 
         subtitle_document

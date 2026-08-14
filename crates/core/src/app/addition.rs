@@ -15,23 +15,43 @@ where
 
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => match &mut self.state.app_mode {
-                AppMode::Normal => {},
-                AppMode::Select { cue_index, selected_cues: _ } => {
+                AppMode::Normal => {}
+                AppMode::Select {
+                    cue_index,
+                    selected_cues: _,
+                } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let start = subtitle_document.cues[*cue_index].start;
                         let content = SubtitleContent::Text(String::new());
-                        let empty_subtitle = SubtitleCue { id: None, start, end: None, content };
-                        subtitle_document.cues.insert(*cue_index + 1, empty_subtitle);
+                        let empty_subtitle = SubtitleCue {
+                            id: None,
+                            start,
+                            end: None,
+                            content,
+                        };
+                        subtitle_document
+                            .cues
+                            .insert(*cue_index + 1, empty_subtitle);
                     }
-                },
-                AppMode::Edit { cue_index, selected_cues: _ } => {
+                }
+                AppMode::Edit {
+                    cue_index,
+                    selected_cues: _,
+                } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let start = subtitle_document.cues[*cue_index].start;
                         let content = SubtitleContent::Text(String::new());
-                        let empty_subtitle = SubtitleCue { id: None, start, end: None, content };
-                        subtitle_document.cues.insert(*cue_index + 1, empty_subtitle);
+                        let empty_subtitle = SubtitleCue {
+                            id: None,
+                            start,
+                            end: None,
+                            content,
+                        };
+                        subtitle_document
+                            .cues
+                            .insert(*cue_index + 1, empty_subtitle);
                     }
-                },
+                }
             },
             None => self.switch_to_normal_mode(),
         }
@@ -44,23 +64,39 @@ where
 
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => match &mut self.state.app_mode {
-                AppMode::Normal => {},
-                AppMode::Select { cue_index, selected_cues: _ } => {
+                AppMode::Normal => {}
+                AppMode::Select {
+                    cue_index,
+                    selected_cues: _,
+                } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let start = subtitle_document.cues[*cue_index].start;
                         let content = SubtitleContent::Text(String::new());
-                        let empty_subtitle = SubtitleCue { id: None, start, end: None, content };
+                        let empty_subtitle = SubtitleCue {
+                            id: None,
+                            start,
+                            end: None,
+                            content,
+                        };
                         subtitle_document.cues.insert(*cue_index, empty_subtitle);
                     }
-                },
-                AppMode::Edit { cue_index, selected_cues: _ } => {
+                }
+                AppMode::Edit {
+                    cue_index,
+                    selected_cues: _,
+                } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let start = subtitle_document.cues[*cue_index].start;
                         let content = SubtitleContent::Text(String::new());
-                        let empty_subtitle = SubtitleCue { id: None, start, end: None, content };
+                        let empty_subtitle = SubtitleCue {
+                            id: None,
+                            start,
+                            end: None,
+                            content,
+                        };
                         subtitle_document.cues.insert(*cue_index, empty_subtitle);
                     }
-                },
+                }
             },
             None => self.switch_to_normal_mode(),
         }
@@ -73,9 +109,15 @@ where
 
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => match &mut self.state.app_mode {
-                AppMode::Normal => {},
-                AppMode::Select { cue_index, selected_cues } => {},
-                AppMode::Edit { cue_index, selected_cues } => {},
+                AppMode::Normal => {}
+                AppMode::Select {
+                    cue_index,
+                    selected_cues,
+                } => {}
+                AppMode::Edit {
+                    cue_index,
+                    selected_cues,
+                } => {}
             },
             None => self.switch_to_normal_mode(),
         }
@@ -88,9 +130,15 @@ where
 
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => match &mut self.state.app_mode {
-                AppMode::Normal => {},
-                AppMode::Select { cue_index, selected_cues } => {},
-                AppMode::Edit { cue_index, selected_cues } => {},
+                AppMode::Normal => {}
+                AppMode::Select {
+                    cue_index,
+                    selected_cues,
+                } => {}
+                AppMode::Edit {
+                    cue_index,
+                    selected_cues,
+                } => {}
             },
             None => self.switch_to_normal_mode(),
         }
