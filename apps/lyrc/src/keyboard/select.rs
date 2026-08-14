@@ -65,13 +65,15 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
 
             // Line control
             KeyCode::Up => app.go_to_previous_line(),
-            KeyCode::Char('k') => app.go_to_previous_line(),
             KeyCode::Down => app.go_to_next_line(),
-            KeyCode::Char('j') => app.go_to_next_line(),
             KeyCode::Char('H') => app.toggle_select_all_lines()?,
             KeyCode::Char('h') => app.toggle_select_line(),
             KeyCode::Char('D') => app.delete_selected_lines(),
             KeyCode::Char('d') => app.delete_current_line(),
+            KeyCode::Char('k') => app.add_cue_before_current_cue(),
+            KeyCode::Char('j') => app.add_cue_after_current_cue(),
+
+            KeyCode::Char('w') => println!("cues: {:?}", app.synchronizer.get_active_cue_indices()),
 
             // Adjust cue time
             KeyCode::Char(',') => {

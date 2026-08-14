@@ -1,7 +1,6 @@
 Fix downloading
+allow multiple cues to be highlighted
 Move upwards by half/whole page
-Add cue before current line
-Add cue after current line
 Undo change
 Redo change
 Need to validate the subtitle document
