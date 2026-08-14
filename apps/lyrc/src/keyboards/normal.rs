@@ -98,6 +98,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             }
             None => {}
         },
+        KeyCode::Char('h') => app.toggle_select_all_lines()?,
 
         // Change modes
         KeyCode::Enter => app.switch_to_select_mode()?,

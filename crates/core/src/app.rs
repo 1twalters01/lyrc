@@ -199,6 +199,41 @@ where
         }
     }
 
+    pub fn toggle_select_all_lines(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        if self.state.track.is_none() {
+            self.switch_to_normal_mode();
+            return Err(String::from("No track found").into());
+        }
+
+        self.switch_to_select_mode();
+
+        match &self.state.subtitle_document {
+            Some(subtitle_document) => match &mut self.state.app_mode {
+                AppMode::Normal => {}
+                AppMode::Select {
+                    cue_index,
+                    selected_cues,
+                } => {
+                    if selected_cues.is_empty() {
+                        *selected_cues = (0..subtitle_document.cues.len()).collect::<Vec<usize>>();
+                    } else {
+                        *selected_cues = Vec::new();
+                    }
+                }
+                AppMode::Edit {
+                    cue_index,
+                    original_content,
+                } => {}
+            },
+            None => {
+                self.switch_to_normal_mode();
+                return Err(String::from("No subtitle document found").into());
+            }
+        }
+
+        Ok(())
+    }
+
     pub async fn seek_to_selected_line(
         &mut self,
         cue_index: usize,

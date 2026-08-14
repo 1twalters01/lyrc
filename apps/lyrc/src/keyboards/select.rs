@@ -74,6 +74,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Char('k') => app.select_previous_line(cue_index),
             KeyCode::Down => app.select_next_line(cue_index),
             KeyCode::Char('j') => app.select_next_line(cue_index),
+            KeyCode::Char('H') => app.toggle_select_all_lines()?,
             KeyCode::Char('h') => app.toggle_select_line(),
 
             // Adjust cue time

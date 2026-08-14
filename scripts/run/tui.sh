@@ -22,4 +22,4 @@ print(":".join(
 cd "$ROOT"
 
 
-cargo run
+cargo run --release
