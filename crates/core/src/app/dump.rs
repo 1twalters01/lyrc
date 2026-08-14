@@ -1,7 +1,7 @@
 use std::fs;
 
 use chrono::Duration;
-use mpris::playback::{PlaybackCommand, PlaybackStatus, PlayerEvent};
+use mpris::playback::{PlaybackCommand, PlaybackStatus};
 use subtitles::subtitles::SubtitleDocument;
 use synchronizer::traits::Synchronizer;
 
@@ -12,43 +12,6 @@ where
     R: Renderer,
     S: Synchronizer,
 {
-    pub async fn handle_player_event(
-        &mut self,
-        event: PlayerEvent,
-    ) -> Result<(), <R as Renderer>::Error> {
-        self.state.update(&event);
-        self.synchronizer
-            .update(&self.state.subtitle_document, &self.clock.get_position());
-        self.clock.update(event);
-
-        self.renderer.render(
-            &mut self.state,
-            self.clock.get_position(),
-            self.synchronizer.get_active_cues(),
-        )
-    }
-
-    pub async fn tick(&mut self) -> Result<(), <R as Renderer>::Error> {
-        let current_position = self.get_current_position().await;
-        let playback_status = self.get_playback_status().await;
-        self.handle_tick(current_position, playback_status)
-    }
-
-    pub fn handle_tick(
-        &mut self,
-        current_position: Option<Duration>,
-        playback_status: PlaybackStatus,
-    ) -> Result<(), <R as Renderer>::Error> {
-        self.synchronizer
-            .update(&self.state.subtitle_document, &self.clock.get_position());
-        self.clock.sync(current_position, playback_status).unwrap();
-        self.renderer.render(
-            &mut self.state,
-            self.clock.get_position(),
-            self.synchronizer.get_active_cues(),
-        )
-    }
-
     pub async fn get_current_position(&self) -> Option<Duration> {
         self.mpris.get_current_position().await.ok()
     }
@@ -308,7 +271,9 @@ where
         match (&mut self.state.subtitle_document, &self.state.track) {
             (Some(document), Some(track)) => {
                 match &self.state.app_mode {
-                    AppMode::Normal => return Err(String::from("Cannot be in normal mode")),
+                    AppMode::Normal => {
+                        return Err(String::from("Cannot be in normal mode"));
+                    }
                     AppMode::Select {
                         cue_index,
                         selected_cues,
@@ -371,7 +336,9 @@ where
         match &mut self.state.subtitle_document {
             Some(document) => {
                 match &self.state.app_mode {
-                    AppMode::Normal => return Err(String::from("Cannot be in normal mode")),
+                    AppMode::Normal => {
+                        return Err(String::from("Cannot be in normal mode"));
+                    }
                     AppMode::Select {
                         cue_index,
                         selected_cues,

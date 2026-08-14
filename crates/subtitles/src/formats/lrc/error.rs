@@ -15,7 +15,9 @@ pub enum LrcError {
 impl fmt::Display for LrcError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LrcError::MissingTagClosingBracket => write!(f, "Missing tag closing bracket"),
+            LrcError::MissingTagClosingBracket => {
+                write!(f, "Missing tag closing bracket")
+            }
             LrcError::InvalidTimestamp => write!(f, "Invalid timestamp"),
             LrcError::InvalidTimestampMillisecondFormat => {
                 write!(f, "Invalid timestamp millisecond format")
@@ -23,9 +25,13 @@ impl fmt::Display for LrcError {
             LrcError::MissingColonSeparatorInTimestamp => {
                 write!(f, "Missing colon separator in timestamp")
             }
-            LrcError::ContentAfterMetadataTag => write!(f, "Content after metadata tag"),
+            LrcError::ContentAfterMetadataTag => {
+                write!(f, "Content after metadata tag")
+            }
             LrcError::InvalidMetadata => write!(f, "Invalid metadata"),
-            LrcError::MissingMetadataSeparator => write!(f, "Missing metadata separator"),
+            LrcError::MissingMetadataSeparator => {
+                write!(f, "Missing metadata separator")
+            }
         }
     }
 }

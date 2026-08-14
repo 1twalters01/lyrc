@@ -52,7 +52,8 @@ impl LyricsProvider for LrclibProvider {
                 ))?;
 
                 // run service.search(track, "lrclib")
-                // let coroutine = lyrics_service.call_method1("ping", (py_track, "lrclib"))?;
+                // let coroutine = lyrics_service.call_method1("ping",
+                // (py_track, "lrclib"))?;
                 let coroutine = lyrics_service.call_method1("search", (py_track, "lrclib"))?;
                 into_future(coroutine)
             })

@@ -151,7 +151,9 @@ impl LrcParser {
                         Ok(milliseconds) => Duration::milliseconds(milliseconds),
                         Err(_) => return Err(LrcError::InvalidTimestamp),
                     },
-                    _ => return Err(LrcError::InvalidTimestampMillisecondFormat),
+                    _ => {
+                        return Err(LrcError::InvalidTimestampMillisecondFormat);
+                    }
                 };
 
                 (seconds, milliseconds)

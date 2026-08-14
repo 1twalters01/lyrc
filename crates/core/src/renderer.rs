@@ -3,7 +3,7 @@ use chrono::Duration;
 use crate::state::AppState;
 
 pub trait Renderer {
-    type Error;
+    type Error: std::error::Error + 'static;
 
     fn render(
         &mut self,

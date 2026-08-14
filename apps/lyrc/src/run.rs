@@ -77,7 +77,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                 tokio::select! {
                     Some(event) = events.next() => app.handle_player_event(event).await?,
 
-                    _ = tick.tick() => app.tick().await?,
+                    _ = tick.tick() => app.handle_tick_event().await?,
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => {
                         let mode = &match app.state.app_mode {
