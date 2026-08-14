@@ -71,6 +71,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Char('H') => app.toggle_select_all_lines()?,
             KeyCode::Char('h') => app.toggle_select_line(),
             KeyCode::Char('D') => app.delete_selected_lines(),
+            KeyCode::Char('d') => app.delete_current_line(),
 
             // Adjust cue time
             KeyCode::Char(',') => {

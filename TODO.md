@@ -1,5 +1,4 @@
 Fix downloading
-Delete cue
 Add cue before current line
 Add cue after current line
 Undo change
