@@ -1,46 +1,17 @@
 use std::fs;
 
 use chrono::Duration;
-use mpris::{
-    client::MprisClient,
-    playback::{PlaybackCommand, PlaybackStatus, PlayerEvent},
-};
+use mpris::playback::{PlaybackCommand, PlaybackStatus, PlayerEvent};
 use subtitles::subtitles::SubtitleDocument;
 use synchronizer::traits::Synchronizer;
 
-use crate::{clock::PlaybackClock, mode::AppMode, renderer::Renderer, state::AppState};
-
-pub struct App<R, S>
-where
-    R: Renderer,
-    S: Synchronizer,
-{
-    renderer: R,
-    pub synchronizer: S,
-    pub clock: PlaybackClock,
-    pub state: AppState,
-    pub mpris: MprisClient,
-}
+use crate::{app::App, mode::AppMode, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
     R: Renderer,
     S: Synchronizer,
 {
-    pub async fn new(renderer: R, synchronizer: S, clock_offset: Duration, player: &str) -> Self {
-        let clock = PlaybackClock::new(clock_offset);
-        let state = AppState::new();
-        let mpris = MprisClient::connect(player).await.unwrap();
-
-        Self {
-            renderer,
-            clock,
-            state,
-            synchronizer,
-            mpris,
-        }
-    }
-
     pub async fn handle_player_event(
         &mut self,
         event: PlayerEvent,
