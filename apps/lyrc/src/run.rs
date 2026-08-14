@@ -2,11 +2,10 @@ use std::time::Duration as std_duration;
 
 use crate::{
     args::{Args, Command, Frontend},
-    keyboards,
+    keyboard,
 };
 
-use lyrc_core::{app::App, mode::AppMode};
-use subtitles::subtitles::SubtitleDocument;
+use lyrc_core::app::App;
 use synchronizer::strategies::lyrics::LyricsSynchronizer;
 use tui::renderer::TuiRenderer;
 
@@ -20,7 +19,7 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // println!("Initialisation code");
-    let fps = 60;
+    let fps = 60f64;
     let player = "cmus"; // also want to be able to automatically find a player
     let clock_offset = Duration::milliseconds(0);
     let rewind_duration = Duration::milliseconds(-5000);
@@ -52,26 +51,12 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             };
 
             let mut app = App::new(renderer, synchronizer, clock_offset, player).await;
-
-            let mut tick = tokio::time::interval(std_duration::from_secs_f64(1.0 / fps as f64));
+            app.update_track_information().await;
 
             let mpris = app.mpris.clone();
-
-            app.state.track = mpris.get_current_track().await.ok();
-            app.state.subtitle_document = match app.state.track {
-                Some(ref track) => match &track.file_path {
-                    Some(file_path) => {
-                        let mut lyrics_path = file_path.to_path_buf();
-                        lyrics_path.set_extension("lrc");
-                        SubtitleDocument::from_pathbuf(lyrics_path).ok()
-                    }
-                    None => None,
-                },
-                None => None,
-            };
-
-            let mut keyboard = EventStream::new();
             let mut events = mpris.events().await?;
+            let mut tick = tokio::time::interval(std_duration::from_secs_f64(1f64 / fps));
+            let mut keyboard = EventStream::new();
 
             loop {
                 tokio::select! {
@@ -79,27 +64,13 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
                     _ = tick.tick() => app.handle_tick_event().await?,
 
-                    Some(Ok(Event::Key(key))) = keyboard.next() => {
-                        let mode = &match app.state.app_mode {
-                            AppMode::Normal => AppMode::Normal,
-                            AppMode::Select { cue_index, ref selected_cues } => AppMode::Select { cue_index, selected_cues: selected_cues.clone() },
-                            AppMode::Edit { cue_index, ref original_content } => AppMode::Edit { cue_index, original_content: original_content.clone() },
-                        };
-
-                        match mode {
-                            AppMode::Normal => keyboards::normal::handle_key(&mut app, key, &config).await?,
-                            AppMode::Select { cue_index, selected_cues: _ } => keyboards::select::handle_key(&mut app, key, *cue_index, &config).await?,
-                            AppMode::Edit { cue_index, original_content } => keyboards::edit::handle_key(&mut app, key, *cue_index, original_content.clone(), &config)?,
-                        }
-                    },
+                    Some(Ok(Event::Key(key))) = keyboard.next() => keyboard::handle_keyboard_event(&mut app, key, &config).await?,
                 }
 
                 if app.state.quit == true {
-                    break;
+                    break Ok(());
                 }
             }
-
-            Ok(())
         }
     }
 }

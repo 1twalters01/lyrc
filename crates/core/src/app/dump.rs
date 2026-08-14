@@ -12,6 +12,21 @@ where
     R: Renderer,
     S: Synchronizer,
 {
+    pub async fn update_track_information(&mut self) {
+        self.state.track = self.mpris.get_current_track().await.ok();
+        self.state.subtitle_document = match self.state.track {
+            Some(ref track) => match &track.file_path {
+                Some(file_path) => {
+                    let mut lyrics_path = file_path.to_path_buf();
+                    lyrics_path.set_extension("lrc");
+                    SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                }
+                None => None,
+            },
+            None => None,
+        };
+    }
+
     pub async fn get_current_position(&self) -> Option<Duration> {
         self.mpris.get_current_position().await.ok()
     }

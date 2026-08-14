@@ -27,7 +27,6 @@ where
     pub async fn handle_tick_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let current_position = self.get_current_position().await;
         let playback_status = self.get_playback_status().await;
-
         self.process_tick(current_position, playback_status)
     }
 
