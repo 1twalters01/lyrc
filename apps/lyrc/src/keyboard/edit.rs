@@ -25,7 +25,7 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                 KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
                     match &app.state.subtitle_document {
                         Some(document) => {
-                            app.save_document(document.clone())?;
+                            document.save()?;
                             app.state.unsaved_changes = false;
                             app.state.subtitle_document = match app.state.track {
                                 Some(ref track) => match &track.file_path {

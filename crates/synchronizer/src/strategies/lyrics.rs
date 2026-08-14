@@ -43,7 +43,7 @@ impl Synchronizer for LyricsSynchronizer {
         None
     }
 
-    fn get_active_cues(&self) -> &[usize] {
+    fn get_active_cue_indices(&self) -> &[usize] {
         &self.active_cues
     }
 }

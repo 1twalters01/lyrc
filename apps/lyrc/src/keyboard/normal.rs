@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use lyrc_core::{app::App, mode::AppMode, renderer::Renderer};
+use lyrc_core::{app::App, renderer::Renderer};
 use lyrics::{models::LyricsFormat, service::LyricsService};
 use subtitles::{
     formats::lrc::parser::LrcParser, parser::SubtitleParser, subtitles::SubtitleDocument,
@@ -37,7 +37,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
             match &app.state.subtitle_document {
                 Some(document) => {
-                    app.save_document(document.clone())?;
+                    document.save()?;
                     app.state.unsaved_changes = false;
                     app.state.subtitle_document = match app.state.track {
                         Some(ref track) => match &track.file_path {
@@ -63,25 +63,9 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         // line control
         // Use the app.select_next_line and app.select_next_line
         KeyCode::Up => app.go_to_previous_line(),
-        KeyCode::Down => match app.get_first_active_cue() {
-            Some(cue_index) => {
-                app.state.app_mode = AppMode::Select {
-                    cue_index,
-                    selected_cues: Vec::new(),
-                }
-            }
-            None => {}
-        },
+        KeyCode::Down => app.go_to_next_line(),
         KeyCode::Char('k') => app.go_to_previous_line(),
-        KeyCode::Char('j') => match app.get_first_active_cue() {
-            Some(cue_index) => {
-                app.state.app_mode = AppMode::Select {
-                    cue_index,
-                    selected_cues: Vec::new(),
-                }
-            }
-            None => {}
-        },
+        KeyCode::Char('j') => app.go_to_next_line(),
         KeyCode::Char('h') => app.toggle_select_all_lines()?,
 
         // Change modes
@@ -91,19 +75,19 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         // Bulk adjust cue times
         KeyCode::Char(',') => {
             app.state.unsaved_changes = true;
-            app.adjust_all_cues_start_backwards(config.backwards_cue_increment_small)
+            app.decrease_all_cue_start_times(config.backwards_cue_increment_small)
         }
         KeyCode::Char('.') => {
             app.state.unsaved_changes = true;
-            app.adjust_all_cues_start_forwards(config.forwards_cue_increment_small)
+            app.increase_all_cue_start_times(config.forwards_cue_increment_small)
         }
         KeyCode::Char('<') => {
             app.state.unsaved_changes = true;
-            app.adjust_all_cues_start_backwards(config.backwards_cue_increment_large)
+            app.decrease_all_cue_start_times(config.backwards_cue_increment_large)
         }
         KeyCode::Char('>') => {
             app.state.unsaved_changes = true;
-            app.adjust_all_cues_start_forwards(config.forwards_cue_increment_large)
+            app.increase_all_cue_start_times(config.forwards_cue_increment_large)
         }
 
         // download lyrics

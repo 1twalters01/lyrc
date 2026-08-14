@@ -32,7 +32,7 @@ impl SubtitleDocument {
     }
 
     pub fn write(
-        subtitle_document: SubtitleDocument,
+        subtitle_document: &SubtitleDocument,
     ) -> Result<String, Box<dyn std::error::Error>> {
         match &subtitle_document.metadata.file_path {
             Some(file_path) => match file_path.extension() {
@@ -48,6 +48,16 @@ impl SubtitleDocument {
                 None => Err(String::from("File does not have an extension").into()),
             },
             None => Err(String::from("File path does not exist").into()),
+        }
+    }
+
+    pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+        match &self.metadata.file_path {
+            Some(file_path) => {
+                let file = SubtitleDocument::write(self)?;
+                Ok(fs::write(file_path, file)?)
+            }
+            None => Ok(()),
         }
     }
 }

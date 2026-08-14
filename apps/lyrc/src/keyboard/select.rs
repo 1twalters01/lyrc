@@ -21,7 +21,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
                 match &app.state.subtitle_document {
                     Some(document) => {
-                        app.save_document(document.clone())?;
+                        document.save()?;
                         app.state.unsaved_changes = false;
                         app.state.subtitle_document = match app.state.track {
                             Some(ref track) => match &track.file_path {
@@ -76,19 +76,19 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             // Adjust cue time
             KeyCode::Char(',') => {
                 app.state.unsaved_changes = true;
-                app.adjust_selected_cue_start_backwards(config.backwards_cue_increment_small)?
+                app.decrease_selected_cue_start_time(config.backwards_cue_increment_small)?
             }
             KeyCode::Char('.') => {
                 app.state.unsaved_changes = true;
-                app.adjust_selected_cue_start_forwards(config.forwards_cue_increment_small)?
+                app.increase_selected_cue_start_time(config.forwards_cue_increment_small)?
             }
             KeyCode::Char('<') => {
                 app.state.unsaved_changes = true;
-                app.adjust_selected_cue_start_backwards(config.backwards_cue_increment_large)?
+                app.decrease_selected_cue_start_time(config.backwards_cue_increment_large)?
             }
             KeyCode::Char('>') => {
                 app.state.unsaved_changes = true;
-                app.adjust_selected_cue_start_forwards(config.forwards_cue_increment_large)?
+                app.increase_selected_cue_start_time(config.forwards_cue_increment_large)?
             }
 
             _ => {}

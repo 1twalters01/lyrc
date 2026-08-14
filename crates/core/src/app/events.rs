@@ -47,7 +47,7 @@ where
 
     fn render(&mut self) -> Result<(), R::Error> {
         let position = self.clock.get_position();
-        let active_cues = self.synchronizer.get_active_cues();
+        let active_cues = self.synchronizer.get_active_cue_indices();
         self.renderer.render(&mut self.state, position, active_cues)
     }
 }
