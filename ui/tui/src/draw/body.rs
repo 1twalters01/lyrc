@@ -20,18 +20,28 @@ pub fn draw_body(
         .map(|cues| {
             cues.iter()
                 .map(|cue| {
-                    let total_minutes = cue.start.num_minutes();
-                    let seconds = cue.start.num_seconds() % 60;
-                    let hundredths = (cue.start.num_milliseconds() % 1000) / 10;
+                    let start_timestamp = format!(
+                        "[{:02}:{:02}.{:02}]",
+                        cue.start.num_minutes(),
+                        cue.start.num_seconds() % 60,
+                        (cue.start.num_milliseconds() % 1000) / 10,
+                    );
 
-                    let timestamp =
-                        format!("[{:02}:{:02}.{:02}]", total_minutes, seconds, hundredths,);
+                    let end_timestamp = format!(
+                        "[{:02?}:{:02?}.{:02?}]",
+                        // cue.end.num_minutes(),
+                        // cue.end.num_seconds() % 60,
+                        // cue.end.num_milliseconds() % 1000) / 10,
+                        cue.end.map_or(0, |e| e.num_minutes()),
+                        cue.end.map_or(0, |e| e.num_seconds() % 60),
+                        cue.end.map_or(0, |e| (e.num_milliseconds() % 1000) / 10),
+                    );
 
                     let content = match &cue.content.clone() {
                         SubtitleContent::Text(content) => content.clone(),
                     };
 
-                    format!("{} {}", timestamp, content)
+                    format!("{}{} {}", start_timestamp, end_timestamp, content)
                 })
                 .collect::<Vec<_>>()
         })
