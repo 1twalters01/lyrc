@@ -11,4 +11,6 @@ pub trait Renderer {
         position: Option<Duration>,
         active_cues: &[usize],
     ) -> Result<(), Self::Error>;
+
+    fn get_lines_per_page(&self) -> usize;
 }

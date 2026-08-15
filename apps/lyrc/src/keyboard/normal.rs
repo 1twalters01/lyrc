@@ -73,21 +73,29 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
         KeyCode::Tab => app.switch_to_select_mode()?,
 
         // Bulk adjust cue times
-        KeyCode::Char(',') => {
+        KeyCode::Char('m') => {
             app.state.unsaved_changes = true;
             app.decrease_all_cue_start_times(config.backwards_cue_increment_small)
         }
-        KeyCode::Char('.') => {
+        KeyCode::Char(',') => {
             app.state.unsaved_changes = true;
             app.increase_all_cue_start_times(config.forwards_cue_increment_small)
         }
-        KeyCode::Char('<') => {
+        KeyCode::Char('.') => {
             app.state.unsaved_changes = true;
-            app.decrease_all_cue_start_times(config.backwards_cue_increment_large)
+            app.decrease_all_cue_end_times(config.backwards_cue_increment_small)
+        }
+        KeyCode::Char('/') => {
+            app.state.unsaved_changes = true;
+            app.increase_all_cue_end_times(config.forwards_cue_increment_small)
         }
         KeyCode::Char('>') => {
             app.state.unsaved_changes = true;
-            app.increase_all_cue_start_times(config.forwards_cue_increment_large)
+            app.decrease_all_cue_end_times(config.backwards_cue_increment_large)
+        }
+        KeyCode::Char('?') => {
+            app.state.unsaved_changes = true;
+            app.increase_all_cue_end_times(config.forwards_cue_increment_large)
         }
 
         // download lyrics
@@ -125,7 +133,6 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             }
         }
 
-        // _ => eprintln!("{:?}", key),
         _ => {}
     }
 

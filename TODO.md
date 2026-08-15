@@ -1,6 +1,4 @@
 Fix downloading
-Represent changes live on screen
-Move upwards by half/whole page
 Undo change
 Redo change
 Need to validate the subtitle document

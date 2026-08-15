@@ -11,10 +11,11 @@ use ratatui::{
     prelude::CrosstermBackend,
 };
 
-use crate::draw::window::draw_window;
+use crate::draw::window::{draw_window, window_layout};
 
 pub struct TuiRenderer {
     terminal: Terminal<CrosstermBackend<Stdout>>,
+    lines_per_page: usize,
 }
 
 impl TuiRenderer {
@@ -28,7 +29,12 @@ impl TuiRenderer {
         let backend = CrosstermBackend::new(std::io::stdout());
         let terminal = Terminal::new(backend)?;
 
-        Ok(Self { terminal })
+        let lines_per_page = 0;
+
+        Ok(Self {
+            terminal,
+            lines_per_page,
+        })
     }
 }
 
@@ -42,10 +48,17 @@ impl Renderer for TuiRenderer {
         active_cues: &[usize],
     ) -> Result<(), Self::Error> {
         self.terminal.draw(|frame| {
-            draw_window(frame, state, position, active_cues);
+            let window_layout = window_layout(frame);
+            self.lines_per_page = window_layout[1].height as usize;
+
+            draw_window(frame, window_layout, state, position, active_cues);
         })?;
 
         Ok(())
+    }
+
+    fn get_lines_per_page(&self) -> usize {
+        self.lines_per_page
     }
 }
 

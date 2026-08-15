@@ -64,6 +64,8 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Right => app.seek_by_duration(config.fast_forward_duration).await?,
 
             // Line control
+            KeyCode::Up if key.modifiers == KeyModifiers::CONTROL => app.go_to_previous_half_page(),
+            KeyCode::Down if key.modifiers == KeyModifiers::CONTROL => app.go_to_next_half_page(),
             KeyCode::Up => app.go_to_previous_line(),
             KeyCode::Down => app.go_to_next_line(),
             KeyCode::Char('H') => app.toggle_select_all_lines()?,
@@ -76,21 +78,37 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Char('i') => app.add_cue_after_selected_cues(),
 
             // Adjust cue time
-            KeyCode::Char(',') => {
+            KeyCode::Char('m') => {
                 app.state.unsaved_changes = true;
                 app.decrease_selected_cue_start_time(config.backwards_cue_increment_small)?
             }
-            KeyCode::Char('.') => {
+            KeyCode::Char(',') => {
                 app.state.unsaved_changes = true;
                 app.increase_selected_cue_start_time(config.forwards_cue_increment_small)?
             }
-            KeyCode::Char('<') => {
+            KeyCode::Char('.') => {
+                app.state.unsaved_changes = true;
+                app.decrease_selected_cue_end_time(config.backwards_cue_increment_small)?
+            }
+            KeyCode::Char('/') => {
+                app.state.unsaved_changes = true;
+                app.increase_selected_cue_end_time(config.forwards_cue_increment_small)?
+            }
+            KeyCode::Char('M') => {
                 app.state.unsaved_changes = true;
                 app.decrease_selected_cue_start_time(config.backwards_cue_increment_large)?
             }
-            KeyCode::Char('>') => {
+            KeyCode::Char('<') => {
                 app.state.unsaved_changes = true;
                 app.increase_selected_cue_start_time(config.forwards_cue_increment_large)?
+            }
+            KeyCode::Char('>') => {
+                app.state.unsaved_changes = true;
+                app.decrease_selected_cue_end_time(config.backwards_cue_increment_large)?
+            }
+            KeyCode::Char('?') => {
+                app.state.unsaved_changes = true;
+                app.increase_selected_cue_end_time(config.forwards_cue_increment_large)?
             }
 
             _ => {}
