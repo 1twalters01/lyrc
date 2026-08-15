@@ -1,4 +1,4 @@
-use chrono::Duration;
+use chrono::{Duration, TimeDelta};
 
 use crate::{
     formats::lrc::error::LrcError,
@@ -192,7 +192,7 @@ impl LrcParser {
                         .map(|timestamp| SubtitleCue {
                             id: None,
                             start: timestamp,
-                            end: None,
+                            end: timestamp,
                             content: SubtitleContent::Text(text.clone()),
                         })
                         .collect();
@@ -212,7 +212,7 @@ impl LrcParser {
                 .iter()
                 .find(|cue| cue.start > start)
             {
-                subtitle_document.cues[i].end = Some(next.start);
+                subtitle_document.cues[i].end = next.start;
             }
         }
 

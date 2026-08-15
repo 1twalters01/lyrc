@@ -24,7 +24,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[*cue_index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
                         subtitle_document
@@ -46,7 +46,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[*cue_index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
                         subtitle_document
@@ -81,7 +81,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[*cue_index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
                         subtitle_document.cues.insert(*cue_index, empty_subtitle);
@@ -102,7 +102,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[*cue_index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
                         subtitle_document.cues.insert(*cue_index, empty_subtitle);
@@ -138,7 +138,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
 
@@ -157,7 +157,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
 
@@ -189,7 +189,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
 
@@ -208,7 +208,7 @@ where
                         let empty_subtitle = SubtitleCue {
                             id: None,
                             start: subtitle_document.cues[index].start,
-                            end: None,
+                            end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
                         };
 

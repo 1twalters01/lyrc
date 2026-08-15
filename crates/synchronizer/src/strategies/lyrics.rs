@@ -72,7 +72,7 @@ impl LyricsSynchronizer {
             .iter()
             .enumerate()
             .filter_map(|(index, cue)| {
-                if cue.end.map_or(true, |end| position < &end) {
+                if position < &cue.end {
                     Some(index)
                 } else {
                     None

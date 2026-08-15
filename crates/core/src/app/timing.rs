@@ -16,31 +16,41 @@ where
     ) -> Result<(), String> {
         fn increase_cue_index(
             document: &mut subtitles::subtitles::SubtitleDocument,
-            cue_index: usize,
+            cue_index: &mut usize,
             forwards_cue_increment: Duration,
             track: &mpris::track::Track,
         ) -> usize {
-            let current_cue = &mut document.cues[cue_index];
+            let current_cue = &mut document.cues[*cue_index];
             let new_start = current_cue.start + forwards_cue_increment;
-            let mut new_index = cue_index;
 
             if new_start <= track.duration {
                 current_cue.start = new_start;
 
-                while new_index + 1 < document.cues.len()
-                    && &document.cues[new_index].start > &document.cues[new_index + 1].start
+                while *cue_index + 1 < document.cues.len()
+                    && &document.cues[*cue_index].start > &document.cues[*cue_index + 1].start
                 {
-                    document.cues.swap(new_index, new_index + 1);
-                    new_index += 1;
+                    document.cues.swap(*cue_index, *cue_index + 1);
+
+                    *cue_index += 1;
+                }
+
+                if document.cues[*cue_index].start > document.cues[*cue_index].end {
+                    let start = document.cues[*cue_index].start;
+                    if let Some(next) = document.cues[*cue_index + 1..]
+                        .iter()
+                        .find(|cue| cue.start > start)
+                    {
+                        document.cues[*cue_index].end = next.start;
+                    }
                 }
             }
 
-            new_index
+            *cue_index
         }
 
         match (&mut self.state.subtitle_document, &self.state.track) {
             (Some(document), Some(track)) => {
-                match &self.state.app_mode {
+                match &mut self.state.app_mode {
                     AppMode::Normal => {
                         return Err(String::from("Cannot be in normal mode"));
                     }
@@ -50,7 +60,7 @@ where
                     } => AppMode::Select {
                         cue_index: increase_cue_index(
                             document,
-                            *cue_index,
+                            cue_index,
                             forwards_cue_increment,
                             track,
                         ),
@@ -62,7 +72,7 @@ where
                     } => AppMode::Edit {
                         cue_index: increase_cue_index(
                             document,
-                            *cue_index,
+                            cue_index,
                             forwards_cue_increment,
                             track,
                         ),
@@ -82,30 +92,30 @@ where
     ) -> Result<(), String> {
         fn decrease_cue_index(
             document: &mut subtitles::subtitles::SubtitleDocument,
-            cue_index: usize,
+            cue_index: &mut usize,
             backwards_cue_increment: Duration,
         ) -> usize {
-            let current_cue = &mut document.cues[cue_index];
+            let current_cue = &mut document.cues[*cue_index];
             let new_start = current_cue.start - backwards_cue_increment;
-            let mut new_index = cue_index;
 
             if new_start >= Duration::zero() {
                 current_cue.start = new_start;
 
-                while new_index > 0
-                    && &document.cues[new_index].start < &document.cues[new_index - 1].start
+                while *cue_index > 0
+                    && &document.cues[*cue_index].start < &document.cues[*cue_index - 1].start
                 {
-                    document.cues.swap(new_index, new_index - 1);
-                    new_index -= 1;
+                    document.cues.swap(*cue_index, *cue_index - 1);
+
+                    *cue_index -= 1;
                 }
             }
 
-            new_index
+            *cue_index
         }
 
         match &mut self.state.subtitle_document {
             Some(document) => {
-                match &self.state.app_mode {
+                match &mut self.state.app_mode {
                     AppMode::Normal => {
                         return Err(String::from("Cannot be in normal mode"));
                     }
@@ -113,22 +123,14 @@ where
                         cue_index,
                         selected_cues,
                     } => AppMode::Select {
-                        cue_index: decrease_cue_index(
-                            document,
-                            *cue_index,
-                            backwards_cue_increment,
-                        ),
+                        cue_index: decrease_cue_index(document, cue_index, backwards_cue_increment),
                         selected_cues: selected_cues.clone(),
                     },
                     AppMode::Edit {
                         cue_index,
                         selected_cues,
                     } => AppMode::Edit {
-                        cue_index: decrease_cue_index(
-                            document,
-                            *cue_index,
-                            backwards_cue_increment,
-                        ),
+                        cue_index: decrease_cue_index(document, cue_index, backwards_cue_increment),
                         selected_cues: selected_cues.clone(),
                     },
                 };
@@ -142,11 +144,21 @@ where
     pub fn increase_all_cue_start_times(&mut self, forwards_cue_increment: Duration) {
         match (&mut self.state.subtitle_document, &self.state.track) {
             (Some(document), Some(track)) => {
-                for cue in &mut document.cues {
+                for i in 0..document.cues.len() {
+                    let cue = &mut document.cues[i];
                     let new_start = cue.start + forwards_cue_increment;
 
                     if new_start <= track.duration {
                         cue.start = new_start;
+                    }
+
+                    if cue.start > cue.end {
+                        let start = cue.start;
+                        if let Some(next) =
+                            document.cues[i + 1..].iter().find(|cue| cue.start > start)
+                        {
+                            document.cues[i].end = next.start;
+                        }
                     }
                 }
 

@@ -96,7 +96,7 @@ impl Default for SubtitleMetadata {
 pub struct SubtitleCue {
     pub id: Option<String>,
     pub start: Duration,
-    pub end: Option<Duration>,
+    pub end: Duration,
     pub content: SubtitleContent,
 }
 
