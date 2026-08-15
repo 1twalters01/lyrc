@@ -41,19 +41,22 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
 
             // Mode change
             KeyCode::Esc => {
-                app.state.unsaved_changes = false;
-                app.state.subtitle_document = match app.state.track {
-                    Some(ref track) => match &track.file_path {
-                        Some(file_path) => {
-                            let mut lyrics_path = file_path.to_path_buf();
-                            lyrics_path.set_extension("lrc");
-                            SubtitleDocument::from_pathbuf(lyrics_path).ok()
-                        }
+                if app.state.unsaved_changes == true {
+                    app.state.unsaved_changes = false;
+                    app.state.subtitle_document = match app.state.track {
+                        Some(ref track) => match &track.file_path {
+                            Some(file_path) => {
+                                let mut lyrics_path = file_path.to_path_buf();
+                                lyrics_path.set_extension("lrc");
+                                SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                            }
+                            None => None,
+                        },
                         None => None,
-                    },
-                    None => None,
-                };
-                app.switch_to_normal_mode()
+                    };
+                } else {
+                    app.switch_to_normal_mode()
+                }
             }
             KeyCode::Tab => app.switch_to_edit_mode()?,
             KeyCode::Enter => app.seek_to_selected_line(cue_index).await?,
@@ -80,36 +83,50 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             // Adjust cue time
             KeyCode::Char('m') => {
                 app.state.unsaved_changes = true;
-                app.decrease_selected_cue_start_time(config.backwards_cue_increment_small)?
+                app.decrease_current_cue_start_time(config.backwards_cue_increment_small)?
             }
             KeyCode::Char(',') => {
                 app.state.unsaved_changes = true;
-                app.increase_selected_cue_start_time(config.forwards_cue_increment_small)?
+                app.increase_current_cue_start_time(config.forwards_cue_increment_small)?
             }
             KeyCode::Char('.') => {
                 app.state.unsaved_changes = true;
-                app.decrease_selected_cue_end_time(config.backwards_cue_increment_small)?
+                app.decrease_current_cue_end_time(config.backwards_cue_increment_small)?
             }
             KeyCode::Char('/') => {
                 app.state.unsaved_changes = true;
-                app.increase_selected_cue_end_time(config.forwards_cue_increment_small)?
+                app.increase_current_cue_end_time(config.forwards_cue_increment_small)?
             }
             KeyCode::Char('M') => {
                 app.state.unsaved_changes = true;
-                app.decrease_selected_cue_start_time(config.backwards_cue_increment_large)?
+                app.decrease_current_cue_start_time(config.backwards_cue_increment_large)?
             }
             KeyCode::Char('<') => {
                 app.state.unsaved_changes = true;
-                app.increase_selected_cue_start_time(config.forwards_cue_increment_large)?
+                app.increase_current_cue_start_time(config.forwards_cue_increment_large)?
             }
             KeyCode::Char('>') => {
                 app.state.unsaved_changes = true;
-                app.decrease_selected_cue_end_time(config.backwards_cue_increment_large)?
+                app.decrease_current_cue_end_time(config.backwards_cue_increment_large)?
             }
             KeyCode::Char('?') => {
                 app.state.unsaved_changes = true;
-                app.increase_selected_cue_end_time(config.forwards_cue_increment_large)?
+                app.increase_current_cue_end_time(config.forwards_cue_increment_large)?
             }
+            KeyCode::Char('c') => match app.clock.get_position() {
+                Some(position) => {
+                    app.state.unsaved_changes = true;
+                    app.set_current_cue_start_time(position)?
+                }
+                None => {}
+            },
+            KeyCode::Char('C') => match app.clock.get_position() {
+                Some(position) => {
+                    app.state.unsaved_changes = true;
+                    app.set_current_cue_end_time(position)?
+                }
+                None => {}
+            },
 
             _ => {}
         },

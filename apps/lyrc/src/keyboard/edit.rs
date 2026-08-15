@@ -61,23 +61,26 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                 }
 
                 KeyCode::Esc => {
-                    for cue in selected_cues {
-                        document.cues[cue.index].content = cue.original_content;
-                    }
+                    if app.state.unsaved_changes == true {
+                        for cue in selected_cues {
+                            document.cues[cue.index].content = cue.original_content;
+                        }
 
-                    app.state.unsaved_changes = false;
-                    app.state.subtitle_document = match app.state.track {
-                        Some(ref track) => match &track.file_path {
-                            Some(file_path) => {
-                                let mut lyrics_path = file_path.to_path_buf();
-                                lyrics_path.set_extension("lrc");
-                                SubtitleDocument::from_pathbuf(lyrics_path).ok()
-                            }
+                        app.state.unsaved_changes = false;
+                        app.state.subtitle_document = match app.state.track {
+                            Some(ref track) => match &track.file_path {
+                                Some(file_path) => {
+                                    let mut lyrics_path = file_path.to_path_buf();
+                                    lyrics_path.set_extension("lrc");
+                                    SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                                }
+                                None => None,
+                            },
                             None => None,
-                        },
-                        None => None,
-                    };
-                    app.switch_to_select_mode()?
+                        };
+                    } else {
+                        app.switch_to_select_mode()?
+                    }
                 }
 
                 KeyCode::Tab => app.switch_to_normal_mode(),
