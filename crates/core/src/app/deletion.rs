@@ -16,20 +16,26 @@ where
             Some(subtitle_document) => match &mut self.state.app_mode {
                 AppMode::Normal => {}
                 AppMode::Select {
-                    cue_index: _,
+                    cue_index,
                     selected_cues,
                 } => {
                     for index in selected_cues.iter().rev() {
                         subtitle_document.cues.remove(*index);
+                        if index < cue_index {
+                            *cue_index = cue_index.saturating_sub(1);
+                        }
                     }
                     *selected_cues = Vec::new();
                 }
                 AppMode::Edit {
-                    cue_index: _,
+                    cue_index,
                     selected_cues,
                 } => {
                     for cue in selected_cues.iter().rev() {
                         subtitle_document.cues.remove(cue.index);
+                        if cue.index < *cue_index {
+                            *cue_index = cue_index.saturating_sub(1);
+                        }
                     }
                 }
             },

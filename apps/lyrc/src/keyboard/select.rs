@@ -72,6 +72,8 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Char('d') => app.delete_current_line(),
             KeyCode::Char('k') => app.add_cue_before_current_cue(),
             KeyCode::Char('j') => app.add_cue_after_current_cue(),
+            KeyCode::Char('o') => app.add_cue_before_selected_cues(),
+            KeyCode::Char('i') => app.add_cue_after_selected_cues(),
 
             // Adjust cue time
             KeyCode::Char(',') => {
