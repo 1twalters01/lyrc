@@ -14,13 +14,16 @@ where
         if let Some(edit) = self.state.edit_history.pop_undo() {
             self.undo_edit(&edit);
             self.state.edit_history.push_redo(edit);
-        } else {
+        }
+
+        if self.state.edit_history.is_empty() {
             self.state.unsaved_changes = false;
         }
     }
 
     pub fn redo(&mut self) {
         if let Some(edit) = self.state.edit_history.pop_redo() {
+            self.state.unsaved_changes = true;
             self.redo_edit(&edit);
             self.state.edit_history.push_undo(edit);
         }
@@ -34,9 +37,13 @@ where
                         subtitle_document.cues[change.index].content = change.old_content.clone()
                     }
                 }
-                Edit::EditCueTimes { changes } => {}
-                Edit::DeleteCue { cues } => {}
-                Edit::InsertCue { cues } => {}
+                Edit::EditCueTimes { changes } => for change in changes {},
+                Edit::DeleteCue { cues } => {
+                    self.insert_cues(cues.clone());
+                }
+                Edit::InsertCue { cues } => {
+                    self.delete_cues(cues.clone());
+                }
             },
             None => {}
         }
@@ -50,9 +57,13 @@ where
                         subtitle_document.cues[change.index].content = change.new_content.clone()
                     }
                 }
-                Edit::EditCueTimes { changes } => {}
-                Edit::DeleteCue { cues } => {}
-                Edit::InsertCue { cues } => {}
+                Edit::EditCueTimes { changes } => for change in changes {},
+                Edit::DeleteCue { cues } => {
+                    self.delete_cues(cues.clone());
+                }
+                Edit::InsertCue { cues } => {
+                    self.insert_cues(cues.clone());
+                }
             },
             None => {}
         }

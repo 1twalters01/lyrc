@@ -1,5 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use lyrc_core::{app::App, renderer::Renderer};
+use lyrc_core::{
+    app::App,
+    history::{Edit, IndexedSubtitleCue},
+    renderer::Renderer,
+};
 use subtitles::subtitles::SubtitleDocument;
 use synchronizer::traits::Synchronizer;
 
@@ -58,6 +62,7 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
                         },
                         None => None,
                     };
+                    app.state.edit_history.empty();
                 } else {
                     app.switch_to_normal_mode()
                 }
@@ -77,8 +82,39 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             KeyCode::Down => app.go_to_next_line(),
             KeyCode::Char('H') => app.toggle_select_all_lines()?,
             KeyCode::Char('h') => app.toggle_select_line(),
-            KeyCode::Char('D') => app.delete_selected_lines(),
+
+            KeyCode::Char('D') => {
+                let cues = match &app.state.app_mode {
+                    lyrc_core::mode::AppMode::Normal => Vec::new(),
+                    lyrc_core::mode::AppMode::Select {
+                        cue_index: _,
+                        selected_cues,
+                    } => selected_cues
+                        .iter()
+                        .map(|cue| IndexedSubtitleCue {
+                            index: *cue,
+                            subtitle_cue: document.cues[*cue].clone(),
+                        })
+                        .collect(),
+                    lyrc_core::mode::AppMode::Edit {
+                        cue_index: _,
+                        selected_cues,
+                    } => selected_cues
+                        .iter()
+                        .map(|cue| IndexedSubtitleCue {
+                            index: cue.index,
+                            subtitle_cue: document.cues[cue.index].clone(),
+                        })
+                        .collect(),
+                };
+
+                app.delete_selected_lines();
+                app.state.unsaved_changes = true;
+                let edit = Edit::DeleteCue { cues };
+                app.push_to_history(edit);
+            }
             KeyCode::Char('d') => app.delete_current_line(),
+
             KeyCode::Char('k') => app.add_cue_before_current_cue(),
             KeyCode::Char('j') => app.add_cue_after_current_cue(),
             KeyCode::Char('o') => app.add_cue_before_selected_cues(),

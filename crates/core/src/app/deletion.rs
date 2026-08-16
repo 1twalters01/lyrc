@@ -1,6 +1,6 @@
 use synchronizer::traits::Synchronizer;
 
-use crate::{app::App, mode::AppMode, renderer::Renderer};
+use crate::{app::App, history::IndexedSubtitleCue, mode::AppMode, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
@@ -66,6 +66,46 @@ where
                     subtitle_document.cues.remove(*cue_index);
                 }
             },
+            None => self.switch_to_normal_mode(),
+        }
+    }
+
+    pub fn delete_cues(&mut self, indexed_cues: Vec<IndexedSubtitleCue>) {
+        if self.state.track.is_none() {
+            self.switch_to_normal_mode();
+        }
+
+        match &mut self.state.subtitle_document {
+            Some(subtitle_document) => {
+                for indexed_cue in indexed_cues.iter().rev() {
+                    subtitle_document.cues.remove(indexed_cue.index);
+
+                    match &mut self.state.app_mode {
+                        AppMode::Normal => {}
+                        AppMode::Select {
+                            cue_index: _,
+                            selected_cues,
+                        } => {
+                            selected_cues.retain(|c_index| *c_index != indexed_cue.index);
+                            for selected_cue in selected_cues {
+                                if *selected_cue > indexed_cue.index {
+                                    *selected_cue -= 1;
+                                }
+                            }
+                        }
+                        AppMode::Edit {
+                            cue_index: _,
+                            selected_cues,
+                        } => {
+                            for selected_cue in selected_cues {
+                                if selected_cue.index > indexed_cue.index {
+                                    selected_cue.index -= 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             None => self.switch_to_normal_mode(),
         }
     }

@@ -15,6 +15,14 @@ impl EditHistory {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.undo.is_empty()
+    }
+
+    pub fn empty(&mut self) {
+        self.undo.clear();
+    }
+
     pub fn push(&mut self, edit: Edit) {
         self.undo.push(edit);
         self.redo.clear();
@@ -64,6 +72,6 @@ pub struct CueTimeChange {
 
 #[derive(Clone)]
 pub struct IndexedSubtitleCue {
-    index: usize,
-    subtitle_cue: SubtitleCue,
+    pub index: usize,
+    pub subtitle_cue: SubtitleCue,
 }

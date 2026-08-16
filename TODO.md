@@ -1,8 +1,6 @@
 # V1
 * Undo/redo change
     * Time changes
-    * Deleting cues
-    * Inserting cues
 
 * Need to validate the subtitle document
 
