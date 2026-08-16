@@ -1,8 +1,7 @@
 use std::time::Instant;
 
 use mpris::{
-    playback::{PlaybackStatus, PlayerEvent},
-    track::Track,
+    client::MprisClient, playback::{PlaybackStatus, PlayerEvent}, track::Track
 };
 use subtitles::subtitles::SubtitleDocument;
 
@@ -43,7 +42,7 @@ impl AppState {
         }
     }
 
-    pub fn update(&mut self, event: &PlayerEvent) {
+    pub async fn update(&mut self, mpris: &mut MprisClient, event: &PlayerEvent) -> Result<(), Box<dyn std::error::Error>> {
         match event {
             PlayerEvent::TrackChanged(track) => {
                 if self.track.as_ref() != Some(track) {
@@ -52,20 +51,28 @@ impl AppState {
                 self.track = Some(track.clone());
 
                 self.subtitle_document = match self.track {
-                    Some(ref track) => match &track.file_path {
-                        Some(file_path) => {
-                            let mut lyrics_path = file_path.to_path_buf();
-                            lyrics_path.set_extension("lrc");
-                            SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                    Some(ref track) => match &track.get_lrc_file_path() {
+                        Some(lyrics_file_path) => {
+                           SubtitleDocument::from_pathbuf(lyrics_file_path.clone()).ok()
                         }
                         None => None,
                     },
                     None => None,
                 };
             }
-            PlayerEvent::PlaybackChanged(playback) => self.playback_state = playback.clone(),
+            PlayerEvent::PlaybackChanged(playback) => {
+                self.playback_state = playback.clone();
+                if playback == &PlaybackStatus::Stopped {
+                    let targets = Vec::from(["mpv", "cmus"]);
+                    let player = MprisClient::choose_player(targets).await?;
+                    *mpris = MprisClient::connect(&player).await?;
+                    self.playback_state = mpris.get_playback_status().await?;
+                }
+            }
             PlayerEvent::Seeked(_duration) => {}
         }
+
+        Ok(())
     }
 
     pub fn is_normal_mode(&self) -> bool {

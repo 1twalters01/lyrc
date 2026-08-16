@@ -13,7 +13,8 @@ where
         &mut self,
         event: PlayerEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.state.update(&event);
+        self.state.update(&mut self.mpris, &event).await?;
+        self.update_track_and_subtitle_document_information().await;
         self.clock.update(event);
 
         let subtitle_document = &self.state.subtitle_document;

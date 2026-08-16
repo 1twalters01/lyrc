@@ -6,6 +6,7 @@ use crate::{
 };
 
 use lyrc_core::app::App;
+use mpris::client::MprisClient;
 use synchronizer::strategies::lyrics::LyricsSynchronizer;
 use tui::renderer::TuiRenderer;
 
@@ -18,9 +19,10 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         frontend: Frontend::Tui,
     });
 
-    // println!("Initialisation code");
+    let targets_in_priority_order = Vec::from(["mpv", "cmus"]);
+    let player = &MprisClient::choose_player(targets_in_priority_order).await?;
+
     let fps = 60f64;
-    let player = "cmus"; // also want to be able to automatically find a player
     let clock_offset = Duration::milliseconds(0);
     let rewind_duration = Duration::milliseconds(-5000);
     let fast_forward_duration = Duration::milliseconds(5000);
