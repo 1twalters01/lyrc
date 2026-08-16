@@ -2,7 +2,10 @@ use std::{collections::HashMap, path::PathBuf};
 use tokio::process::Command;
 
 use chrono::Duration;
+use url::Url;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value};
+
+use crate::client::MprisClient;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Track {
@@ -19,7 +22,7 @@ pub struct Track {
 }
 
 impl Track {
-    pub async fn parse_track(metadata: HashMap<String, OwnedValue>) -> Track {
+    pub async fn parse_track(mpris: &MprisClient, metadata: HashMap<String, OwnedValue>) -> Track {
         let album = get_optional_string(&metadata, "xesam:album");
         let disc_number = get_optional_i32(&metadata, "xesam:discNumber");
         let title = get_string(&metadata, "xesam:title");
@@ -32,7 +35,11 @@ impl Track {
 
         // println!("\n\n\n{:?}", metadata.get("xesam:albumArtist"));
         // println!("\n{:?}", metadata.get("xesam:url"));
-        let file_path = get_current_track_file_path().await.ok().flatten();
+        let file_path = if mpris.get_player() == "cmus" {
+            get_current_track_file_path_cmus().await.ok().flatten()
+        } else {
+            get_optional_pathbuf(&metadata, "xesam:url")
+        };
 
         Track {
             album,
@@ -48,6 +55,15 @@ impl Track {
             file_path,
         }
     }
+
+    pub fn get_lrc_file_path(&self) -> Option<PathBuf> {
+        if let Some(track_file_path) = self.file_path.clone() {
+            let mut lyrics_file_path = track_file_path.to_path_buf();
+            lyrics_file_path.set_extension("lrc");
+            return Some(lyrics_file_path);
+        }
+        None
+    }
 }
 
 fn get_string(metadata: &HashMap<String, OwnedValue>, key: &str) -> String {
@@ -61,6 +77,14 @@ fn get_optional_string(metadata: &HashMap<String, OwnedValue>, key: &str) -> Opt
     metadata
         .get(key)
         .and_then(|v| v.downcast_ref::<String>().ok())
+}
+
+fn get_optional_pathbuf(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<PathBuf> {
+    metadata
+        .get(key)
+        .and_then(|v| v.downcast_ref::<String>().ok())
+        .and_then(|s| Url::parse(&s).ok())
+        .and_then(|url| url.to_file_path().ok())
 }
 
 fn get_optional_i32(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<i32> {
@@ -111,7 +135,7 @@ fn get_object_path(metadata: &HashMap<String, OwnedValue>, key: &str) -> Option<
         .map(OwnedObjectPath::from)
 }
 
-async fn get_current_track_file_path() -> Result<Option<PathBuf>, std::io::Error> {
+async fn get_current_track_file_path_cmus() -> Result<Option<PathBuf>, std::io::Error> {
     let output = Command::new("cmus-remote").arg("-Q").output().await?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);

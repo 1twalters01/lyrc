@@ -21,9 +21,93 @@ use crate::{
 pub struct MprisClient {
     connection: Connection,
     service: OwnedWellKnownName,
+    player: String,
 }
 
 impl MprisClient {
+    pub async fn find_players() -> zbus::Result<Vec<String>> {
+        let connection = Connection::session().await?;
+
+        let proxy = zbus::fdo::DBusProxy::new(&connection).await?;
+
+        let names = proxy.list_names().await?;
+
+        Ok(names
+            .into_iter()
+            .filter_map(|name| {
+                name.strip_prefix("org.mpris.MediaPlayer2.")
+                    .map(str::to_owned)
+            })
+            .collect::<Vec<_>>())
+    }
+
+    pub async fn choose_player(targets: Vec<&str>) -> zbus::Result<String> {
+        let players = Self::find_players().await?;
+
+        let mut clients = Vec::new();
+        for player in &players {
+            let client = Self::connect(player).await?;
+            clients.push(client);
+        }
+
+        let mut playback_statuses = Vec::new();
+        for client in clients {
+            playback_statuses.push(client.get_playback_status().await?);
+        }
+
+        let playing_players: Vec<_> = players
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| playback_statuses[*i] == PlaybackStatus::Playing)
+            .map(|(_, p)| p.clone())
+            .collect();
+        if playing_players.len() > 0 {
+            for target in targets {
+                if playing_players.contains(&String::from(target)) {
+                    return Ok(String::from(target));
+                }
+            }
+
+            return Ok(playing_players[0].clone());
+        }
+
+        let paused_players: Vec<_> = players
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| playback_statuses[*i] == PlaybackStatus::Paused)
+            .map(|(_, c)| c)
+            .cloned()
+            .collect();
+        if paused_players.len() > 0 {
+            for target in targets {
+                if paused_players.contains(&String::from(target)) {
+                    return Ok(String::from(target));
+                }
+            }
+
+            return Ok(paused_players[0].clone());
+        }
+
+        let stopped_players: Vec<_> = players
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| playback_statuses[*i] == PlaybackStatus::Stopped)
+            .map(|(_, c)| c)
+            .cloned()
+            .collect();
+        if stopped_players.len() > 0 {
+            for target in targets {
+                if stopped_players.contains(&String::from(target)) {
+                    return Ok(String::from(target));
+                }
+            }
+
+            return Ok(stopped_players[0].clone());
+        }
+
+        Ok(players[0].clone())
+    }
+
     pub async fn connect(player: &str) -> zbus::Result<Self> {
         let connection = Connection::session().await?;
         let service = format!("org.mpris.MediaPlayer2.{player}");
@@ -31,11 +115,16 @@ impl MprisClient {
         Ok(Self {
             connection,
             service: service.try_into()?,
+            player: String::from(player),
         })
     }
 
     pub fn get_service(&self) -> OwnedWellKnownName {
         self.service.clone()
+    }
+
+    pub fn get_player(&self) -> String {
+        self.player.clone()
     }
 
     async fn proxy(&self) -> zbus::Result<PlayerProxy<'_>> {
@@ -59,7 +148,7 @@ impl MprisClient {
     pub async fn get_current_track(&self) -> zbus::Result<Track> {
         let metadata = self.proxy().await?.metadata().await?;
 
-        Ok(Track::parse_track(metadata).await)
+        Ok(Track::parse_track(self, metadata).await)
     }
 
     pub async fn get_playback_status(&self) -> zbus::Result<PlaybackStatus> {
@@ -139,7 +228,7 @@ impl MprisClient {
                                 })
                                 .collect();
 
-                            let track = Track::parse_track(owned_metadata).await;
+                            let track = Track::parse_track(self, owned_metadata).await;
                             yield PlayerEvent::TrackChanged(track);
                         }
 
