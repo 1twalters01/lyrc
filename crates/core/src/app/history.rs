@@ -7,51 +7,54 @@ where
     S: Synchronizer,
 {
     pub fn push_to_history(&mut self, edit: Edit) {
-        self.state.edit_history.undo.push(edit);
-        self.state.edit_history.redo.clear();
+        self.state.edit_history.push(edit);
     }
 
     pub fn undo(&mut self) {
-        if let Some(edit) = self.state.edit_history.undo.pop() {
+        if let Some(edit) = self.state.edit_history.pop_undo() {
             self.undo_edit(&edit);
-            self.state.edit_history.redo.push(edit);
+            self.state.edit_history.push_redo(edit);
+        } else {
+            self.state.unsaved_changes = false;
         }
     }
 
     pub fn redo(&mut self) {
-        if let Some(edit) = self.state.edit_history.redo.pop() {
+        if let Some(edit) = self.state.edit_history.pop_redo() {
             self.redo_edit(&edit);
-            self.state.edit_history.undo.push(edit);
+            self.state.edit_history.push_undo(edit);
         }
     }
 
     fn undo_edit(&mut self, edit: &Edit) {
-        match edit {
-            Edit::ChangeContent {
-                index,
-                old_content,
-                new_content: _,
-            } => match &mut self.state.subtitle_document {
-                Some(subtitle_document) => {
-                    subtitle_document.cues[*index].content = old_content.clone()
+        match &mut self.state.subtitle_document {
+            Some(subtitle_document) => match edit {
+                Edit::EditCueContent { changes } => {
+                    for change in changes {
+                        subtitle_document.cues[change.index].content = change.old_content.clone()
+                    }
                 }
-                None => {}
+                Edit::EditCueTimes { changes } => {}
+                Edit::DeleteCue { cues } => {}
+                Edit::InsertCue { cues } => {}
             },
+            None => {}
         }
     }
 
     fn redo_edit(&mut self, edit: &Edit) {
-        match edit {
-            Edit::ChangeContent {
-                index,
-                old_content: _,
-                new_content,
-            } => match &mut self.state.subtitle_document {
-                Some(subtitle_document) => {
-                    subtitle_document.cues[*index].content = new_content.clone()
+        match &mut self.state.subtitle_document {
+            Some(subtitle_document) => match edit {
+                Edit::EditCueContent { changes } => {
+                    for change in changes {
+                        subtitle_document.cues[change.index].content = change.new_content.clone()
+                    }
                 }
-                None => {}
+                Edit::EditCueTimes { changes } => {}
+                Edit::DeleteCue { cues } => {}
+                Edit::InsertCue { cues } => {}
             },
+            None => {}
         }
     }
 }

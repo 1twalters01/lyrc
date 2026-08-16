@@ -1,7 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use lyrc_core::{
     app::App,
-    history::Edit,
+    history::{CueContentChange, Edit},
     mode::{AppMode, EditCue},
     renderer::Renderer,
 };
@@ -99,10 +99,12 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                             app.state.unsaved_changes = true;
                             text.push(char);
 
-                            let edit = Edit::ChangeContent {
-                                index: cue_index,
-                                old_content,
-                                new_content: current_cue.content.clone(),
+                            let edit = Edit::EditCueContent {
+                                changes: Vec::from([CueContentChange {
+                                    index: cue_index,
+                                    old_content,
+                                    new_content: current_cue.content.clone(),
+                                }]),
                             };
                             app.push_to_history(edit);
                         }
@@ -116,10 +118,12 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                             app.state.unsaved_changes = true;
                             text.pop();
 
-                            let edit = Edit::ChangeContent {
-                                index: cue_index,
-                                old_content,
-                                new_content: current_cue.content.clone(),
+                            let edit = Edit::EditCueContent {
+                                changes: Vec::from([CueContentChange {
+                                    index: cue_index,
+                                    old_content,
+                                    new_content: current_cue.content.clone(),
+                                }]),
                             };
                             app.push_to_history(edit);
                         }
