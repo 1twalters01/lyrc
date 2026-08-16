@@ -6,12 +6,16 @@ use mpris::{
 };
 use subtitles::subtitles::SubtitleDocument;
 
-use crate::mode::AppMode;
+use crate::{
+    history::EditHistory,
+    mode::AppMode,
+};
 
 #[derive(Clone)]
 pub struct AppState {
     pub track: Option<Track>,
     pub subtitle_document: Option<SubtitleDocument>,
+    pub edit_history: EditHistory,
     pub playback_state: PlaybackStatus,
     pub last_updated: Option<Instant>,
 
