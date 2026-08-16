@@ -39,6 +39,10 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
                 }
             }
 
+            // Undo and redo changes
+            KeyCode::Char('z') if key.modifiers == KeyModifiers::CONTROL => app.undo(),
+            KeyCode::Char('r') if key.modifiers == KeyModifiers::CONTROL => app.redo(),
+
             // Mode change
             KeyCode::Esc => {
                 if app.state.unsaved_changes == true {
