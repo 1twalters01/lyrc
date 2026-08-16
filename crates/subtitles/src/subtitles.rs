@@ -5,6 +5,7 @@ use crate::{
 };
 use chrono::Duration;
 use std::{fs, path::PathBuf};
+use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub struct SubtitleDocument {
@@ -94,7 +95,7 @@ impl Default for SubtitleMetadata {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SubtitleCue {
-    pub id: Option<String>,
+    pub id: Uuid,
     pub start: Duration,
     pub end: Duration,
     pub content: SubtitleContent,

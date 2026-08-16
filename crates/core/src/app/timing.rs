@@ -2,7 +2,7 @@ use chrono::Duration;
 
 use synchronizer::traits::Synchronizer;
 
-use crate::{app::App, mode::AppMode, renderer::Renderer};
+use crate::{app::App, history::CueTimeChange, mode::AppMode, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
@@ -10,6 +10,35 @@ where
     S: Synchronizer,
 {
     // change error types in this file
+    pub fn set_times(&mut self, mut changes: Vec<CueTimeChange>) {
+        if self.state.track.is_none() {
+            self.switch_to_normal_mode();
+        }
+
+        changes.sort_by_key(|c| std::cmp::Reverse(c.old_index));
+
+        match &mut self.state.subtitle_document {
+            Some(subtitle_document) => {
+                let mut items = Vec::new();
+
+                for change in changes {
+                    let mut item = subtitle_document.cues.remove(change.old_index);
+
+                    item.start = change.new_start;
+                    item.end = change.new_end;
+
+                    items.push((change.new_index, item));
+                }
+
+                items.sort_by_key(|(index, _)| *index);
+
+                for (index, item) in items {
+                    subtitle_document.cues.insert(index, item);
+                }
+            }
+            None => self.switch_to_normal_mode(),
+        }
+    }
 
     pub fn set_current_cue_start_time(&mut self, new_position: Duration) -> Result<(), String> {
         fn update_cue_index(

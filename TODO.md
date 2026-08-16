@@ -1,7 +1,4 @@
 # V1
-* Undo/redo change
-    * Time changes
-
 * Need to validate the subtitle document
 
 * Fix downloading

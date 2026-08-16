@@ -1,7 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use lyrc_core::{
     app::App,
-    history::{Edit, IndexedSubtitleCue},
+    history::{CueTimeChange, Edit, IndexedSubtitleCue},
     renderer::Renderer,
 };
 use subtitles::subtitles::SubtitleDocument;
@@ -122,48 +122,388 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
 
             // Adjust cue time
             KeyCode::Char('m') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.decrease_current_cue_start_time(config.backwards_cue_increment_small)?
+                app.decrease_current_cue_start_time(config.backwards_cue_increment_small)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char(',') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.increase_current_cue_start_time(config.forwards_cue_increment_small)?
+                app.increase_current_cue_start_time(config.forwards_cue_increment_small)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char('.') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.decrease_current_cue_end_time(config.backwards_cue_increment_small)?
+                app.decrease_current_cue_end_time(config.backwards_cue_increment_small)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char('/') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.increase_current_cue_end_time(config.forwards_cue_increment_small)?
+                app.increase_current_cue_end_time(config.forwards_cue_increment_small)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char('M') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.decrease_current_cue_start_time(config.backwards_cue_increment_large)?
+                app.decrease_current_cue_start_time(config.backwards_cue_increment_large)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char('<') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.increase_current_cue_start_time(config.forwards_cue_increment_large)?
+                app.increase_current_cue_start_time(config.forwards_cue_increment_large)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char('>') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.decrease_current_cue_end_time(config.backwards_cue_increment_large)?
+                app.decrease_current_cue_end_time(config.backwards_cue_increment_large)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char('?') => {
+                let mut changes = match &mut app.state.subtitle_document {
+                    Some(document) => {
+                        let cue = &document.cues[cue_index];
+                        Vec::from([CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: cue_index,
+                            old_index: cue_index,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        }])
+                    }
+                    None => Vec::new(),
+                };
+
                 app.state.unsaved_changes = true;
-                app.increase_current_cue_end_time(config.forwards_cue_increment_large)?
+                app.increase_current_cue_end_time(config.forwards_cue_increment_large)?;
+
+                if let Some(document) = &mut app.state.subtitle_document {
+                    for change in &mut changes {
+                        if let Some((i, cue)) = document
+                            .cues
+                            .iter()
+                            .enumerate()
+                            .find(|(_, cue)| cue.id == change.id)
+                        {
+                            change.new_index = i;
+                            change.new_start = cue.start;
+                            change.new_end = cue.end;
+                        };
+                    }
+                }
+
+                let edit = Edit::EditCueTimes { changes };
+                app.push_to_history(edit);
             }
             KeyCode::Char('c') => match app.clock.get_position() {
                 Some(position) => {
+                    let mut changes = match &mut app.state.subtitle_document {
+                        Some(document) => {
+                            let cue = &document.cues[cue_index];
+                            Vec::from([CueTimeChange {
+                                id: cue.id.clone(),
+                                new_index: cue_index,
+                                old_index: cue_index,
+                                new_start: cue.start,
+                                old_start: cue.start,
+                                new_end: cue.end,
+                                old_end: cue.end,
+                            }])
+                        }
+                        None => Vec::new(),
+                    };
+
                     app.state.unsaved_changes = true;
-                    app.set_current_cue_start_time(position)?
+                    app.set_current_cue_start_time(position)?;
+
+                    if let Some(document) = &mut app.state.subtitle_document {
+                        for change in &mut changes {
+                            if let Some((i, cue)) = document
+                                .cues
+                                .iter()
+                                .enumerate()
+                                .find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+
+                    let edit = Edit::EditCueTimes { changes };
+                    app.push_to_history(edit);
                 }
                 None => {}
             },
             KeyCode::Char('C') => match app.clock.get_position() {
                 Some(position) => {
+                    let mut changes = match &mut app.state.subtitle_document {
+                        Some(document) => {
+                            let cue = &document.cues[cue_index];
+                            Vec::from([CueTimeChange {
+                                id: cue.id.clone(),
+                                new_index: cue_index,
+                                old_index: cue_index,
+                                new_start: cue.start,
+                                old_start: cue.start,
+                                new_end: cue.end,
+                                old_end: cue.end,
+                            }])
+                        }
+                        None => Vec::new(),
+                    };
+
                     app.state.unsaved_changes = true;
-                    app.set_current_cue_end_time(position)?
+                    app.set_current_cue_end_time(position)?;
+
+                    if let Some(document) = &mut app.state.subtitle_document {
+                        for change in &mut changes {
+                            if let Some((i, cue)) = document
+                                .cues
+                                .iter()
+                                .enumerate()
+                                .find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+
+                    let edit = Edit::EditCueTimes { changes };
+                    app.push_to_history(edit);
                 }
                 None => {}
             },

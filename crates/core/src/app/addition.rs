@@ -1,5 +1,6 @@
 use subtitles::subtitles::{SubtitleContent, SubtitleCue};
 use synchronizer::traits::Synchronizer;
+use uuid::Uuid;
 
 use crate::{app::App, history::IndexedSubtitleCue, mode::AppMode, renderer::Renderer};
 
@@ -22,7 +23,7 @@ where
                 } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[*cue_index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -44,7 +45,7 @@ where
                 } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[*cue_index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -79,7 +80,7 @@ where
                 } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[*cue_index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -100,7 +101,7 @@ where
                 } => {
                     if subtitle_document.cues.len() > *cue_index {
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[*cue_index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -136,7 +137,7 @@ where
                         let index = selected_cues[i] + i;
 
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -155,7 +156,7 @@ where
                         let index = selected_cues[i].index + i;
 
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -187,7 +188,7 @@ where
                         let index = selected_cues[i] + i;
 
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -206,7 +207,7 @@ where
                         let index = selected_cues[i].index + i;
 
                         let empty_subtitle = SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: subtitle_document.cues[index].start,
                             end: subtitle_document.cues[*cue_index].end,
                             content: SubtitleContent::Text(String::new()),
@@ -222,11 +223,12 @@ where
         }
     }
 
-    pub fn insert_cues(&mut self, indexed_cues: Vec<IndexedSubtitleCue>) {
+    pub fn insert_cues(&mut self, mut indexed_cues: Vec<IndexedSubtitleCue>) {
         if self.state.track.is_none() {
             self.switch_to_normal_mode();
         }
 
+        indexed_cues.sort_by_key(|c| c.index);
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => {
                 for indexed_cue in indexed_cues {

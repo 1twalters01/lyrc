@@ -70,11 +70,12 @@ where
         }
     }
 
-    pub fn delete_cues(&mut self, indexed_cues: Vec<IndexedSubtitleCue>) {
+    pub fn delete_cues(&mut self, mut indexed_cues: Vec<IndexedSubtitleCue>) {
         if self.state.track.is_none() {
             self.switch_to_normal_mode();
         }
 
+        indexed_cues.sort_by_key(|c| c.index);
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => {
                 for indexed_cue in indexed_cues.iter().rev() {

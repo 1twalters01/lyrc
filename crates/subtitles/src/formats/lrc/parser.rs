@@ -1,4 +1,5 @@
-use chrono::{Duration, TimeDelta};
+use chrono::Duration;
+use uuid::Uuid;
 
 use crate::{
     formats::lrc::error::LrcError,
@@ -190,7 +191,7 @@ impl LrcParser {
                     let cues: Vec<SubtitleCue> = timestamps
                         .into_iter()
                         .map(|timestamp| SubtitleCue {
-                            id: None,
+                            id: Uuid::new_v4(),
                             start: timestamp,
                             end: timestamp,
                             content: SubtitleContent::Text(text.clone()),

@@ -1,4 +1,8 @@
-use crate::{app::App, history::Edit, renderer::Renderer};
+use crate::{
+    app::App,
+    history::{CueTimeChange, Edit},
+    renderer::Renderer,
+};
 use synchronizer::traits::Synchronizer;
 
 impl<R, S> App<R, S>
@@ -37,7 +41,21 @@ where
                         subtitle_document.cues[change.index].content = change.old_content.clone()
                     }
                 }
-                Edit::EditCueTimes { changes } => for change in changes {},
+                Edit::EditCueTimes { changes } => {
+                    let inverse_changes = changes
+                        .iter()
+                        .map(|change| CueTimeChange {
+                            id: change.id.clone(),
+                            new_index: change.old_index,
+                            old_index: change.new_index,
+                            new_start: change.old_start,
+                            old_start: change.new_start,
+                            new_end: change.old_end,
+                            old_end: change.new_end,
+                        })
+                        .collect::<Vec<CueTimeChange>>();
+                    self.set_times(inverse_changes.clone());
+                }
                 Edit::DeleteCue { cues } => {
                     self.insert_cues(cues.clone());
                 }
@@ -57,7 +75,9 @@ where
                         subtitle_document.cues[change.index].content = change.new_content.clone()
                     }
                 }
-                Edit::EditCueTimes { changes } => for change in changes {},
+                Edit::EditCueTimes { changes } => {
+                    self.set_times(changes.clone());
+                }
                 Edit::DeleteCue { cues } => {
                     self.delete_cues(cues.clone());
                 }

@@ -1,5 +1,6 @@
 use chrono::Duration;
 use subtitles::subtitles::{SubtitleContent, SubtitleCue};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct EditHistory {
@@ -62,12 +63,13 @@ pub struct CueContentChange {
 
 #[derive(Clone)]
 pub struct CueTimeChange {
-    new_index: usize,
-    old_index: usize,
-    old_start: Duration,
-    old_end: Duration,
-    new_start: Duration,
-    new_end: Duration,
+    pub id: Uuid,
+    pub new_index: usize,
+    pub old_index: usize,
+    pub old_start: Duration,
+    pub old_end: Duration,
+    pub new_start: Duration,
+    pub new_end: Duration,
 }
 
 #[derive(Clone)]
