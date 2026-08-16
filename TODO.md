@@ -1,6 +1,7 @@
 # V1
 * Undo change
 * Redo change
+
 * Need to validate the subtitle document
 
 * Fix downloading
@@ -8,7 +9,9 @@
 
 * Allow completely empty lines (no timestamps or words) - maybe have it as an option to show blank lines or not?
 * Confirm quit if there are unsaved changes
+
 * Signify that you are editing a cue (maybe add a cursor?)
+
 * Improve keyboard commands
 * Improve UI/UX/Design
 
