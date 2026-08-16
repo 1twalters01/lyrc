@@ -6,10 +6,7 @@ use mpris::{
 };
 use subtitles::subtitles::SubtitleDocument;
 
-use crate::{
-    history::EditHistory,
-    mode::AppMode,
-};
+use crate::{history::EditHistory, mode::AppMode};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -34,6 +31,10 @@ impl AppState {
         Self {
             track: None,
             subtitle_document: None,
+            edit_history: EditHistory {
+                undo: Vec::new(),
+                redo: Vec::new(),
+            },
             playback_state: PlaybackStatus::Unknown,
             last_updated: None,
             playback_speed: 1f64,

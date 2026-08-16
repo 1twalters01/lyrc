@@ -55,6 +55,10 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             }
         }
 
+        // Undo and redo changes
+        KeyCode::Char('z') if key.modifiers == KeyModifiers::CONTROL => app.undo(),
+        KeyCode::Char('r') if key.modifiers == KeyModifiers::CONTROL => app.redo(),
+
         // playback control
         KeyCode::Char(' ') => app.toggle_play_pause().await?,
         KeyCode::Left => app.seek_by_duration(config.rewind_duration).await?,

@@ -1,6 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use lyrc_core::{
     app::App,
+    history::Edit,
     mode::{AppMode, EditCue},
     renderer::Renderer,
 };
@@ -60,6 +61,10 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                     }
                 }
 
+                // Undo and redo changes
+                KeyCode::Char('z') if key.modifiers == KeyModifiers::CONTROL => app.undo(),
+                KeyCode::Char('r') if key.modifiers == KeyModifiers::CONTROL => app.redo(),
+
                 KeyCode::Esc => {
                     if app.state.unsaved_changes == true {
                         for cue in selected_cues {
@@ -86,18 +91,40 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                 KeyCode::Tab => app.switch_to_normal_mode(),
                 KeyCode::Enter => app.switch_to_select_mode()?,
 
-                KeyCode::Char(char) => match &mut current_cue.content {
-                    SubtitleContent::Text(text) => {
-                        app.state.unsaved_changes = true;
-                        text.push(char);
+                KeyCode::Char(char) => {
+                    let old_content = current_cue.content.clone();
+
+                    match &mut current_cue.content {
+                        SubtitleContent::Text(text) => {
+                            app.state.unsaved_changes = true;
+                            text.push(char);
+
+                            let edit = Edit::ChangeContent {
+                                index: cue_index,
+                                old_content,
+                                new_content: current_cue.content.clone(),
+                            };
+                            app.push_to_history(edit);
+                        }
                     }
-                },
-                KeyCode::Backspace => match &mut current_cue.content {
-                    SubtitleContent::Text(text) => {
-                        app.state.unsaved_changes = true;
-                        text.pop();
+                }
+                KeyCode::Backspace => {
+                    let old_content = current_cue.content.clone();
+
+                    match &mut current_cue.content {
+                        SubtitleContent::Text(text) => {
+                            app.state.unsaved_changes = true;
+                            text.pop();
+
+                            let edit = Edit::ChangeContent {
+                                index: cue_index,
+                                old_content,
+                                new_content: current_cue.content.clone(),
+                            };
+                            app.push_to_history(edit);
+                        }
                     }
-                },
+                }
 
                 _ => {}
             }
