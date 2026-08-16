@@ -1,6 +1,8 @@
 # V1
-* Undo change
-* Redo change
+* Undo/redo change
+    * Time changes
+    * Deleting cues
+    * Inserting cues
 
 * Need to validate the subtitle document
 
@@ -11,7 +13,6 @@
 * Confirm quit if there are unsaved changes
 
 * Signify that you are editing a cue (maybe add a cursor?)
-
 * Improve keyboard commands
 * Improve UI/UX/Design
 
