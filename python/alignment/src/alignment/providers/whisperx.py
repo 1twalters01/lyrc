@@ -49,4 +49,5 @@ for segment in result["segments"]:
             start=segment_start,
             end=segment_end,
             words=words
+        )
     )
