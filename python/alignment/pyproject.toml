@@ -7,3 +7,12 @@ requires-python = ">=3.13"
 dependencies = [
     "whisperx>=3.8.6",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

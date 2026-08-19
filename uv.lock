@@ -142,13 +142,21 @@ wheels = [
 [[package]]
 name = "alignment"
 version = "0.1.0"
-source = { virtual = "python/alignment" }
+source = { editable = "python/alignment" }
 dependencies = [
     { name = "whisperx" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [{ name = "whisperx", specifier = ">=3.8.6" }]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.1.1" }]
 
 [[package]]
 name = "antlr4-python3-runtime"
