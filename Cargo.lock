@@ -12,6 +12,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "alignment"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "futures",
+ "mpris",
+ "pyo3",
+ "pyo3-async-runtimes",
+ "subtitles",
+ "tokio",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
