@@ -23,10 +23,15 @@ class WhisperXAligner(Aligner):
         result = whisperx.align(segments, model_a, metadata, audio, device, return_char_alignments=False)
 
         aligned_cues: List[AlignedCue] = []
-        for segment in result["segments"]:
-            segment_start = timedelta(seconds=segment["start"])
-            segment_end = timedelta(seconds=segment["end"])
+        for index, segment in enumerate(result["segments"]):
+            segment_start = timedelta(
+                seconds=segments[index].get("start", segment["start"])
+            )
+            segment_end = timedelta(
+                seconds=segments[index].get("end", segment["end"])
+            )
             segment_words = segment.get("words", [])
+            print(f'\n{segment["start"]}')
             print(f"\n{segment_start} -> {segment_end}")
 
             words: List[Word] = []

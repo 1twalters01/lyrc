@@ -3,13 +3,16 @@ use std::path::PathBuf;
 use pyo3::{prelude::*, types::PyList};
 use subtitles::subtitles::{AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument};
 
-use crate::provider::{AlignmentError, LyricsAligner};
+use crate::{
+    helpers::timedelta_to_duration,
+    provider::{AlignmentError, LyricsAligner},
+};
 
 pub struct WhisperXAligner;
 
 impl LyricsAligner for WhisperXAligner {
     fn align_cues(
-        &self,
+        // &self,
         audio_file_path: PathBuf,
         subtitle_document: SubtitleDocument,
     ) -> Result<Option<SubtitleDocument>, AlignmentError> {
@@ -103,6 +106,8 @@ impl LyricsAligner for WhisperXAligner {
                         })
                         .collect::<PyResult<Vec<_>>>()?;
 
+                    // Need to check that length of subtitle_document.cues 
+                    // is the same as the length of aligned_cues
                     Ok(SubtitleCue {
                         id: subtitle_document.cues[i].id,
                         start,
@@ -121,14 +126,4 @@ impl LyricsAligner for WhisperXAligner {
 
         Ok(Some(aligned_subtitle_document))
     }
-}
-
-fn timedelta_to_duration(timedelta: &Bound<'_, PyAny>) -> PyResult<chrono::Duration> {
-    let days: i64 = timedelta.getattr("days")?.extract()?;
-    let seconds: i64 = timedelta.getattr("seconds")?.extract()?;
-    let microseconds: i64 = timedelta.getattr("microseconds")?.extract()?;
-
-    Ok(chrono::Duration::days(days)
-        + chrono::Duration::seconds(seconds)
-        + chrono::Duration::microseconds(microseconds))
 }
