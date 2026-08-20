@@ -25,10 +25,10 @@ class WhisperXAligner(Aligner):
         aligned_cues: List[AlignedCue] = []
         for index, segment in enumerate(result["segments"]):
             segment_start = timedelta(
-                seconds=segments[index].get("start", segment["start"])
+                seconds=min(segments[index].get("start"), segment["start"])
             )
             segment_end = timedelta(
-                seconds=segments[index].get("end", segment["end"])
+                seconds=min(segments[index].get("end"), segment["end"])
             )
             segment_words = segment.get("words", [])
             print(f'\n{segment["start"]}')
