@@ -108,6 +108,7 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                             };
                             app.push_to_history(edit);
                         }
+                        SubtitleContent::Words(words) => todo!(),
                     }
                 }
                 KeyCode::Backspace => {
@@ -127,6 +128,7 @@ pub fn handle_key<R: Renderer, S: Synchronizer>(
                             };
                             app.push_to_history(edit);
                         }
+                        SubtitleContent::Words(words) => todo!(),
                     }
                 }
 

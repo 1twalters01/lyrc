@@ -45,6 +45,7 @@ impl LrcWriter {
             let timestamp = Self::format_timestamp(cue.start);
             let text = match &cue.content {
                 SubtitleContent::Text(text) => text,
+                SubtitleContent::Words(words) => todo!(),
             };
 
             output.push_str(&format!("[{}]{}\n", timestamp, text));

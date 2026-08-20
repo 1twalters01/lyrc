@@ -104,4 +104,12 @@ pub struct SubtitleCue {
 #[derive(Clone, Debug, PartialEq)]
 pub enum SubtitleContent {
     Text(String),
+    Words(Vec<AlignedWord>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlignedWord {
+    pub start: Duration,
+    pub end: Duration,
+    pub content: String,
 }

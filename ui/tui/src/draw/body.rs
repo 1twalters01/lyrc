@@ -36,6 +36,7 @@ pub fn draw_body(
 
                     let content = match &cue.content.clone() {
                         SubtitleContent::Text(content) => content.clone(),
+                        SubtitleContent::Words(words) => todo!(),
                     };
 
                     format!("{}-{} {}", start_timestamp, end_timestamp, content)

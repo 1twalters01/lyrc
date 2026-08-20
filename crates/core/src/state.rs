@@ -1,7 +1,9 @@
 use std::time::Instant;
 
 use mpris::{
-    client::MprisClient, playback::{PlaybackStatus, PlayerEvent}, track::Track
+    client::MprisClient,
+    playback::{PlaybackStatus, PlayerEvent},
+    track::Track,
 };
 use subtitles::subtitles::SubtitleDocument;
 
@@ -42,7 +44,11 @@ impl AppState {
         }
     }
 
-    pub async fn update(&mut self, mpris: &mut MprisClient, event: &PlayerEvent) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn update(
+        &mut self,
+        mpris: &mut MprisClient,
+        event: &PlayerEvent,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
             PlayerEvent::TrackChanged(track) => {
                 if self.track.as_ref() != Some(track) {
@@ -53,7 +59,7 @@ impl AppState {
                 self.subtitle_document = match self.track {
                     Some(ref track) => match &track.get_lrc_file_path() {
                         Some(lyrics_file_path) => {
-                           SubtitleDocument::from_pathbuf(lyrics_file_path.clone()).ok()
+                            SubtitleDocument::from_pathbuf(lyrics_file_path.clone()).ok()
                         }
                         None => None,
                     },
