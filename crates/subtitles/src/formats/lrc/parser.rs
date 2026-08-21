@@ -1,8 +1,11 @@
+use std::str::FromStr;
+
 use chrono::Duration;
 use uuid::Uuid;
 
 use crate::{
     formats::lrc::error::LrcError,
+    language::Language,
     parser::SubtitleParser,
     subtitles::{SubtitleContent, SubtitleCue, SubtitleDocument},
 };
@@ -41,7 +44,11 @@ impl SubtitleParser for LrcParser {
             .map(|line| Self::parse_line(line))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(LrcParser::build_subtitle_document(lrc_lines))
+        let mut subtitle_document = LrcParser::build_subtitle_document(lrc_lines);
+
+        subtitle_document.update_languages();
+
+        Ok(subtitle_document)
     }
 }
 
@@ -180,7 +187,11 @@ impl LrcParser {
                 LrcLine::Metadata { key, value } => match key.as_str() {
                     "ti" => subtitle_document.metadata.title = Some(value),
                     "al" => subtitle_document.metadata.album = Some(value),
-                    "la" => subtitle_document.metadata.languages.push(value),
+                    "la" => {
+                        if let Some(code) = Language::from_str(&value).ok() {
+                            subtitle_document.metadata.languages.push(code.into())
+                        }
+                    }
                     "ar" => subtitle_document
                         .metadata
                         .artists

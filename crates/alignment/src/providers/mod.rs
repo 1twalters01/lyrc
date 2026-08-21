@@ -1,2 +1,2 @@
-pub mod whisperx;
 pub mod aeneas;
+pub mod whisperx;

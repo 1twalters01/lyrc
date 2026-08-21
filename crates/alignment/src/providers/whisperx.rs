@@ -28,7 +28,8 @@ impl LyricsAligner for WhisperXAligner {
             .languages
             .first()
             .ok_or(AlignmentError::NoLanguageCode)?
-            .clone();
+            .as_code_2();
+        println!("language code: {}", language_code);
         let device = "cuda"; // Store in Config crate
 
         let aligned_cues = Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
@@ -106,7 +107,7 @@ impl LyricsAligner for WhisperXAligner {
                         })
                         .collect::<PyResult<Vec<_>>>()?;
 
-                    // Need to check that length of subtitle_document.cues 
+                    // Need to check that length of subtitle_document.cues
                     // is the same as the length of aligned_cues
                     Ok(SubtitleCue {
                         id: subtitle_document.cues[i].id,

@@ -1,11 +1,13 @@
 use crate::{
     formats::lrc::{parser::LrcParser, writer::LrcWriter},
+    language::Language,
     parser::SubtitleParser,
     writer::SubtitleWriter,
 };
 use chrono::Duration;
-use std::{fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 use uuid::Uuid;
+use whatlang::{Lang, detect_lang};
 
 #[derive(Clone, Debug)]
 pub struct SubtitleDocument {
@@ -61,6 +63,24 @@ impl SubtitleDocument {
             None => Ok(()),
         }
     }
+
+    pub fn update_languages(&mut self) {
+        let text = self
+            .cues
+            .iter()
+            .filter_map(|cue| match &cue.content {
+                SubtitleContent::Text(text) => Some(text.as_str()),
+                SubtitleContent::Words(_) => None,
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        if let Some(info) = whatlang::detect(&text) {
+            self.metadata.languages.push(info.lang().into());
+        }
+
+        self.metadata.languages.dedup();
+    }
 }
 
 impl Default for SubtitleDocument {
@@ -77,7 +97,7 @@ pub struct SubtitleMetadata {
     pub album: Option<String>,
     pub title: Option<String>,
     pub artists: Vec<String>,
-    pub languages: Vec<String>,
+    pub languages: Vec<Language>,
     pub file_path: Option<PathBuf>,
 }
 

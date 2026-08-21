@@ -29,11 +29,6 @@ impl LyricsAligner for WhisperXAligner {
             .first()
             .ok_or(AlignmentError::NoLanguageCode)?
             .clone();
-        
-
-
-
-
 
         Ok(Some(subtitle_document))
     }
