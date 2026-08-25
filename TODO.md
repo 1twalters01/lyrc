@@ -1,6 +1,4 @@
 # V1
-* Need to validate the subtitle document
-
 * Fix downloading
 * Have more download providers (maybe 2 more)
 

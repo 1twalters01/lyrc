@@ -44,8 +44,15 @@ impl LrcWriter {
         for cue in &document.cues {
             let timestamp = Self::format_timestamp(cue.start);
             let text = match &cue.content {
-                SubtitleContent::Text(text) => text,
-                SubtitleContent::Words(words) => todo!(),
+                SubtitleContent::Text(text) => text.to_string(),
+                SubtitleContent::Words(words) => {
+                    let mut text = String::new();
+                    for word in words {
+                        text.push_str(&word.content);
+                        text.push_str(" ");
+                    }
+                    text
+                }
             };
 
             output.push_str(&format!("[{}]{}\n", timestamp, text));

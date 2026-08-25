@@ -5,9 +5,8 @@ use crate::{
     writer::SubtitleWriter,
 };
 use chrono::Duration;
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{fs, path::PathBuf};
 use uuid::Uuid;
-use whatlang::{Lang, detect_lang};
 
 #[derive(Clone, Debug)]
 pub struct SubtitleDocument {
