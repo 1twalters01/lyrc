@@ -3,6 +3,7 @@ use std::{error::Error, fmt};
 #[derive(Debug)]
 pub enum ElrcError {
     MissingTagClosingBracket,
+    MissingWordTimeClosingBracket,
     InvalidTimestamp,
     InvalidTimestampMillisecondFormat,
     MissingColonSeparatorInTimestamp,
@@ -17,6 +18,9 @@ impl fmt::Display for ElrcError {
         match self {
             ElrcError::MissingTagClosingBracket => {
                 write!(f, "Missing tag closing bracket")
+            }
+            ElrcError::MissingWordTimeClosingBracket => {
+                write!(f, "Missing word time closing bracket")
             }
             ElrcError::InvalidTimestamp => write!(f, "Invalid timestamp"),
             ElrcError::InvalidTimestampMillisecondFormat => {

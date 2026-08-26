@@ -1,0 +1,161 @@
+use std::str::FromStr;
+
+use chrono::Duration;
+use uuid::Uuid;
+
+use crate::{
+    formats::elrc::error::ElrcError,
+    language::Language,
+    parser::SubtitleParser,
+    subtitles::{SubtitleContent, SubtitleCue, SubtitleDocument},
+};
+
+enum ElrcLine {
+    Metadata {
+        key: String,
+        value: String,
+    },
+
+    Lyric {
+        timestamps: Vec<Duration>,
+        text: String,
+    },
+    Empty,
+    Unknown {
+        value: String,
+    },
+}
+
+enum ElrcLineType {
+    Metadata,
+    Lyric,
+    Empty,
+    Unknown,
+}
+
+pub struct ElrcParser;
+
+impl SubtitleParser for ElrcParser {
+    type Error = ElrcError;
+
+    fn parse(&self, input: &str) -> Result<SubtitleDocument, Self::Error> {
+        let lrc_lines = input
+            .lines()
+            .map(|line| Self::parse_line(line))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let mut subtitle_document = ElrcParser::build_subtitle_document(lrc_lines);
+
+        subtitle_document.update_languages();
+
+        Ok(subtitle_document)
+    }
+}
+
+impl ElrcParser {
+    fn parse_line(line: &str) -> Result<ElrcLine, ElrcError> {
+        match Self::get_line_type(line) {
+            ElrcLineType::Metadata => Self::parse_metadata(line),
+            ElrcLineType::Lyric => Self::parse_lyric(line),
+            ElrcLineType::Empty => Ok(ElrcLine::Empty),
+            ElrcLineType::Unknown => Ok(ElrcLine::Unknown { value: line.into() }),
+        }
+    }
+
+    fn get_line_type(line: &str) -> ElrcLineType {
+        let line = line.trim();
+
+        if line.is_empty() {
+            return ElrcLineType::Empty;
+        }
+
+        let Some(tag) = line
+            .strip_prefix('[')
+            .and_then(|s| s.split_once(']'))
+            .map(|(tag, _)| tag)
+        else {
+            return ElrcLineType::Unknown;
+        };
+
+        if Self::parse_timestamp(tag).is_ok() {
+            return ElrcLineType::Lyric;
+        }
+
+        if let Some((key, _)) = tag.split_once(":") {
+            if key.len() >= 2 && key.chars().all(|c| c.is_ascii_alphabetic()) {
+                return ElrcLineType::Metadata;
+            }
+        }
+
+        ElrcLineType::Unknown
+    }
+
+    fn parse_metadata(line: &str) -> Result<ElrcLine, ElrcError> {
+        let tag = line
+            .strip_prefix('[')
+            .and_then(|s| s.split_once(']'))
+            .map(|(tag, _)| tag)
+            .ok_or(ElrcError::InvalidMetadata)?;
+
+        let (key, value) = tag
+            .split_once(":")
+            .ok_or(ElrcError::MissingMetadataSeparator)?;
+
+        Ok(ElrcLine::Metadata {
+            key: key.to_owned(),
+            value: value.to_owned(),
+        })
+    }
+
+    fn parse_timestamp(input: &str) -> Result<Duration, LrcError> {
+        let trimmed_input = input.trim_start_matches('[').trim_end_matches(']');
+
+        let colon_idx = match trimmed_input.find(':') {
+            Some(colon_idx) => colon_idx,
+            None => return Err(LrcError::MissingColonSeparatorInTimestamp),
+        };
+
+        let minutes = match trimmed_input[..colon_idx].parse::<i64>() {
+            Ok(minutes) => Duration::minutes(minutes),
+            Err(_) => return Err(LrcError::InvalidTimestamp),
+        };
+
+        let remainder = &trimmed_input[colon_idx + 1..];
+        let (seconds, milliseconds) = match remainder.find('.') {
+            Some(dot_idx) => {
+                let seconds = match remainder[..dot_idx].parse::<i64>() {
+                    Ok(seconds) => Duration::seconds(seconds),
+                    Err(_) => return Err(LrcError::InvalidTimestamp),
+                };
+
+                let milliseconds_str = &remainder[dot_idx + 1..];
+                let milliseconds = match milliseconds_str.len() {
+                    2 => match milliseconds_str.parse::<i64>() {
+                        Ok(milliseconds) => Duration::milliseconds(milliseconds * 10),
+                        Err(_) => return Err(LrcError::InvalidTimestamp),
+                    },
+                    3 => match milliseconds_str.parse::<i64>() {
+                        Ok(milliseconds) => Duration::milliseconds(milliseconds),
+                        Err(_) => return Err(LrcError::InvalidTimestamp),
+                    },
+                    _ => {
+                        return Err(LrcError::InvalidTimestampMillisecondFormat);
+                    }
+                };
+
+                (seconds, milliseconds)
+            }
+            None => {
+                let seconds = match remainder.parse::<i64>() {
+                    Ok(seconds) => Duration::seconds(seconds),
+                    Err(_) => return Err(LrcError::InvalidTimestamp),
+                };
+                let milliseconds = Duration::milliseconds(0);
+                (seconds, milliseconds)
+            }
+        };
+
+        Ok(minutes + seconds + milliseconds)
+    }
+}
+

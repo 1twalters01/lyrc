@@ -107,27 +107,6 @@ impl LrcParser {
         })
     }
 
-    fn parse_lyric(line: &str) -> Result<LrcLine, LrcError> {
-        let mut remaining_line = line;
-        let mut timestamps = Vec::new();
-
-        while let Some(stripped_line) = remaining_line.strip_prefix('[') {
-            let Some(end) = stripped_line.find(']') else {
-                return Err(LrcError::MissingTagClosingBracket);
-            };
-
-            let tag = &stripped_line[..end];
-            remaining_line = &stripped_line[end + 1..];
-
-            timestamps.push(LrcParser::parse_timestamp(tag)?);
-        }
-
-        Ok(LrcLine::Lyric {
-            timestamps,
-            text: remaining_line.to_owned(),
-        })
-    }
-
     fn parse_timestamp(input: &str) -> Result<Duration, LrcError> {
         let trimmed_input = input.trim_start_matches('[').trim_end_matches(']');
 
@@ -179,12 +158,33 @@ impl LrcParser {
         Ok(minutes + seconds + milliseconds)
     }
 
+    fn parse_lyric(line: &str) -> Result<LrcLine, LrcError> {
+        let mut remaining_line = line;
+        let mut timestamps = Vec::new();
+
+        while let Some(stripped_line) = remaining_line.strip_prefix('[') {
+            let Some(end) = stripped_line.find(']') else {
+                return Err(LrcError::MissingTagClosingBracket);
+            };
+
+            let tag = &stripped_line[..end];
+            remaining_line = &stripped_line[end + 1..];
+
+            timestamps.push(LrcParser::parse_timestamp(tag)?);
+        }
+
+        Ok(LrcLine::Lyric {
+            timestamps,
+            text: remaining_line.to_owned(),
+        })
+    }
+
     fn build_subtitle_document(lrc_lines: Vec<LrcLine>) -> SubtitleDocument {
         let mut subtitle_document = SubtitleDocument::default();
 
         for lrc_line in lrc_lines {
             match lrc_line {
-                LrcLine::Metadata { key, value } => match key.as_str() {
+                LrcLine::Metadata { key, value } => match key.to_ascii_lowercase().as_str() {
                     "ti" => subtitle_document.metadata.title = Some(value),
                     "al" => subtitle_document.metadata.album = Some(value),
                     "la" => {
@@ -211,13 +211,13 @@ impl LrcParser {
                     subtitle_document.cues.extend(cues);
                 }
                 LrcLine::Empty => {}
-                LrcLine::Unknown { value: _val } => {}
+                LrcLine::Unknown { value } => {}
             }
         }
 
         subtitle_document.cues.sort_by_key(|c| c.start);
 
-        for i in 0..subtitle_document.cues.len() - 1 {
+        for i in 0..subtitle_document.cues.len().saturating_sub(1) {
             let start = subtitle_document.cues[i].start;
 
             if let Some(next) = subtitle_document.cues[i + 1..]
