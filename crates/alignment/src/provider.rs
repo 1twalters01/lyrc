@@ -16,6 +16,7 @@ pub trait LyricsAligner: Send + Sync {
 pub enum AlignmentError {
     PythonError { error: PyErr },
     NoAudioFilePath,
+    NoSubtitles,
     InvalidAudioPath,
     NoLanguageCode,
     AlreadyAligned,
@@ -36,6 +37,9 @@ impl fmt::Display for AlignmentError {
             AlignmentError::NoAudioFilePath => {
                 write!(f, "No audio file path found for current song")
             }
+            AlignmentError::NoSubtitles => {
+                write!(f, "No subtitles found for current song")
+            }
             AlignmentError::InvalidAudioPath => {
                 write!(f, "Invalid audio path")
             }
@@ -54,6 +58,7 @@ impl Error for AlignmentError {
         match self {
             AlignmentError::PythonError { error } => Some(error),
             AlignmentError::NoAudioFilePath => None,
+            AlignmentError::NoSubtitles => None,
             AlignmentError::InvalidAudioPath => None,
             AlignmentError::NoLanguageCode => None,
             AlignmentError::AlreadyAligned => None,

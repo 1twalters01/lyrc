@@ -54,13 +54,21 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                 Frontend::Tui => TuiRenderer::new().unwrap(),
             };
 
-            let mut app = App::new(renderer, synchronizer, clock_offset, player).await;
-            app.update_track_and_subtitle_document_information().await;
-
             let (alignment_req_tx, alignment_req_rx) =
                 tokio::sync::mpsc::channel::<AlignmentRequest>(1);
             let (alignment_res_tx, mut alignment_res_rx) =
                 tokio::sync::mpsc::channel::<AlignmentResult>(1);
+
+            let mut app = App::new(
+                renderer,
+                synchronizer,
+                clock_offset,
+                player,
+                alignment_req_tx,
+            )
+            .await;
+            app.update_track_and_subtitle_document_information().await;
+
             start_alignment_worker(alignment_req_rx, alignment_res_tx);
 
             let mpris = app.mpris.clone();

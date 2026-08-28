@@ -5,6 +5,7 @@ mod events;
 
 // Clean up the code
 mod addition;
+mod alignment;
 mod deletion;
 mod history;
 mod modes;
