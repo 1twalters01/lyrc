@@ -1309,6 +1309,7 @@ dependencies = [
 name = "lyrc"
 version = "0.1.0"
 dependencies = [
+ "alignment",
  "chrono",
  "clap",
  "crossterm",
@@ -1328,10 +1329,12 @@ dependencies = [
 name = "lyrc_core"
 version = "0.1.0"
 dependencies = [
+ "alignment",
  "chrono",
  "mpris",
  "subtitles",
  "synchronizer",
+ "tokio",
  "uuid",
  "zbus",
 ]

@@ -1,3 +1,4 @@
+use alignment::messages::AlignmentResult;
 use chrono::Duration;
 use mpris::playback::{PlaybackStatus, PlayerEvent};
 use synchronizer::traits::Synchronizer;
@@ -22,6 +23,25 @@ where
         self.synchronizer.update(subtitle_document, &position);
 
         self.render()?;
+        Ok(())
+    }
+
+    pub fn handle_alignment_event(
+        &mut self,
+        // event: AlignmentEvent,
+        event: AlignmentResult,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match event {
+            AlignmentResult::Complete(subtitle_document) => {
+                // Save this to an aligned_subtitle_document variable?
+                self.state.subtitle_document = subtitle_document;
+                self.state.alignment_running = false;
+            }
+            AlignmentResult::Cancelled => self.state.alignment_running = false,
+            AlignmentResult::Failed(error) => {
+                self.state.alignment_running = false;
+            }
+        }
         Ok(())
     }
 

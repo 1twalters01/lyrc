@@ -3,8 +3,10 @@ use std::time::Duration as std_duration;
 use crate::{
     args::{Args, Command, Frontend},
     keyboard,
+    workers::alignment::start_alignment_worker,
 };
 
+use alignment::messages::{AlignmentRequest, AlignmentResult};
 use lyrc_core::app::App;
 use mpris::client::MprisClient;
 use synchronizer::strategies::lyrics::LyricsSynchronizer;
@@ -55,6 +57,12 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             let mut app = App::new(renderer, synchronizer, clock_offset, player).await;
             app.update_track_and_subtitle_document_information().await;
 
+            let (alignment_req_tx, alignment_req_rx) =
+                tokio::sync::mpsc::channel::<AlignmentRequest>(1);
+            let (alignment_res_tx, mut alignment_res_rx) =
+                tokio::sync::mpsc::channel::<AlignmentResult>(1);
+            start_alignment_worker(alignment_req_rx, alignment_res_tx);
+
             let mpris = app.mpris.clone();
             let mut events = mpris.events().await?;
             let mut tick = tokio::time::interval(std_duration::from_secs_f64(1f64 / fps));
@@ -67,6 +75,8 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                     _ = tick.tick() => app.handle_tick_event().await?,
 
                     Some(Ok(Event::Key(key))) = keyboard.next() => keyboard::handle_keyboard_event(&mut app, key, &config).await?,
+
+                    Some(result) = alignment_res_rx.recv() => app.handle_alignment_event(result)?,
                 }
 
                 if app.state.quit == true {

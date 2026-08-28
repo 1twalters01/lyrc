@@ -8,9 +8,9 @@ use crate::{
     provider::{AlignmentError, LyricsAligner},
 };
 
-pub struct WhisperXAligner;
+pub struct AeneasAligner;
 
-impl LyricsAligner for WhisperXAligner {
+impl LyricsAligner for AeneasAligner {
     fn align_cues(
         // &self,
         audio_file_path: PathBuf,

@@ -22,13 +22,13 @@ impl SubtitleWriter for LrcWriter {
 }
 
 impl LrcWriter {
-    pub fn write_metadata(subtitle_metadata: &SubtitleMetadata, file: &mut String) {
-        if let Some(album) = &subtitle_metadata.album {
-            file.push_str(&format!("[al:{album}]\n"));
-        }
-
+    fn write_metadata(subtitle_metadata: &SubtitleMetadata, file: &mut String) {
         if let Some(title) = &subtitle_metadata.title {
             file.push_str(&format!("[ti:{title}]\n"));
+        }
+
+        if let Some(album) = &subtitle_metadata.album {
+            file.push_str(&format!("[al:{album}]\n"));
         }
 
         if !subtitle_metadata.artists.is_empty() {
@@ -36,7 +36,15 @@ impl LrcWriter {
         }
 
         if !subtitle_metadata.languages.is_empty() {
-            file.push_str(&format!("[la:{}]\n", subtitle_metadata.artists.join(", ")));
+            file.push_str(&format!(
+                "[la:{}]\n",
+                subtitle_metadata
+                    .languages
+                    .iter()
+                    .map(|l| l.as_name())
+                    .collect::<Vec<&str>>()
+                    .join(", ")
+            ));
         }
     }
 

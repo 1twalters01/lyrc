@@ -22,13 +22,13 @@ impl SubtitleWriter for ElrcWriter {
 }
 
 impl ElrcWriter {
-    pub fn write_metadata(subtitle_metadata: &SubtitleMetadata, file: &mut String) {
-        if let Some(album) = &subtitle_metadata.album {
-            file.push_str(&format!("[al:{album}]\n"));
-        }
-
+    fn write_metadata(subtitle_metadata: &SubtitleMetadata, file: &mut String) {
         if let Some(title) = &subtitle_metadata.title {
             file.push_str(&format!("[ti:{title}]\n"));
+        }
+
+        if let Some(album) = &subtitle_metadata.album {
+            file.push_str(&format!("[al:{album}]\n"));
         }
 
         if !subtitle_metadata.artists.is_empty() {
@@ -36,7 +36,15 @@ impl ElrcWriter {
         }
 
         if !subtitle_metadata.languages.is_empty() {
-            file.push_str(&format!("[la:{}]\n", subtitle_metadata.artists.join(", ")));
+            file.push_str(&format!(
+                "[la:{}]\n",
+                subtitle_metadata
+                    .languages
+                    .iter()
+                    .map(|l| l.as_name())
+                    .collect::<Vec<&str>>()
+                    .join(", ")
+            ));
         }
     }
 
@@ -47,11 +55,16 @@ impl ElrcWriter {
                 SubtitleContent::Text(text) => text.to_string(),
                 SubtitleContent::Words(words) => {
                     let mut text = String::new();
-                    for word in words {
-                        let start = &format!("<{}>", Self::format_timestamp(word.start));
-                        text.push_str(start);
-                        text.push_str(&word.content);
-                        text.push_str(" ");
+                    for (index, word) in words.iter().enumerate() {
+                        if index > 0 {
+                            text.push_str(" ");
+                        }
+
+                        text.push_str(&format!(
+                            "<{}>{}",
+                            Self::format_timestamp(word.start),
+                            word.content
+                        ));
                     }
                     text
                 }

@@ -4,6 +4,7 @@ use pyo3::PyResult;
 mod args;
 mod keyboard;
 mod run;
+mod workers;
 // move to config crate and improve
 mod config;
 

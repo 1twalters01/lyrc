@@ -213,9 +213,11 @@ impl ElrcParser {
             "ti" => subtitle_document.metadata.title = Some(String::from(value)),
             "al" => subtitle_document.metadata.album = Some(String::from(value)),
             "la" => {
-                if let Some(code) = Language::from_str(&value).ok() {
-                    subtitle_document.metadata.languages.push(code.into())
-                }
+                subtitle_document.metadata.languages.extend(
+                    value
+                        .split(',')
+                        .filter_map(|language| Language::from_str(language.trim()).ok()),
+                );
             }
             "ar" => subtitle_document
                 .metadata
