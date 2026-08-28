@@ -7,7 +7,7 @@ use synchronizer::traits::Synchronizer;
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub fn push_to_history(&mut self, edit: Edit) {

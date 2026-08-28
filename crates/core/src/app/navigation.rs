@@ -1,15 +1,35 @@
-use synchronizer::traits::Synchronizer;
+use synchronizer::traits::{CueIndexed, Synchronizer};
 
 use crate::{app::App, mode::AppMode, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
+    pub fn get_first_active_index(&self) -> Option<S::Active> {
+        match &self.state.subtitle_document {
+            Some(_document) => Some(
+                self.synchronizer
+                    .get_active_indices()
+                    .first()
+                    .cloned()
+                    .unwrap_or_default(),
+            ),
+            None => None,
+        }
+    }
+
     pub fn get_first_active_cue_index(&self) -> Option<usize> {
         match &self.state.subtitle_document {
-            Some(_document) => match self.synchronizer.get_active_cue_indices().first() {
+            Some(_document) => match self
+                .synchronizer
+                .get_active_indices()
+                .iter()
+                .map(|i| i.cue_index().cue)
+                .collect::<Vec<_>>()
+                .first()
+            {
                 Some(line_idx) => Some(line_idx.clone()),
                 None => Some(0),
             },

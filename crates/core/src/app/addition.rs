@@ -6,7 +6,7 @@ use crate::{app::App, history::IndexedSubtitleCue, mode::AppMode, renderer::Rend
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub fn add_cue_after_current_cue(&mut self) {

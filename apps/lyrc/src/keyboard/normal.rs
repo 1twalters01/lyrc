@@ -10,7 +10,7 @@ use subtitles::{
 };
 use synchronizer::traits::Synchronizer;
 
-pub async fn handle_key<R: Renderer, S: Synchronizer>(
+pub async fn handle_key<R: Renderer<S::Active>, S: Synchronizer>(
     app: &mut App<R, S>,
     key: KeyEvent,
     config: &crate::config::Config,
@@ -401,6 +401,9 @@ pub async fn handle_key<R: Renderer, S: Synchronizer>(
             let edit = Edit::EditCueTimes { changes };
             app.push_to_history(edit);
         }
+
+        // align lyrics
+        KeyCode::Char('a') => app.start_alignment().await?,
 
         // download lyrics
         KeyCode::Char('d') => {

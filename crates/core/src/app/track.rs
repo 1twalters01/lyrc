@@ -5,7 +5,7 @@ use crate::{app::App, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub async fn update_track_and_subtitle_document_information(&mut self) {

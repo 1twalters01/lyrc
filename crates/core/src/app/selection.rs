@@ -4,7 +4,7 @@ use crate::{app::App, mode::AppMode, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub fn toggle_select_line(&mut self) {

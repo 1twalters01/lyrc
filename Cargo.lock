@@ -2538,6 +2538,7 @@ dependencies = [
  "lyrc_core",
  "ratatui",
  "subtitles",
+ "synchronizer",
 ]
 
 [[package]]

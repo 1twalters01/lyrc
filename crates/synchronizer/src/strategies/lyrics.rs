@@ -1,21 +1,39 @@
 use chrono::Duration;
 use subtitles::subtitles::SubtitleDocument;
 
-use crate::traits::Synchronizer;
+use crate::traits::{CueIndexed, Synchronizer};
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CueIndex {
+    pub cue: usize,
+}
+
+impl Default for CueIndex {
+    fn default() -> Self {
+        Self { cue: 0 }
+    }
+}
+
+impl CueIndexed for CueIndex {
+    fn cue_index(&self) -> Self {
+        *self
+    }
+}
 
 pub enum LyricsSyncEvent {
     Changed {
-        old_cues: Vec<usize>,
-        new_cues: Vec<usize>,
+        old_cues: Vec<CueIndex>,
+        new_cues: Vec<CueIndex>,
     },
 }
 
 pub struct LyricsSynchronizer {
-    active_cues: Vec<usize>,
+    active_cues: Vec<CueIndex>,
 }
 
 impl Synchronizer for LyricsSynchronizer {
     type Event = LyricsSyncEvent;
+    type Active = CueIndex;
 
     fn update(
         &mut self,
@@ -43,7 +61,7 @@ impl Synchronizer for LyricsSynchronizer {
         None
     }
 
-    fn get_active_cue_indices(&self) -> &[usize] {
+    fn get_active_indices(&self) -> &[CueIndex] {
         &self.active_cues
     }
 }
@@ -58,7 +76,7 @@ impl LyricsSynchronizer {
     pub fn get_cues_at(
         subtitle_document: &SubtitleDocument,
         position: Option<&Duration>,
-    ) -> Vec<usize> {
+    ) -> Vec<CueIndex> {
         let position = match position {
             Some(position) => position,
             None => return Vec::new(),
@@ -73,7 +91,7 @@ impl LyricsSynchronizer {
             .enumerate()
             .filter_map(|(index, cue)| {
                 if position < &cue.end {
-                    Some(index)
+                    Some(CueIndex { cue: index })
                 } else {
                     None
                 }

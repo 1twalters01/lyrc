@@ -1,7 +1,14 @@
+use std::fmt::Debug;
+
 use lyrc_core::{mode::AppMode, state::AppState};
 use ratatui::{Frame, layout::Rect, widgets::Paragraph};
 
-pub fn draw_footer(frame: &mut Frame, area: Rect, state: &mut AppState, active_cues: &[usize]) {
+pub fn draw_footer<A: Debug>(
+    frame: &mut Frame,
+    area: Rect,
+    state: &mut AppState,
+    active_cues: &[A],
+) {
     let selected_cue = match state.app_mode {
         AppMode::Normal => None,
         AppMode::Select {

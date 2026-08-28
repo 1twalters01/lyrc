@@ -9,12 +9,36 @@ use std::{fs, path::PathBuf};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
+pub enum SyncLevel {
+    None,
+    Cue,
+    Word,
+}
+
+#[derive(Clone, Debug)]
 pub struct SubtitleDocument {
     pub metadata: SubtitleMetadata,
     pub cues: Vec<SubtitleCue>,
 }
 
 impl SubtitleDocument {
+    pub fn sync_level(&self) -> SyncLevel {
+        if self
+            .cues
+            .iter()
+            .any(|cue| matches!(cue.content, SubtitleContent::Words(_)))
+        {
+            SyncLevel::Word
+        } else if self.cues.iter().any(|cue| {
+            // cue.start
+            true
+        }) {
+            SyncLevel::Cue
+        } else {
+            SyncLevel::None
+        }
+    }
+
     pub fn from_pathbuf(path: PathBuf) -> Result<SubtitleDocument, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(&path)?;
         match &path.extension() {

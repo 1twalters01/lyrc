@@ -31,15 +31,15 @@ class WhisperXAligner(Aligner):
                 seconds=min(segments[index].get("end"), segment["end"])
             )
             segment_words = segment.get("words", [])
-            print(f'\n{segment["start"]}')
-            print(f"\n{segment_start} -> {segment_end}")
+            # print(f'\n{segment["start"]}')
+            # print(f"\n{segment_start} -> {segment_end}")
 
             words: List[Word] = []
             for segment_word in segment_words:
                 word_start = timedelta(seconds=segment_word.get("start", segment_start))
                 word_end = timedelta(seconds=segment_word.get("end", segment_end))
                 word_text = segment_word.get("word", "").strip()
-                print(f"    {word_start} -> {word_end}: {word_text}")
+                # print(f"    {word_start} -> {word_end}: {word_text}")
                 
                 words.append(
                     Word(

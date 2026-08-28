@@ -7,7 +7,7 @@ use lyrc_core::{
 use subtitles::subtitles::SubtitleDocument;
 use synchronizer::traits::Synchronizer;
 
-pub async fn handle_key<R: Renderer, S: Synchronizer>(
+pub async fn handle_key<R: Renderer<S::Active>, S: Synchronizer>(
     app: &mut App<R, S>,
     key: KeyEvent,
     cue_index: usize,

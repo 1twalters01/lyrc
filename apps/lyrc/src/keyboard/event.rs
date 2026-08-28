@@ -4,7 +4,7 @@ use synchronizer::traits::Synchronizer;
 
 use crate::{config::Config, keyboard};
 
-pub async fn handle_keyboard_event<R: Renderer, S: Synchronizer>(
+pub async fn handle_keyboard_event<R: Renderer<S::Active>, S: Synchronizer>(
     app: &mut App<R, S>,
     key: KeyEvent,
     config: &Config,

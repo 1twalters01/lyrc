@@ -6,7 +6,7 @@ use crate::{app::App, history::CueTimeChange, mode::AppMode, renderer::Renderer}
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     // change error types in this file

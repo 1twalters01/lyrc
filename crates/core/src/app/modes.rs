@@ -1,8 +1,4 @@
-use std::fs;
-
-use chrono::Duration;
-use subtitles::subtitles::SubtitleDocument;
-use synchronizer::traits::Synchronizer;
+use synchronizer::traits::{CueIndexed, Synchronizer};
 
 use crate::{
     app::App,
@@ -12,7 +8,7 @@ use crate::{
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub fn switch_to_normal_mode(&mut self) {
@@ -28,7 +24,10 @@ where
             AppMode::Normal => (
                 *self
                     .synchronizer
-                    .get_active_cue_indices()
+                    .get_active_indices()
+                    .iter()
+                    .map(|i| i.cue_index().cue)
+                    .collect::<Vec<_>>()
                     .first()
                     .unwrap_or(&0),
                 Vec::new(),
@@ -67,7 +66,10 @@ where
             AppMode::Normal => {
                 let index = *self
                     .synchronizer
-                    .get_active_cue_indices()
+                    .get_active_indices()
+                    .iter()
+                    .map(|i| i.cue_index().cue)
+                    .collect::<Vec<_>>()
                     .first()
                     .unwrap_or(&0);
                 let original_content = subtitle_document.cues[index].content.clone();

@@ -7,12 +7,13 @@ use ratatui::{
     widgets::Paragraph,
 };
 use subtitles::subtitles::SubtitleContent;
+use synchronizer::traits::CueIndexed;
 
-pub fn draw_body(
+pub fn draw_body<A: CueIndexed>(
     frame: &mut Frame,
     area: Rect,
     state: &mut AppState,
-    active_cue_indices: &[usize],
+    active_cue_indices: &[A],
 ) {
     let subtitle_document = state.subtitle_document.as_ref();
     let cues = subtitle_document.map(|document| document.cues.clone());
@@ -36,7 +37,13 @@ pub fn draw_body(
 
                     let content = match &cue.content.clone() {
                         SubtitleContent::Text(content) => content.clone(),
-                        SubtitleContent::Words(words) => todo!(),
+                        SubtitleContent::Words(words) => {
+                            let mut content = String::new();
+                            for word in words {
+                                content.push_str(&word.content);
+                            }
+                            content
+                        }
                     };
 
                     format!("{}-{} {}", start_timestamp, end_timestamp, content)
@@ -71,12 +78,18 @@ pub fn draw_body(
     let mut lines: Vec<Line> = cues_str.into_iter().map(Line::from).collect();
     highlight_lines(
         &mut lines,
-        active_cue_indices,
+        &active_cue_indices
+            .iter()
+            .map(|i| i.cue_index().cue)
+            .collect(),
         selected_line_indices,
         &selected_cues,
     );
 
     let automatic_scroll_offset = active_cue_indices
+        .iter()
+        .map(|i| i.cue_index().cue)
+        .collect::<Vec<_>>()
         .first()
         .unwrap_or(&0usize)
         .saturating_sub(middle);
@@ -101,7 +114,7 @@ pub fn draw_body(
 
 fn highlight_lines(
     lines: &mut [Line],
-    bold_indices: &[usize],
+    bold_indices: &Vec<usize>,
     reverse_indices: &[usize],
     selected_indices: &[usize],
 ) {

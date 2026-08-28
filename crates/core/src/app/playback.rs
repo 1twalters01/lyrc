@@ -6,7 +6,7 @@ use crate::{app::App, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub async fn get_current_position(&self) -> Option<Duration> {

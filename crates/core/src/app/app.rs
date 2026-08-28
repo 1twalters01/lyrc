@@ -8,8 +8,8 @@ use crate::{clock::PlaybackClock, renderer::Renderer, state::AppState};
 
 pub struct App<R, S>
 where
-    R: Renderer,
     S: Synchronizer,
+    R: Renderer<S::Active>,
 {
     pub renderer: R,
     pub synchronizer: S,
@@ -21,7 +21,7 @@ where
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub async fn new(

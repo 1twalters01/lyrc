@@ -7,7 +7,7 @@ use crate::{app::App, renderer::Renderer};
 
 impl<R, S> App<R, S>
 where
-    R: Renderer,
+    R: Renderer<S::Active>,
     S: Synchronizer,
 {
     pub async fn handle_player_event(
@@ -68,7 +68,7 @@ where
 
     fn render(&mut self) -> Result<(), R::Error> {
         let position = self.clock.get_position();
-        let active_cues = self.synchronizer.get_active_cue_indices();
+        let active_cues = self.synchronizer.get_active_indices();
         self.renderer.render(&mut self.state, position, active_cues)
     }
 }
