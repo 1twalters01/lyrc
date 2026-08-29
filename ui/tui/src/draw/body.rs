@@ -1,25 +1,33 @@
-use lyrc_core::{mode::AppMode, state::AppState};
+use lyrc_core::{mode::AppMode, state::AppState, synchronizer::ActiveIndex};
 use ratatui::{
     Frame,
     layout::Rect,
     style::{Modifier, Style},
-    text::Line,
+    text::{Line, Span},
     widgets::Paragraph,
 };
 use subtitles::subtitles::SubtitleContent;
-use synchronizer::traits::CueIndexed;
+use synchronizer::{
+    strategies::words::WordIndex,
+    traits::{ActiveIndexed, CueIndexed},
+};
 
-pub fn draw_body<A: CueIndexed>(
+pub fn draw_body(
     frame: &mut Frame,
     area: Rect,
     state: &mut AppState,
-    active_cue_indices: &[A],
+    active_indices: &Vec<ActiveIndex>,
 ) {
+    let visible_height = area.height as usize;
+    let middle = visible_height / 2;
+
     let subtitle_document = state.subtitle_document.as_ref();
-    let cues = subtitle_document.map(|document| document.cues.clone());
-    let cues_str: Vec<String> = cues
-        .map(|cues| {
-            cues.iter()
+
+    let mut lines: Vec<Line> = subtitle_document
+        .map(|document| {
+            document
+                .cues
+                .iter()
                 .map(|cue| {
                     let start_timestamp = format!(
                         "[{:02}:{:02}.{:03}]",
@@ -34,26 +42,34 @@ pub fn draw_body<A: CueIndexed>(
                         cue.end.num_seconds() % 60,
                         (cue.end.num_milliseconds() % 1000) / 10,
                     );
-
-                    let content = match &cue.content.clone() {
-                        SubtitleContent::Text(content) => content.clone(),
-                        SubtitleContent::Words(words) => {
-                            let mut content = String::new();
-                            for word in words {
-                                content.push_str(&word.content);
-                            }
-                            content
+                    match &cue.content {
+                        SubtitleContent::Text(content) => {
+                            Line::from(format!("{}-{} {}", start_timestamp, end_timestamp, content))
                         }
-                    };
 
-                    format!("{}-{} {}", start_timestamp, end_timestamp, content)
+                        SubtitleContent::Words(words) => {
+                            let mut line = Line::from(Span::raw(format!(
+                                "{}-{}  ",
+                                start_timestamp, end_timestamp
+                            )));
+
+                            line.extend(
+                                words
+                                    .iter()
+                                    .map(|word| {
+                                        let mut spaced_word = word.clone();
+                                        spaced_word.content.push_str(" ");
+                                        Span::raw(spaced_word.content)
+                                    })
+                                    .collect::<Vec<_>>(),
+                            );
+                            line
+                        }
+                    }
                 })
-                .collect::<Vec<_>>()
+                .collect()
         })
         .unwrap_or_default();
-
-    let visible_height = area.height as usize;
-    let middle = visible_height / 2;
 
     let (selected_cue, selected_cues) = match &state.app_mode {
         AppMode::Normal => (None, Vec::new()),
@@ -75,18 +91,16 @@ pub fn draw_body<A: CueIndexed>(
         Some(index) => &Vec::from([index]),
     };
 
-    let mut lines: Vec<Line> = cues_str.into_iter().map(Line::from).collect();
     highlight_lines(
         &mut lines,
-        &active_cue_indices
-            .iter()
-            .map(|i| i.cue_index().cue)
-            .collect(),
+        &active_indices.iter().map(|i| i.cue_index().cue).collect(),
         selected_line_indices,
         &selected_cues,
     );
 
-    let automatic_scroll_offset = active_cue_indices
+    highlight_words(&mut lines, active_indices);
+
+    let automatic_scroll_offset = active_indices
         .iter()
         .map(|i| i.cue_index().cue)
         .collect::<Vec<_>>()
@@ -139,6 +153,21 @@ fn highlight_lines(
             *line = line
                 .clone()
                 .patch_style(Style::default().add_modifier(Modifier::UNDERLINED));
+        }
+    }
+}
+
+fn highlight_words(lines: &mut [Line], active_indices: &Vec<ActiveIndex>) {
+    for index in active_indices {
+        if let ActiveIndex::Word(index) = index {
+            let cue_index = index.cue;
+            let word_index = index.word;
+
+            if let Some(line) = lines.get_mut(cue_index) {
+                if let Some(span) = line.spans.get_mut(word_index + 1) {
+                    span.style = Style::default().red();
+                }
+            }
         }
     }
 }

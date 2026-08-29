@@ -8,10 +8,9 @@ use lyrics::{models::LyricsFormat, service::LyricsService};
 use subtitles::{
     formats::lrc::parser::LrcParser, parser::SubtitleParser, subtitles::SubtitleDocument,
 };
-use synchronizer::traits::Synchronizer;
 
-pub async fn handle_key<R: Renderer<S::Active>, S: Synchronizer>(
-    app: &mut App<R, S>,
+pub async fn handle_key<R: Renderer>(
+    app: &mut App<R>,
     key: KeyEvent,
     config: &crate::config::Config,
 ) -> Result<(), Box<dyn std::error::Error>> {

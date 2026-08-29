@@ -1,2 +1,2 @@
-pub mod lyrics;
+pub mod cues;
 pub mod words;

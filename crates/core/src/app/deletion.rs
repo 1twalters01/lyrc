@@ -1,11 +1,8 @@
-use synchronizer::traits::Synchronizer;
-
 use crate::{app::App, history::IndexedSubtitleCue, mode::AppMode, renderer::Renderer};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub fn delete_selected_lines(&mut self) {
         if self.state.track.is_none() {

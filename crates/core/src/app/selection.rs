@@ -2,10 +2,9 @@ use synchronizer::traits::Synchronizer;
 
 use crate::{app::App, mode::AppMode, renderer::Renderer};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub fn toggle_select_line(&mut self) {
         if self.state.track.is_none() {

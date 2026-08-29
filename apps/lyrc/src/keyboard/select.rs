@@ -5,10 +5,9 @@ use lyrc_core::{
     renderer::Renderer,
 };
 use subtitles::subtitles::SubtitleDocument;
-use synchronizer::traits::Synchronizer;
 
-pub async fn handle_key<R: Renderer<S::Active>, S: Synchronizer>(
-    app: &mut App<R, S>,
+pub async fn handle_key<R: Renderer>(
+    app: &mut App<R>,
     key: KeyEvent,
     cue_index: usize,
     config: &crate::config::Config,

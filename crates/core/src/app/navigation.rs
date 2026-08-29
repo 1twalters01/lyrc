@@ -1,13 +1,12 @@
 use synchronizer::traits::{CueIndexed, Synchronizer};
 
-use crate::{app::App, mode::AppMode, renderer::Renderer};
+use crate::{app::App, mode::AppMode, renderer::Renderer, synchronizer::ActiveIndex};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
-    pub fn get_first_active_index(&self) -> Option<S::Active> {
+    pub fn get_first_active_index(&self) -> Option<ActiveIndex> {
         match &self.state.subtitle_document {
             Some(_document) => Some(
                 self.synchronizer

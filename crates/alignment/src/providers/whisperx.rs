@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
 use pyo3::{prelude::*, types::PyList};
-use subtitles::subtitles::{AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument};
+use subtitles::subtitles::{
+    AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument, SubtitleMetadata,
+};
 
 use crate::{
     helpers::timedelta_to_duration,
@@ -12,7 +14,6 @@ pub struct WhisperXAligner;
 
 impl LyricsAligner for WhisperXAligner {
     fn align_cues(
-        // &self,
         audio_file_path: PathBuf,
         subtitle_document: SubtitleDocument,
     ) -> Result<Option<SubtitleDocument>, AlignmentError> {
@@ -29,7 +30,7 @@ impl LyricsAligner for WhisperXAligner {
             .first()
             .ok_or(AlignmentError::NoLanguageCode)?
             .as_code_2();
-        println!("language code: {}", language_code);
+        // println!("language code: {}", language_code);
         let device = "cuda"; // Store in Config crate
 
         let aligned_cues = Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
@@ -120,8 +121,22 @@ impl LyricsAligner for WhisperXAligner {
         })
         .map_err(|e| AlignmentError::PythonError { error: e })?;
 
+        let aligned_metadata = SubtitleMetadata {
+            album: subtitle_document.metadata.album,
+            title: subtitle_document.metadata.title,
+            artists: subtitle_document.metadata.artists,
+            languages: subtitle_document.metadata.languages,
+            file_path: match subtitle_document.metadata.file_path {
+                Some(mut path) => {
+                    path.set_extension(".elrc");
+                    Some(path)
+                }
+                None => None,
+            },
+        };
+
         let aligned_subtitle_document = SubtitleDocument {
-            metadata: subtitle_document.metadata.clone(),
+            metadata: aligned_metadata,
             cues: aligned_cues,
         };
 

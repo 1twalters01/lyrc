@@ -4,8 +4,8 @@ use chrono::Duration;
 use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
 
 use crate::{
-    strategies::lyrics::{CueIndex, LyricsSynchronizer},
-    traits::{CueIndexed, Synchronizer},
+    strategies::cues::{CueIndex, CueSynchronizer},
+    traits::{ActiveIndexed, CueIndexed, Synchronizer},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -21,8 +21,14 @@ impl Default for WordIndex {
 }
 
 impl CueIndexed for WordIndex {
-    fn cue_index(&self) -> super::lyrics::CueIndex {
+    fn cue_index(&self) -> CueIndex {
         CueIndex { cue: self.cue }
+    }
+}
+
+impl ActiveIndexed for WordIndex {
+    fn word_index(&self) -> Option<WordIndex> {
+        Some(*self)
     }
 }
 
@@ -88,8 +94,7 @@ impl WordSynchronizer {
             None => return Vec::new(),
         };
 
-        let current_cue_indices =
-            LyricsSynchronizer::get_cues_at(subtitle_document, Some(position));
+        let current_cue_indices = CueSynchronizer::get_cues_at(subtitle_document, Some(position));
 
         current_cue_indices
             .iter()

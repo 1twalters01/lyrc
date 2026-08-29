@@ -1,13 +1,10 @@
 use chrono::Duration;
 
-use synchronizer::traits::Synchronizer;
-
 use crate::{app::App, history::CueTimeChange, mode::AppMode, renderer::Renderer};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     // change error types in this file
     pub fn set_times(&mut self, mut changes: Vec<CueTimeChange>) {

@@ -13,6 +13,7 @@ pub struct AlignmentTask {
 }
 
 // Change error to not be string
+#[derive(Debug)]
 pub enum AlignmentResult {
     Complete(Option<SubtitleDocument>),
     Cancelled,

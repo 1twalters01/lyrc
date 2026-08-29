@@ -1,16 +1,15 @@
 use chrono::Duration;
-use synchronizer::traits::CueIndexed;
 
-use crate::state::AppState;
+use crate::{state::AppState, synchronizer::ActiveIndex};
 
-pub trait Renderer<A: CueIndexed> {
+pub trait Renderer {
     type Error: std::error::Error + 'static;
 
     fn render(
         &mut self,
         state: &mut AppState,
         position: Option<Duration>,
-        active_cues: &[A],
+        active_indices: &Vec<ActiveIndex>,
     ) -> Result<(), Self::Error>;
 
     fn get_lines_per_page(&self) -> usize;

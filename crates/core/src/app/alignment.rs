@@ -2,14 +2,12 @@ use alignment::{
     messages::{AlignmentRequest, AlignmentTask},
     provider::AlignmentError,
 };
-use synchronizer::traits::Synchronizer;
 
 use crate::{app::App, renderer::Renderer};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub async fn start_alignment(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // also check if it is for the same audio/subtitles?

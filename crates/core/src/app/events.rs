@@ -1,14 +1,12 @@
 use alignment::messages::AlignmentResult;
 use chrono::Duration;
 use mpris::playback::{PlaybackStatus, PlayerEvent};
-use synchronizer::traits::Synchronizer;
 
 use crate::{app::App, renderer::Renderer};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub async fn handle_player_event(
         &mut self,
@@ -33,9 +31,10 @@ where
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
             AlignmentResult::Complete(subtitle_document) => {
-                // Save this to an aligned_subtitle_document variable?
                 self.state.subtitle_document = subtitle_document;
                 self.state.alignment_running = false;
+                self.synchronizer.mode = crate::synchronizer::SynchronizerMode::Word;
+                println!("alignment run successfully");
             }
             AlignmentResult::Cancelled => self.state.alignment_running = false,
             AlignmentResult::Failed(error) => {
@@ -69,6 +68,7 @@ where
     fn render(&mut self) -> Result<(), R::Error> {
         let position = self.clock.get_position();
         let active_cues = self.synchronizer.get_active_indices();
-        self.renderer.render(&mut self.state, position, active_cues)
+        self.renderer
+            .render(&mut self.state, position, &active_cues)
     }
 }

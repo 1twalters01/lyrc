@@ -1,12 +1,10 @@
 use subtitles::subtitles::SubtitleDocument;
-use synchronizer::traits::Synchronizer;
 
 use crate::{app::App, renderer::Renderer};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub async fn update_track_and_subtitle_document_information(&mut self) {
         self.state.track = self.mpris.get_current_track().await.ok();

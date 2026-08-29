@@ -1,7 +1,7 @@
 use chrono::Duration;
 use subtitles::subtitles::SubtitleDocument;
 
-use crate::traits::{CueIndexed, Synchronizer};
+use crate::traits::{ActiveIndexed, CueIndexed, Synchronizer};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CueIndex {
@@ -20,19 +20,21 @@ impl CueIndexed for CueIndex {
     }
 }
 
-pub enum LyricsSyncEvent {
+impl ActiveIndexed for CueIndex {}
+
+pub enum CueSyncEvent {
     Changed {
         old_cues: Vec<CueIndex>,
         new_cues: Vec<CueIndex>,
     },
 }
 
-pub struct LyricsSynchronizer {
+pub struct CueSynchronizer {
     active_cues: Vec<CueIndex>,
 }
 
-impl Synchronizer for LyricsSynchronizer {
-    type Event = LyricsSyncEvent;
+impl Synchronizer for CueSynchronizer {
+    type Event = CueSyncEvent;
     type Active = CueIndex;
 
     fn update(
@@ -50,7 +52,7 @@ impl Synchronizer for LyricsSynchronizer {
         if new_cues != self.active_cues {
             let old_cues = std::mem::replace(&mut self.active_cues, new_cues);
 
-            let event = LyricsSyncEvent::Changed {
+            let event = CueSyncEvent::Changed {
                 old_cues,
                 new_cues: self.active_cues.clone(),
             };
@@ -66,7 +68,7 @@ impl Synchronizer for LyricsSynchronizer {
     }
 }
 
-impl LyricsSynchronizer {
+impl CueSynchronizer {
     pub fn new() -> Self {
         Self {
             active_cues: Vec::new(),

@@ -1,10 +1,6 @@
 use chrono::Duration;
-use lyrc_core::{renderer::Renderer, state::AppState};
-use std::{
-    fmt::Debug,
-    io::{self, Stdout},
-};
-use synchronizer::traits::CueIndexed;
+use lyrc_core::{renderer::Renderer, state::AppState, synchronizer::ActiveIndex};
+use std::io::{self, Stdout};
 
 use ratatui::{
     Terminal,
@@ -42,14 +38,14 @@ impl TuiRenderer {
     }
 }
 
-impl<A: Debug + CueIndexed> Renderer<A> for TuiRenderer {
+impl Renderer for TuiRenderer {
     type Error = std::io::Error;
 
     fn render(
         &mut self,
         state: &mut AppState,
         position: Option<Duration>,
-        active_cues: &[A],
+        active_cues: &Vec<ActiveIndex>,
     ) -> Result<(), Self::Error> {
         self.terminal.draw(|frame| {
             let window_layout = window_layout(frame);

@@ -9,7 +9,7 @@ use crate::{
 use alignment::messages::{AlignmentRequest, AlignmentResult};
 use lyrc_core::app::App;
 use mpris::client::MprisClient;
-use synchronizer::strategies::lyrics::LyricsSynchronizer;
+use synchronizer::strategies::{cues::CueSynchronizer, words::WordSynchronizer};
 use tui::renderer::TuiRenderer;
 
 use chrono::Duration;
@@ -48,7 +48,8 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             Ok(())
         }
         Command::App { frontend } => {
-            let synchronizer = LyricsSynchronizer::new();
+            let cue_synchronizer = CueSynchronizer::new();
+            let word_synchronizer = WordSynchronizer::new();
 
             let renderer = match frontend {
                 Frontend::Tui => TuiRenderer::new().unwrap(),
@@ -61,7 +62,8 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
 
             let mut app = App::new(
                 renderer,
-                synchronizer,
+                cue_synchronizer,
+                word_synchronizer,
                 clock_offset,
                 player,
                 alignment_req_tx,

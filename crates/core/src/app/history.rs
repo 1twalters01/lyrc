@@ -3,12 +3,10 @@ use crate::{
     history::{CueTimeChange, Edit},
     renderer::Renderer,
 };
-use synchronizer::traits::Synchronizer;
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub fn push_to_history(&mut self, edit: Edit) {
         self.state.edit_history.push(edit);

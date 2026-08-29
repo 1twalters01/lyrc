@@ -1,10 +1,16 @@
 use chrono::Duration;
 use subtitles::subtitles::SubtitleDocument;
 
-use crate::strategies::lyrics::CueIndex;
+use crate::strategies::{cues::CueIndex, words::WordIndex};
 
 pub trait CueIndexed {
     fn cue_index(&self) -> CueIndex;
+}
+
+pub trait ActiveIndexed: CueIndexed {
+    fn word_index(&self) -> Option<WordIndex> {
+        None
+    }
 }
 
 pub trait Synchronizer {

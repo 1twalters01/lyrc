@@ -1,13 +1,11 @@
 use chrono::Duration;
 use mpris::playback::{PlaybackCommand, PlaybackStatus};
-use synchronizer::traits::Synchronizer;
 
 use crate::{app::App, renderer::Renderer};
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub async fn get_current_position(&self) -> Option<Duration> {
         self.mpris.get_current_position().await.ok()

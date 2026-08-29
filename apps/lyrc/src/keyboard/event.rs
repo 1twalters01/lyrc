@@ -1,11 +1,10 @@
 use crossterm::event::KeyEvent;
 use lyrc_core::{app::App, mode::AppMode, renderer::Renderer};
-use synchronizer::traits::Synchronizer;
 
 use crate::{config::Config, keyboard};
 
-pub async fn handle_keyboard_event<R: Renderer<S::Active>, S: Synchronizer>(
-    app: &mut App<R, S>,
+pub async fn handle_keyboard_event<R: Renderer>(
+    app: &mut App<R>,
     key: KeyEvent,
     config: &Config,
 ) -> Result<(), Box<dyn std::error::Error>> {

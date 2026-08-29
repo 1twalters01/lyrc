@@ -6,10 +6,9 @@ use crate::{
     renderer::Renderer,
 };
 
-impl<R, S> App<R, S>
+impl<R> App<R>
 where
-    R: Renderer<S::Active>,
-    S: Synchronizer,
+    R: Renderer,
 {
     pub fn switch_to_normal_mode(&mut self) {
         self.state.app_mode = AppMode::Normal;
