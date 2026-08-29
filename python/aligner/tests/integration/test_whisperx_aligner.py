@@ -1,6 +1,6 @@
 import os
 
-from alignment.providers.whisperx import WhisperXAligner
+from aligner.providers.whisperx import WhisperXAligner
 from .lrc_contents import LRC_CONTENTS
 
 def test_whisperx_aligner():

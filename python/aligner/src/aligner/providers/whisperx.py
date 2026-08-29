@@ -1,8 +1,8 @@
 from datetime import timedelta
 import whisperx
-from alignment.models.cue import Cue
-from alignment.models.aligned_cue import AlignedCue, Word
-from alignment.providers.base import Aligner
+from aligner.models.cue import Cue
+from aligner.models.aligned_cue import AlignedCue, Word
+from aligner.providers.base import Aligner
 
 class WhisperXAligner(Aligner):
     def align_cues(self, lrc_content: list[Cue], audio_path: str, language_code: str, device: str) -> list[AlignedCue]:

@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from alignment.models.cue import Cue
+from aligner.models.cue import Cue
 
 
 LRC_CONTENTS = [

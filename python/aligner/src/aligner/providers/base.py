@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from alignment.models.cue import Cue
-from alignment.models.aligned_cue import AlignedCue
+from aligner.models.cue import Cue
+from aligner.models.aligned_cue import AlignedCue
 
 class Aligner(ABC):
     @abstractmethod

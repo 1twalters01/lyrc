@@ -34,9 +34,9 @@ impl LyricsAligner for WhisperXAligner {
         let device = "cuda"; // Store in Config crate
 
         let aligned_cues = Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
-            let provider_module = PyModule::import(py, "alignment.providers.whisperx")
+            let provider_module = PyModule::import(py, "aligner.providers.whisperx")
                 .map_err(|e| AlignmentError::PythonError { error: e })?;
-            let models_module = PyModule::import(py, "alignment.models.cue")
+            let models_module = PyModule::import(py, "aligner.models.cue")
                 .map_err(|e| AlignmentError::PythonError { error: e })?;
             let datetime = py
                 .import("datetime")
