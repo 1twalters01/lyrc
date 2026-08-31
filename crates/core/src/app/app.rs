@@ -9,6 +9,7 @@ use synchronizer::{
     traits::Synchronizer,
 };
 use tokio::sync::mpsc::Sender;
+use translation::messages::TranslationRequest;
 
 use crate::{
     clock::PlaybackClock,
@@ -27,6 +28,7 @@ where
     pub state: AppState,
     pub mpris: MprisClient,
     pub alignment_req_tx: Sender<AlignmentRequest>,
+    pub translation_req_tx: Sender<TranslationRequest>,
 }
 
 impl<R> App<R>
@@ -40,6 +42,7 @@ where
         clock_offset: Duration,
         player: &str,
         alignment_req_tx: Sender<AlignmentRequest>,
+        translation_req_tx: Sender<TranslationRequest>,
     ) -> Self {
         let clock = PlaybackClock::new(clock_offset);
         let state = AppState::new();
@@ -57,6 +60,7 @@ where
             synchronizer,
             mpris,
             alignment_req_tx,
+            translation_req_tx,
         }
     }
 }

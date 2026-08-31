@@ -22,13 +22,15 @@ pub fn start_alignment_worker(
 
                     let result = match whisperx_result {
                         Ok(subtitle_document) => AlignmentResult::Complete(subtitle_document),
-                        Err(error) => AlignmentResult::Failed(error.to_string()),
+                        Err(error) => AlignmentResult::Failed(error),
                     };
 
                     if result_tx.blocking_send(result).is_err() {
                         break;
                     }
-                } // AlignmentRequest::Cancel => {}
+                }
+                // AlignmentRequest::Cancel => {
+                // },
             }
         }
     });

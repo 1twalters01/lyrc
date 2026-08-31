@@ -1,10 +1,12 @@
+use futures::future::BoxFuture;
 use subtitles::{language::Language, subtitles::SubtitleDocument};
 
 use crate::error::TranslationError;
 
-pub trait LyricsAligner: Send + Sync {
+pub trait LyricsTranslator: Send + Sync {
     fn translate(
+        &self,
         language: Language,
         subtitle_document: SubtitleDocument,
-    ) -> Result<Option<SubtitleDocument>, TranslationError>;
+    ) -> BoxFuture<'_, Result<Option<SubtitleDocument>, TranslationError>>;
 }

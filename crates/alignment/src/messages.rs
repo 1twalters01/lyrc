@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use subtitles::subtitles::SubtitleDocument;
 
+use crate::error::AlignmentError;
+
 pub enum AlignmentRequest {
     Align(AlignmentTask),
     // Cancel,
@@ -17,5 +19,5 @@ pub struct AlignmentTask {
 pub enum AlignmentResult {
     Complete(Option<SubtitleDocument>),
     Cancelled,
-    Failed(String),
+    Failed(AlignmentError),
 }

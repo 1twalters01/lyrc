@@ -1,6 +1,7 @@
 use alignment::messages::AlignmentResult;
 use chrono::Duration;
 use mpris::playback::{PlaybackStatus, PlayerEvent};
+use translation::messages::TranslationResult;
 
 use crate::{app::App, renderer::Renderer};
 
@@ -26,7 +27,6 @@ where
 
     pub fn handle_alignment_event(
         &mut self,
-        // event: AlignmentEvent,
         event: AlignmentResult,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
@@ -36,11 +36,35 @@ where
                 self.synchronizer.mode = crate::synchronizer::SynchronizerMode::Word;
                 println!("alignment run successfully");
             }
-            AlignmentResult::Cancelled => self.state.alignment_running = false,
-            AlignmentResult::Failed(error) => {
+            AlignmentResult::Cancelled => {
                 self.state.alignment_running = false;
             }
+            AlignmentResult::Failed(error) => {
+                self.state.alignment_running = false;
+                return Err(Box::new(error));
+            }
         }
+
+        Ok(())
+    }
+
+    pub fn handle_translation_event(
+        &mut self,
+        event: TranslationResult,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match event {
+            TranslationResult::Complete(subtitle_document) => {
+                self.state.translation_running = false;
+            }
+            TranslationResult::Cancelled => {
+                self.state.translation_running = false;
+            }
+            TranslationResult::Failed(error) => {
+                self.state.translation_running = false;
+                return Err(Box::new(error));
+            }
+        }
+
         Ok(())
     }
 

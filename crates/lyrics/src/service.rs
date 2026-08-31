@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{provider::LyricsProvider, providers::lrclib::LrclibProvider};
+use crate::{provider::LyricsDownloader, providers::lrclib::LrclibProvider};
 
 pub struct LyricsService {
-    pub providers: HashMap<String, Box<dyn LyricsProvider>>,
+    pub providers: HashMap<String, Box<dyn LyricsDownloader>>,
 }
 
 impl Default for LyricsService {
@@ -11,7 +11,7 @@ impl Default for LyricsService {
         Self {
             providers: HashMap::from([(
                 String::from("lrclib"),
-                Box::new(LrclibProvider) as Box<dyn LyricsProvider>,
+                Box::new(LrclibProvider) as Box<dyn LyricsDownloader>,
             )]),
         }
     }

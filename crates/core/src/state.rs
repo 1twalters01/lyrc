@@ -26,6 +26,7 @@ pub struct AppState {
     pub app_mode: AppMode,
     pub unsaved_changes: bool,
     pub alignment_running: bool,
+    pub translation_running: bool,
 }
 
 impl AppState {
@@ -43,6 +44,7 @@ impl AppState {
             app_mode: AppMode::Normal,
             unsaved_changes: false,
             alignment_running: false,
+            translation_running: false,
         }
     }
 

@@ -1,7 +1,9 @@
 use subtitles::{language::Language, subtitles::SubtitleDocument};
 
+use crate::error::TranslationError;
+
 pub enum TranslationRequest {
-    Align(TranslationTask),
+    Translate(TranslationTask),
     // Cancel,
 }
 
@@ -15,5 +17,5 @@ pub struct TranslationTask {
 pub enum TranslationResult {
     Complete(Option<SubtitleDocument>),
     Cancelled,
-    Failed(String),
+    Failed(TranslationError),
 }

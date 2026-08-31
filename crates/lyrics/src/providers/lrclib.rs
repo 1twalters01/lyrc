@@ -4,13 +4,14 @@ use pyo3::{prelude::*, types::PyDict};
 use pyo3_async_runtimes::tokio::into_future;
 
 use crate::{
+    error::LyricsError,
     models::{Lyrics, LyricsFormat, LyricsSource},
-    provider::{LyricsError, LyricsProvider},
+    provider::LyricsDownloader,
 };
 
 pub struct LrclibProvider;
 
-impl LyricsProvider for LrclibProvider {
+impl LyricsDownloader for LrclibProvider {
     fn search(&self, track: Track) -> BoxFuture<'static, Result<Option<Lyrics>, LyricsError>> {
         Box::pin(async move {
             let py_future = Python::attach(|py| -> PyResult<_> {
