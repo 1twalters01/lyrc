@@ -6,7 +6,7 @@ from scraper.abstractions.providers import LyricsProvider
 
 BASE_URL = "https://lrclib.net"
 
-class LrcLibProvider(LyricsProvider):
+class LrcLibDownloader(LyricsProvider):
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 

@@ -5,7 +5,7 @@ from aligner.models.aligned_cue import AlignedCue, Word
 from aligner.abstractions.providers import AlignmentProvider
 from aligner.aeneas.options import AeneasOptions
 
-class AeneasProvider(AlignmentProvider[AeneasOptions]):
+class AeneasAligner(AlignmentProvider[AeneasOptions]):
     def __init__(self):
         pass
 

@@ -2,7 +2,7 @@ import os
 
 from .lrc_contents import LRC_CONTENTS
 from aligner.service import AlignmentService
-from aligner.whisperx.provider import WhisperXProvider
+from aligner.whisperx.provider import WhisperXAligner
 from aligner.whisperx.options import WhisperXOptions
 
 def test_whisperx_aligner():
@@ -15,7 +15,7 @@ def test_whisperx_aligner():
     device = "cuda"
 
     service = AlignmentService({
-        "whisperx": WhisperXProvider(device=device),
+        "whisperx": WhisperXAligner(device=device),
     })
     options = WhisperXOptions(language_code=language_code)
     aligned_cues = service.align_cues(

@@ -4,7 +4,7 @@ import httpx
 import pytest
 from scraper.models.track import Track
 from scraper.service import LyricsService
-from scraper.lrclib.provider import LrcLibProvider
+from scraper.lrclib.provider import LrcLibDownloader
 
 
 @pytest.mark.integration
@@ -19,7 +19,7 @@ async def test_liblrc_search_api():
 
     async with httpx.AsyncClient(timeout=10.0) as client:
         service = LyricsService({
-            "lrclib": LrcLibProvider(client),
+            "lrclib": LrcLibDownloader(client),
         })
         lyrics = await service.search(track, "lrclib")
 

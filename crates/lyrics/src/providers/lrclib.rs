@@ -25,11 +25,11 @@ impl LyricsProvider for LrclibProvider {
 
                 // get provider dict with lrclib instance inside
                 let client = httpx.getattr("AsyncClient")?.call0()?;
-                let lrclib_provider = provider_module
-                    .getattr("LrcLibProvider")?
+                let lrclib_downloader = provider_module
+                    .getattr("LrcLibDownloader")?
                     .call1((client,))?;
                 let providers = PyDict::new(py);
-                providers.set_item("lrclib", lrclib_provider)?;
+                providers.set_item("lrclib", lrclib_downloader)?;
 
                 // Create instance of lyrics service
                 let lyrics_service = service_module

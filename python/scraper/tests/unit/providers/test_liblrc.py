@@ -5,7 +5,7 @@ import pytest
 import respx
 from scraper.models.track import Track
 from scraper.service import LyricsService
-from scraper.lrclib.provider import LrcLibProvider
+from scraper.lrclib.provider import LrcLibDownloader
 
 
 @pytest.mark.asyncio
@@ -38,7 +38,7 @@ async def test_liblrc_search():
 
     async with httpx.AsyncClient() as client:
         provider = LyricsService({
-            "lrclib": LrcLibProvider(client),
+            "lrclib": LrcLibDownloader(client),
         })
         lyrics = await provider.search(track, "lrclib")
 

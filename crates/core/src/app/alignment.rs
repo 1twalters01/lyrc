@@ -1,6 +1,6 @@
 use alignment::{
     messages::{AlignmentRequest, AlignmentTask},
-    provider::AlignmentError,
+    error::AlignmentError,
 };
 
 use crate::{app::App, renderer::Renderer};

@@ -5,7 +5,8 @@ use subtitles::subtitles::{AlignedWord, SubtitleContent, SubtitleCue, SubtitleDo
 
 use crate::{
     helpers::timedelta_to_duration,
-    provider::{AlignmentError, LyricsAligner},
+    provider::LyricsAligner,
+    error::AlignmentError,
 };
 
 pub struct AeneasAligner;

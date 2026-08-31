@@ -10,7 +10,8 @@ use subtitles::subtitles::{
 
 use crate::{
     helpers::timedelta_to_duration,
-    provider::{AlignmentError, LyricsAligner},
+    provider::LyricsAligner,
+    error::AlignmentError,
 };
 
 pub struct WhisperXAligner;
@@ -44,11 +45,11 @@ impl LyricsAligner for WhisperXAligner {
             let options_module = PyModule::import(py, "aligner.whisperx.options")?;
             let models_module = PyModule::import(py, "aligner.models.cue")?;
 
-            let whisperx_provider = provider_module
-                .getattr("WhisperXProvider")?
+            let whisperx_aligner = provider_module
+                .getattr("WhisperXAligner")?
                 .call1((device,))?;
             let providers = PyDict::new(py);
-            providers.set_item("whisperx", whisperx_provider)?;
+            providers.set_item("whisperx", whisperx_aligner)?;
 
             let alignment_service = service_module
                 .getattr("AlignmentService")?

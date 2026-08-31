@@ -19,7 +19,6 @@ dependencies = [
  "futures",
  "mpris",
  "pyo3",
- "pyo3-async-runtimes",
  "subtitles",
  "tokio",
 ]
@@ -2533,6 +2532,11 @@ dependencies = [
 [[package]]
 name = "translation"
 version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "pyo3-async-runtimes",
+ "subtitles",
+]
 
 [[package]]
 name = "tui"

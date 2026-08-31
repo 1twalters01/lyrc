@@ -5,7 +5,7 @@ from aligner.models.aligned_cue import AlignedCue, Word
 from aligner.abstractions.providers import AlignmentProvider
 from aligner.whisperx.options import WhisperXOptions
 
-class WhisperXProvider(AlignmentProvider[WhisperXOptions]):
+class WhisperXAligner(AlignmentProvider[WhisperXOptions]):
     def __init__(self, device: str):
         self.device = device
 
