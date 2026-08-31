@@ -2,7 +2,7 @@
 import httpx
 from scraper.models.lyrics import Lyrics, LyricsFormat, LyricsSource
 from scraper.models.track import Track
-from scraper.providers.base import LyricsProvider
+from scraper.abstractions.providers import LyricsProvider
 
 BASE_URL = "https://lrclib.net"
 

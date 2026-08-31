@@ -5,7 +5,7 @@ import pytest
 import respx
 from scraper.models.track import Track
 from scraper.service import LyricsService
-from scraper.providers.lrclib import LrcLibProvider
+from scraper.lrclib.providers import LrcLibProvider
 
 
 @pytest.mark.asyncio
