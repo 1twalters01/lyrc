@@ -4,7 +4,7 @@ import httpx
 import pytest
 from scraper.models.track import Track
 from scraper.service import LyricsService
-from scraper.lrclib.providers import LrcLibProvider
+from scraper.lrclib.provider import LrcLibProvider
 
 
 @pytest.mark.integration

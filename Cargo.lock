@@ -2531,6 +2531,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "translation"
+version = "0.1.0"
+
+[[package]]
 name = "tui"
 version = "0.1.0"
 dependencies = [

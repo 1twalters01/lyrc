@@ -20,7 +20,7 @@ impl LyricsProvider for LrclibProvider {
 
                 // import modules
                 let service_module = PyModule::import(py, "scraper.service")?;
-                let provider_module = PyModule::import(py, "scraper.lrclib.providers")?;
+                let provider_module = PyModule::import(py, "scraper.lrclib.provider")?;
                 let track_module = PyModule::import(py, "scraper.models.track")?;
 
                 // get provider dict with lrclib instance inside
