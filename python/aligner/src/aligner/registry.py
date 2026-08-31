@@ -1,4 +1,4 @@
-from aligner.whisperx.providers import WhisperXProvider
+from aligner.whisperx.provider import WhisperXProvider
 
 PROVIDERS = [
     WhisperXProvider,

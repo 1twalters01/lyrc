@@ -36,13 +36,11 @@ impl LyricsAligner for WhisperXAligner {
         let device = "cuda"; // Store in Config crate
 
         let aligned_cues = Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
-            let datetime = py
-                .import("datetime")?;
-            let timedelta = datetime
-                .getattr("timedelta")?;
+            let datetime = py.import("datetime")?;
+            let timedelta = datetime.getattr("timedelta")?;
 
             let service_module = PyModule::import(py, "aligner.service")?;
-            let provider_module = PyModule::import(py, "aligner.whisperx.providers")?;
+            let provider_module = PyModule::import(py, "aligner.whisperx.provider")?;
             let options_module = PyModule::import(py, "aligner.whisperx.options")?;
             let models_module = PyModule::import(py, "aligner.models.cue")?;
 
@@ -50,8 +48,7 @@ impl LyricsAligner for WhisperXAligner {
                 .getattr("WhisperXProvider")?
                 .call1((device,))?;
             let providers = PyDict::new(py);
-            providers
-                .set_item("whisperx", whisperx_provider)?;
+            providers.set_item("whisperx", whisperx_provider)?;
 
             let alignment_service = service_module
                 .getattr("AlignmentService")?
@@ -65,10 +62,9 @@ impl LyricsAligner for WhisperXAligner {
                 .cues
                 .iter()
                 .map(|cue| {
-                    let start = timedelta
-                        .call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
-                    let end = timedelta
-                        .call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
+                    let start =
+                        timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
+                    let end = timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
 
                     let content = match &cue.content {
                         SubtitleContent::Text(text) => text,
@@ -77,10 +73,7 @@ impl LyricsAligner for WhisperXAligner {
                         }
                     };
 
-                    Ok(models_module
-                        .getattr("Cue")?
-                        .call1((start, end, content))?
-                    )
+                    Ok(models_module.getattr("Cue")?.call1((start, end, content))?)
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 

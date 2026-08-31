@@ -2,7 +2,7 @@ import os
 
 from .lrc_contents import LRC_CONTENTS
 from aligner.service import AlignmentService
-from aligner.whisperx.providers import WhisperXProvider
+from aligner.whisperx.provider import WhisperXProvider
 from aligner.whisperx.options import WhisperXOptions
 
 def test_whisperx_aligner():
