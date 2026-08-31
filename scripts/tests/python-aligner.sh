@@ -8,4 +8,6 @@ while [ ! -f "$ROOT/Cargo.toml" ] && [ "$ROOT" != "/" ]; do
     ROOT="$(dirname "$ROOT")"
 done
 
-uv run --env-file python/aligner/.env pytest -s
+cd "$ROOT/python/aligner"
+
+uv run --env-file .env pytest -s

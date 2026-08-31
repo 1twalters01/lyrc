@@ -22,6 +22,6 @@ print(":".join(
 cd "$ROOT"
 
 
-cargo test -p lyrics \
+cargo test -p \
     --features=python-tests
     --test python-async \

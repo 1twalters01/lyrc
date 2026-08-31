@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR"
@@ -8,6 +8,7 @@ while [ ! -f "$ROOT/Cargo.toml" ] && [ "$ROOT" != "/" ]; do
     ROOT="$(dirname "$ROOT")"
 done
 
-cd "$ROOT"
+cd "$ROOT/python/translator"
 
-uv run pytest -m "integration" -s
+uv run --env-file .env pytest -s
+
