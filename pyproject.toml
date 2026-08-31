@@ -1,7 +1,7 @@
 [tool.uv.workspace]
 members = [
     'python/scraper',
-    'python/alignment',
+    'python/aligner',
 ]
 
 [dependency-groups]

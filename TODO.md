@@ -10,6 +10,8 @@
 
 * Load plain text files
 
+* Translate lyrics
+
 * Sync cues/words with aeneas/whisperx and make elrc files
 
 # V2
