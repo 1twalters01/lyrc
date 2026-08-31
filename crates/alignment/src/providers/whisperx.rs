@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PyList},
+};
 use subtitles::subtitles::{
     AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument, SubtitleMetadata,
 };
@@ -30,20 +33,36 @@ impl LyricsAligner for WhisperXAligner {
             .first()
             .ok_or(AlignmentError::NoLanguageCode)?
             .as_code_2();
-        // println!("language code: {}", language_code);
         let device = "cuda"; // Store in Config crate
 
         let aligned_cues = Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
-            let provider_module = PyModule::import(py, "aligner.providers.whisperx")
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
-            let models_module = PyModule::import(py, "aligner.models.cue")
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
             let datetime = py
                 .import("datetime")
                 .map_err(|e| AlignmentError::PythonError { error: e })?;
             let timedelta = datetime
                 .getattr("timedelta")
                 .map_err(|e| AlignmentError::PythonError { error: e })?;
+
+            let service_module = PyModule::import(py, "aligner.service")?;
+            let provider_module = PyModule::import(py, "aligner.providers.whisperx")
+                .map_err(|e| AlignmentError::PythonError { error: e })?;
+            let models_module = PyModule::import(py, "aligner.models.cue")
+                .map_err(|e| AlignmentError::PythonError { error: e })?;
+            let options_module = PyModule::import(py, "aligner.options.whisperx")?;
+
+            let whisperx_provider = provider_module
+                .getattr("WhisperXProvider")?
+                .call1((device,))?;
+            let providers = PyDict::new(py);
+            providers.set_item("whisperx", whisperx_provider)?;
+
+            let alignment_service = service_module
+                .getattr("AlignmentService")?
+                .call1((providers,))?;
+
+            let options = options_module
+                .getattr("WhisperXOptions")?
+                .call1((language_code,))?;
 
             let lrc_contents = subtitle_document
                 .cues
@@ -71,18 +90,10 @@ impl LyricsAligner for WhisperXAligner {
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 
-            let whisperx_aligner = provider_module
-                .getattr("WhisperXAligner")
-                .map_err(|e| AlignmentError::PythonError { error: e })?
-                .call0()
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
-
-            let result = whisperx_aligner
-                .call_method1(
-                    "align_cues",
-                    (lrc_contents, audio_path, language_code, device),
-                )
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
+            let result = alignment_service.call_method1(
+                "align_cues",
+                ("whisperx", lrc_contents, audio_path, options),
+            )?;
 
             Ok(result.unbind())
         })?;

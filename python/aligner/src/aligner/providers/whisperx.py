@@ -2,10 +2,22 @@ from datetime import timedelta
 import whisperx
 from aligner.models.cue import Cue
 from aligner.models.aligned_cue import AlignedCue, Word
-from aligner.providers.base import Aligner
+from aligner.providers.base import AlignmentProvider
+from aligner.options.whisperx import WhisperXOptions
 
-class WhisperXAligner(Aligner):
-    def align_cues(self, lrc_content: list[Cue], audio_path: str, language_code: str, device: str) -> list[AlignedCue]:
+class WhisperXProvider(AlignmentProvider[WhisperXOptions]):
+    def __init__(self, device: str):
+        self.device = device
+
+    def align_cues(
+            self,
+            lrc_content: list[Cue],
+            audio_path: str,
+            options: WhisperXOptions
+    ) -> list[AlignedCue]:
+        language_code = options.language_code
+        device = self.device
+
         segments = [
             {
                 "start": cue.start.total_seconds(),

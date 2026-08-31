@@ -1,7 +1,7 @@
 from scraper.models.track import Track
 from scraper.models.lyrics import Lyrics, LyricsFormat, LyricsSource
 from scraper.providers.base import LyricsProvider
-from scraper.providers.lrclib import LrcLibProvider
+# from scraper.providers.lrclib import LrcLibProvider
 
 import httpx
 

@@ -2,6 +2,7 @@
 members = [
     'python/scraper',
     'python/aligner',
+    "python/translator",
 ]
 
 [dependency-groups]
