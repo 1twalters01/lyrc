@@ -2,8 +2,8 @@ from datetime import timedelta
 import whisperx
 from aligner.models.cue import Cue
 from aligner.models.aligned_cue import AlignedCue, Word
-from aligner.providers.base import AlignmentProvider
-from aligner.options.whisperx import WhisperXOptions
+from aligner.abstractions.providers import AlignmentProvider
+from aligner.whisperx.options import WhisperXOptions
 
 class WhisperXProvider(AlignmentProvider[WhisperXOptions]):
     def __init__(self, device: str):

@@ -37,24 +37,21 @@ impl LyricsAligner for WhisperXAligner {
 
         let aligned_cues = Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
             let datetime = py
-                .import("datetime")
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
+                .import("datetime")?;
             let timedelta = datetime
-                .getattr("timedelta")
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
+                .getattr("timedelta")?;
 
             let service_module = PyModule::import(py, "aligner.service")?;
-            let provider_module = PyModule::import(py, "aligner.providers.whisperx")
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
-            let models_module = PyModule::import(py, "aligner.models.cue")
-                .map_err(|e| AlignmentError::PythonError { error: e })?;
-            let options_module = PyModule::import(py, "aligner.options.whisperx")?;
+            let provider_module = PyModule::import(py, "aligner.whisperx.providers")?;
+            let options_module = PyModule::import(py, "aligner.whisperx.options")?;
+            let models_module = PyModule::import(py, "aligner.models.cue")?;
 
             let whisperx_provider = provider_module
                 .getattr("WhisperXProvider")?
                 .call1((device,))?;
             let providers = PyDict::new(py);
-            providers.set_item("whisperx", whisperx_provider)?;
+            providers
+                .set_item("whisperx", whisperx_provider)?;
 
             let alignment_service = service_module
                 .getattr("AlignmentService")?
@@ -69,11 +66,9 @@ impl LyricsAligner for WhisperXAligner {
                 .iter()
                 .map(|cue| {
                     let start = timedelta
-                        .call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))
-                        .map_err(|e| AlignmentError::PythonError { error: e })?;
+                        .call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
                     let end = timedelta
-                        .call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))
-                        .map_err(|e| AlignmentError::PythonError { error: e })?;
+                        .call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
 
                     let content = match &cue.content {
                         SubtitleContent::Text(text) => text,
@@ -83,10 +78,9 @@ impl LyricsAligner for WhisperXAligner {
                     };
 
                     Ok(models_module
-                        .getattr("Cue")
-                        .map_err(|e| AlignmentError::PythonError { error: e })?
-                        .call1((start, end, content))
-                        .map_err(|e| AlignmentError::PythonError { error: e })?)
+                        .getattr("Cue")?
+                        .call1((start, end, content))?
+                    )
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 

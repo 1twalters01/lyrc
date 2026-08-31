@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from aligner.options.base import AlignmentOptions
+from aligner.abstractions.options import AlignmentOptions
 
 @dataclass
 class WhisperXOptions(AlignmentOptions):

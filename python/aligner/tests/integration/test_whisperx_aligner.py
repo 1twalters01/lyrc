@@ -2,8 +2,8 @@ import os
 
 from .lrc_contents import LRC_CONTENTS
 from aligner.service import AlignmentService
-from aligner.providers.whisperx import WhisperXProvider
-from aligner.options.whisperx import WhisperXOptions
+from aligner.whisperx.providers import WhisperXProvider
+from aligner.whisperx.options import WhisperXOptions
 
 def test_whisperx_aligner():
     audio_path = os.getenv("WHISPERX_TEST_AUDIO")

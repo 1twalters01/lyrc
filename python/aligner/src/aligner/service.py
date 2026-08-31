@@ -1,7 +1,7 @@
 from aligner.models.aligned_cue import AlignedCue
 from aligner.models.cue import Cue
-from aligner.providers.base import AlignmentProvider
-from aligner.options.base import AlignmentOptions
+from aligner.abstractions.providers import AlignmentProvider
+from aligner.abstractions.options import AlignmentOptions
 
 class AlignmentService:
     def __init__(self, providers: dict[str, AlignmentProvider]):
