@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from scraper.models.track import Track
+from downloader.models.track import Track
 
 
 def test_track_creation():

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from scraper.models.lyrics import Lyrics
-from scraper.models.track import Track
+from downloader.models.lyrics import Lyrics
+from downloader.models.track import Track
 
 
 class LyricsProvider(ABC):

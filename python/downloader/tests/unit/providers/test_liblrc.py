@@ -3,9 +3,9 @@ from datetime import timedelta
 import httpx
 import pytest
 import respx
-from scraper.models.track import Track
-from scraper.service import LyricsService
-from scraper.lrclib.provider import LrcLibDownloader
+from downloader.models.track import Track
+from downloader.service import LyricsService
+from downloader.lrclib.provider import LrcLibDownloader
 
 
 @pytest.mark.asyncio

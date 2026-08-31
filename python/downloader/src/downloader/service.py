@@ -1,6 +1,6 @@
-from scraper.models.track import Track
-from scraper.models.lyrics import Lyrics, LyricsFormat, LyricsSource
-from scraper.abstractions.providers import LyricsProvider
+from downloader.models.track import Track
+from downloader.models.lyrics import Lyrics, LyricsFormat, LyricsSource
+from downloader.abstractions.providers import LyricsProvider
 
 import httpx
 

@@ -56,4 +56,3 @@ impl Error for AlignmentError {
         }
     }
 }
-

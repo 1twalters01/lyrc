@@ -1,4 +1,4 @@
-from scraper.models.lyrics import (
+from downloader.models.lyrics import (
     Lyrics,
     LyricsFormat,
     LyricsSource,

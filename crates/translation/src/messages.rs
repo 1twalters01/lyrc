@@ -17,4 +17,3 @@ pub enum TranslationResult {
     Cancelled,
     Failed(String),
 }
-

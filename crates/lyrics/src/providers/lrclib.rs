@@ -19,9 +19,9 @@ impl LyricsProvider for LrclibProvider {
                 let datetime = PyModule::import(py, "datetime")?;
 
                 // import modules
-                let service_module = PyModule::import(py, "scraper.service")?;
-                let provider_module = PyModule::import(py, "scraper.lrclib.provider")?;
-                let track_module = PyModule::import(py, "scraper.models.track")?;
+                let service_module = PyModule::import(py, "downloader.service")?;
+                let provider_module = PyModule::import(py, "downloader.lrclib.provider")?;
+                let track_module = PyModule::import(py, "downloader.models.track")?;
 
                 // get provider dict with lrclib instance inside
                 let client = httpx.getattr("AsyncClient")?.call0()?;

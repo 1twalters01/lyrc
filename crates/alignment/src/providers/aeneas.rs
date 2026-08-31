@@ -3,11 +3,7 @@ use std::path::PathBuf;
 use pyo3::{prelude::*, types::PyList};
 use subtitles::subtitles::{AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument};
 
-use crate::{
-    helpers::timedelta_to_duration,
-    provider::LyricsAligner,
-    error::AlignmentError,
-};
+use crate::{error::AlignmentError, helpers::timedelta_to_duration, provider::LyricsAligner};
 
 pub struct AeneasAligner;
 
