@@ -52,18 +52,21 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             let cue_synchronizer = CueSynchronizer::new();
             let word_synchronizer = WordSynchronizer::new();
 
-            let renderer = match frontend {
-                Frontend::Tui => TuiRenderer::new().unwrap(),
-            };
-
             let (alignment_req_tx, alignment_req_rx) =
-                tokio::sync::mpsc::channel::<AlignmentRequest>(1);
+            tokio::sync::mpsc::channel::<AlignmentRequest>(1);
             let (alignment_res_tx, mut alignment_res_rx) =
-                tokio::sync::mpsc::channel::<AlignmentResult>(1);
+            tokio::sync::mpsc::channel::<AlignmentResult>(1);
+            start_alignment_worker(alignment_req_rx, alignment_res_tx);
+
             let (translation_req_tx, translation_req_rx) =
-                tokio::sync::mpsc::channel::<TranslationRequest>(1);
+            tokio::sync::mpsc::channel::<TranslationRequest>(1);
             let (translation_res_tx, mut translation_res_rx) =
-                tokio::sync::mpsc::channel::<TranslationResult>(1);
+            tokio::sync::mpsc::channel::<TranslationResult>(1);
+            start_translation_worker(translation_req_rx, translation_res_tx).await;
+
+            let renderer = match frontend {
+                Frontend::Tui => TuiRenderer::new()?,
+            };
 
             let mut app = App::new(
                 renderer,
@@ -76,9 +79,6 @@ pub async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             )
             .await;
             app.update_track_and_subtitle_document_information().await;
-
-            start_alignment_worker(alignment_req_rx, alignment_res_tx);
-            start_translation_worker(translation_req_rx, translation_res_tx);
 
             let mpris = app.mpris.clone();
             let mut events = mpris.events().await?;

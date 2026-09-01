@@ -17,7 +17,7 @@ pub async fn start_translation_worker(
             .unwrap();
 
         runtime.block_on(async move {
-            while let Some(request) = request_rx.blocking_recv() {
+            while let Some(request) = request_rx.recv().await {
                 match request {
                     TranslationRequest::Translate(TranslationTask {
                         language,
