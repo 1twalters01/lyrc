@@ -30,7 +30,9 @@ pub async fn start_translation_worker(
                             Err(error) => TranslationResult::Failed(error),
                         };
 
-                        if result_tx.blocking_send(result).is_err() {
+                        // decide to use sync or async send
+                        // if result_tx.blocking_send(result).is_err() {
+                        if result_tx.send(result).await.is_err() {
                             break;
                         }
                     }
