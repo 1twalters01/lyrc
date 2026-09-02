@@ -41,7 +41,7 @@ impl MprisClient {
             .collect::<Vec<_>>())
     }
 
-    pub async fn choose_player(targets: Vec<&str>) -> zbus::Result<String> {
+    pub async fn choose_player(targets: &Vec<String>) -> zbus::Result<String> {
         let players = Self::find_players().await?;
 
         let mut clients = Vec::new();

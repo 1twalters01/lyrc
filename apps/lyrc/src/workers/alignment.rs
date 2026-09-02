@@ -28,9 +28,8 @@ pub fn start_alignment_worker(
                     if result_tx.blocking_send(result).is_err() {
                         break;
                     }
-                }
-                // AlignmentRequest::Cancel => {
-                // },
+                } /* AlignmentRequest::Cancel => {
+                   * }, */
             }
         }
     });

@@ -73,8 +73,8 @@ impl AppState {
             PlayerEvent::PlaybackChanged(playback) => {
                 self.playback_state = playback.clone();
                 if playback == &PlaybackStatus::Stopped {
-                    let targets = Vec::from(["mpv", "cmus"]);
-                    let player = MprisClient::choose_player(targets).await?;
+                    let targets = Vec::from([String::from("mpv"), String::from("cmus")]);
+                    let player = MprisClient::choose_player(&targets).await?;
                     *mpris = MprisClient::connect(&player).await?;
                     self.playback_state = mpris.get_playback_status().await?;
                 }

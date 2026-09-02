@@ -18,6 +18,7 @@ mpris = { path = "../../crates/mpris/" }
 lyrics = { path = "../../crates/lyrics/" }
 lyrc_core = { path = "../../crates/core/" }
 tui = { path = "../../ui/tui/" }
+gui = { path = "../../ui/gui/" }
 
 
 

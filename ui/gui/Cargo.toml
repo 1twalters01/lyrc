@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 gtk = { version = "0.10.3", package = "gtk4", features = ["v4_12"] }
+chrono = "0.4.45"
+lyrc_core = { path = "../../crates/core/" }

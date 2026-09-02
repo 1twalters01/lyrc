@@ -35,9 +35,8 @@ pub async fn start_translation_worker(
                         if result_tx.send(result).await.is_err() {
                             break;
                         }
-                    }
-                    // TranslationRequest::Cancel => {
-                    // },
+                    } /* TranslationRequest::Cancel => {
+                       * }, */
                 }
             }
         })
