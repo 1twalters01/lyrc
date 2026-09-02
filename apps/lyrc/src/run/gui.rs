@@ -18,7 +18,9 @@ use tui::renderer::TuiRenderer;
 use crossterm::event::{Event, EventStream};
 use futures_util::stream::StreamExt;
 
-pub async fn run_gui(player: &str, config: Config) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run_gui(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+    let player = &MprisClient::choose_player(&config.targets_in_priority_order).await?;
+
     let cue_synchronizer = CueSynchronizer::new();
     let word_synchronizer = WordSynchronizer::new();
 

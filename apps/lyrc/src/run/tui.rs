@@ -8,6 +8,7 @@ use crate::{
 
 use alignment::messages::{AlignmentRequest, AlignmentResult};
 use lyrc_core::app::App;
+use mpris::client::MprisClient;
 use synchronizer::strategies::{cues::CueSynchronizer, words::WordSynchronizer};
 use translation::messages::{TranslationRequest, TranslationResult};
 use tui::renderer::TuiRenderer;
@@ -15,7 +16,9 @@ use tui::renderer::TuiRenderer;
 use crossterm::event::{Event, EventStream};
 use futures_util::stream::StreamExt;
 
-pub async fn run_tui(player: &str, config: Config) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run_tui(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+    let player = &MprisClient::choose_player(&config.targets_in_priority_order).await?;
+
     let cue_synchronizer = CueSynchronizer::new();
     let word_synchronizer = WordSynchronizer::new();
 
