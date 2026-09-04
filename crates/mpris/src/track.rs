@@ -56,6 +56,15 @@ impl Track {
         }
     }
 
+    pub fn get_elrc_file_path(&self) -> Option<PathBuf> {
+        if let Some(track_file_path) = self.file_path.clone() {
+            let mut lyrics_file_path = track_file_path.to_path_buf();
+            lyrics_file_path.set_extension("elrc");
+            return Some(lyrics_file_path);
+        }
+        None
+    }
+
     pub fn get_lrc_file_path(&self) -> Option<PathBuf> {
         if let Some(track_file_path) = self.file_path.clone() {
             let mut lyrics_file_path = track_file_path.to_path_buf();

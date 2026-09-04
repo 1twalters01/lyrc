@@ -47,6 +47,7 @@ impl SubtitleParser for LrcParser {
         let mut subtitle_document = LrcParser::build_subtitle_document(lrc_lines);
 
         subtitle_document.update_languages();
+        println!("parsed");
 
         Ok(subtitle_document)
     }

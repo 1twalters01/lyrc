@@ -3,7 +3,7 @@ use subtitles::subtitles::SubtitleDocument;
 
 use crate::traits::{ActiveIndexed, CueIndexed, Synchronizer};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CueIndex {
     pub cue: usize,
 }
@@ -22,6 +22,7 @@ impl CueIndexed for CueIndex {
 
 impl ActiveIndexed for CueIndex {}
 
+#[derive(Clone, Debug)]
 pub enum CueSyncEvent {
     Changed {
         old_cues: Vec<CueIndex>,

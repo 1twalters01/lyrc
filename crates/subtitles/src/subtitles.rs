@@ -5,6 +5,7 @@ use crate::{
     writer::SubtitleWriter,
 };
 use chrono::Duration;
+use lingua::LanguageDetectorBuilder;
 use std::{fs, path::PathBuf};
 use uuid::Uuid;
 

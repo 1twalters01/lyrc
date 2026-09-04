@@ -7,6 +7,7 @@ use synchronizer::{
     traits::{CueIndexed, Synchronizer},
 };
 
+#[derive(Clone, Debug)]
 pub enum SyncEvent {
     Word(WordSyncEvent),
     Cue(CueSyncEvent),
@@ -67,7 +68,7 @@ impl AppSynchronizer {
         subtitle_document: &Option<subtitles::subtitles::SubtitleDocument>,
         position: &Option<Duration>,
     ) -> Option<SyncEvent> {
-        match self.mode {
+        let event = match self.mode {
             SynchronizerMode::Word => self
                 .word_synchronizer
                 .update(subtitle_document, position)
@@ -76,6 +77,7 @@ impl AppSynchronizer {
                 .cue_synchronizer
                 .update(subtitle_document, position)
                 .map(|e| SyncEvent::Cue(e)),
-        }
+        };
+        return event;
     }
 }

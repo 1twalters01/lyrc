@@ -18,6 +18,7 @@ pub fn draw_body(
     state: &mut AppState,
     active_indices: &Vec<ActiveIndex>,
 ) {
+    // println!("active indices {:?}", active_indices);
     let visible_height = area.height as usize;
     let middle = visible_height / 2;
 

@@ -5,32 +5,52 @@ use alignment::{
     provider::LyricsAligner,
     providers::whisperx::WhisperXAligner,
 };
+use tokio::sync::mpsc;
 
-pub fn start_alignment_worker(
-    mut request_rx: tokio::sync::mpsc::Receiver<AlignmentRequest>,
-    result_tx: tokio::sync::mpsc::Sender<AlignmentResult>,
-) {
-    thread::spawn(move || {
-        while let Some(request) = request_rx.blocking_recv() {
-            match request {
-                AlignmentRequest::Align(AlignmentTask {
-                    audio_file_path,
-                    subtitle_document,
-                }) => {
-                    let whisperx_result =
-                        WhisperXAligner::align_cues(audio_file_path, subtitle_document);
+pub struct AlignmentWorker {
+    pub result_rx: mpsc::Receiver<AlignmentResult>,
+    pub request_tx: mpsc::Sender<AlignmentRequest>,
+}
 
-                    let result = match whisperx_result {
-                        Ok(subtitle_document) => AlignmentResult::Complete(subtitle_document),
-                        Err(error) => AlignmentResult::Failed(error),
-                    };
+impl AlignmentWorker {
+    pub fn new() -> Self {
+        let (request_tx, request_rx) = mpsc::channel::<AlignmentRequest>(1);
+        let (result_tx, result_rx) = mpsc::channel::<AlignmentResult>(1);
+        Self::start(request_rx, result_tx);
 
-                    if result_tx.blocking_send(result).is_err() {
-                        break;
-                    }
-                } /* AlignmentRequest::Cancel => {
-                   * }, */
-            }
+        Self {
+            request_tx,
+            result_rx,
         }
-    });
+    }
+
+    pub fn start(
+        mut request_rx: tokio::sync::mpsc::Receiver<AlignmentRequest>,
+        result_tx: tokio::sync::mpsc::Sender<AlignmentResult>,
+    ) {
+        thread::spawn(move || {
+            while let Some(request) = request_rx.blocking_recv() {
+                match request {
+                    AlignmentRequest::Align(AlignmentTask {
+                        audio_file_path,
+                        subtitle_document,
+                    }) => {
+                        let whisperx_result =
+                            WhisperXAligner::align_cues(audio_file_path, subtitle_document);
+
+                        let result = match whisperx_result {
+                            Ok(subtitle_document) => AlignmentResult::Complete(subtitle_document),
+                            Err(error) => AlignmentResult::Failed(error),
+                        };
+
+                        if result_tx.blocking_send(result).is_err() {
+                            break;
+                        }
+                    }
+                    // AlignmentRequest::Cancel => {
+                    //* },
+                }
+            }
+        });
+    }
 }

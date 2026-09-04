@@ -13,7 +13,6 @@ use lyrc_core::app::App;
 use mpris::client::MprisClient;
 use synchronizer::strategies::{cues::CueSynchronizer, words::WordSynchronizer};
 use translation::messages::{TranslationRequest, TranslationResult};
-use tui::renderer::TuiRenderer;
 
 use crossterm::event::{Event, EventStream};
 use futures_util::stream::StreamExt;
@@ -45,7 +44,8 @@ pub async fn run_gui(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     )
     .await;
 
-    app.update_track_and_subtitle_document_information().await;
+    app.update_track().await;
+    app.update_subtitle_document().await;
 
     let mpris = app.mpris.clone();
     let mut events = mpris.events().await?;

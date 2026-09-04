@@ -14,7 +14,6 @@ where
         event: PlayerEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.state.update(&mut self.mpris, &event).await?;
-        self.update_track_and_subtitle_document_information().await;
         self.clock.update(event);
 
         let subtitle_document = &self.state.subtitle_document;
@@ -73,6 +72,8 @@ where
         let playback_status = self.get_playback_status().await;
         self.process_tick(current_position, playback_status)
     }
+
+    fn update_synchronizer(&mut self) {}
 
     fn process_tick(
         &mut self,

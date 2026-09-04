@@ -32,6 +32,7 @@ impl ActiveIndexed for WordIndex {
     }
 }
 
+#[derive(Clone, Debug)]
 pub enum WordSyncEvent {
     Changed {
         old_words: Vec<WordIndex>,

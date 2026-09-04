@@ -58,17 +58,9 @@ impl AppState {
                 if self.track.as_ref() != Some(track) {
                     self.app_mode = AppMode::Normal
                 }
-                self.track = Some(track.clone());
 
-                self.subtitle_document = match self.track {
-                    Some(ref track) => match &track.get_lrc_file_path() {
-                        Some(lyrics_file_path) => {
-                            SubtitleDocument::from_pathbuf(lyrics_file_path.clone()).ok()
-                        }
-                        None => None,
-                    },
-                    None => None,
-                };
+                self.update_track(Some(track.to_owned())).await;
+                self.update_subtitle_document().await;
             }
             PlayerEvent::PlaybackChanged(playback) => {
                 self.playback_state = playback.clone();
@@ -83,6 +75,22 @@ impl AppState {
         }
 
         Ok(())
+    }
+
+    pub async fn update_track(&mut self, current_track: Option<Track>) {
+        self.track = current_track;
+    }
+
+    pub async fn update_subtitle_document(&mut self) {
+        self.subtitle_document = match self.track {
+            Some(ref track) => match &track.get_lrc_file_path() {
+                Some(lyrics_file_path) => {
+                    SubtitleDocument::from_pathbuf(lyrics_file_path.clone()).ok()
+                }
+                None => None,
+            },
+            None => None,
+        };
     }
 
     pub fn is_normal_mode(&self) -> bool {
