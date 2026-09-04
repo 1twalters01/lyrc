@@ -41,7 +41,7 @@ impl MprisClient {
             .collect::<Vec<_>>())
     }
 
-    pub async fn choose_player(targets: &Vec<String>) -> zbus::Result<String> {
+    pub async fn choose_player(targets: &[String]) -> zbus::Result<String> {
         let players = Self::find_players().await?;
 
         let mut clients = Vec::new();
@@ -55,54 +55,28 @@ impl MprisClient {
             playback_statuses.push(client.get_playback_status().await?);
         }
 
-        let playing_players: Vec<_> = players
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| playback_statuses[*i] == PlaybackStatus::Playing)
-            .map(|(_, p)| p.clone())
-            .collect();
-        if playing_players.len() > 0 {
-            for target in targets {
-                if playing_players.contains(&String::from(target)) {
-                    return Ok(String::from(target));
+        for status in [
+            PlaybackStatus::Playing,
+            PlaybackStatus::Paused,
+            PlaybackStatus::Stopped,
+        ] {
+            let matching_players: Vec<_> = players
+                .iter()
+                .zip(&playback_statuses)
+                .filter(|(_, player_status)| player_status == &&status)
+                .map(|(player, _)| player.clone())
+                .collect();
+
+            if !matching_players.is_empty() {
+                if let Some(player) = targets
+                    .iter()
+                    .find(|target| matching_players.iter().any(|p| &p == target))
+                {
+                    return Ok(player.clone());
                 }
+
+                return Ok(matching_players[0].clone());
             }
-
-            return Ok(playing_players[0].clone());
-        }
-
-        let paused_players: Vec<_> = players
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| playback_statuses[*i] == PlaybackStatus::Paused)
-            .map(|(_, c)| c)
-            .cloned()
-            .collect();
-        if paused_players.len() > 0 {
-            for target in targets {
-                if paused_players.contains(&String::from(target)) {
-                    return Ok(String::from(target));
-                }
-            }
-
-            return Ok(paused_players[0].clone());
-        }
-
-        let stopped_players: Vec<_> = players
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| playback_statuses[*i] == PlaybackStatus::Stopped)
-            .map(|(_, c)| c)
-            .cloned()
-            .collect();
-        if stopped_players.len() > 0 {
-            for target in targets {
-                if stopped_players.contains(&String::from(target)) {
-                    return Ok(String::from(target));
-                }
-            }
-
-            return Ok(stopped_players[0].clone());
         }
 
         Ok(players[0].clone())

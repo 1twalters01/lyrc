@@ -13,10 +13,10 @@ pub struct TranslationWorker {
 }
 
 impl TranslationWorker {
-    pub async fn new() -> Self {
+    pub async fn start() -> Self {
         let (request_tx, request_rx) = mpsc::channel::<TranslationRequest>(1);
         let (result_tx, result_rx) = mpsc::channel::<TranslationResult>(1);
-        Self::start(request_rx, result_tx).await;
+        Self::handle(request_rx, result_tx).await;
 
         Self {
             request_tx,
@@ -24,7 +24,7 @@ impl TranslationWorker {
         }
     }
 
-    pub async fn start(
+    async fn handle(
         mut request_rx: mpsc::Receiver<TranslationRequest>,
         result_tx: mpsc::Sender<TranslationResult>,
     ) {

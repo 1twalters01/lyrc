@@ -13,10 +13,10 @@ pub struct AlignmentWorker {
 }
 
 impl AlignmentWorker {
-    pub fn new() -> Self {
+    pub fn start() -> Self {
         let (request_tx, request_rx) = mpsc::channel::<AlignmentRequest>(1);
         let (result_tx, result_rx) = mpsc::channel::<AlignmentResult>(1);
-        Self::start(request_rx, result_tx);
+        Self::handle(request_rx, result_tx);
 
         Self {
             request_tx,
@@ -24,7 +24,7 @@ impl AlignmentWorker {
         }
     }
 
-    pub fn start(
+    pub fn handle(
         mut request_rx: tokio::sync::mpsc::Receiver<AlignmentRequest>,
         result_tx: tokio::sync::mpsc::Sender<AlignmentResult>,
     ) {

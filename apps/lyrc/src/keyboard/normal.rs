@@ -1,3 +1,4 @@
+use configuration::config::Config;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use lyrc_core::{
     app::App,
@@ -12,7 +13,7 @@ use subtitles::{
 pub async fn handle_key<R: Renderer>(
     app: &mut App<R>,
     key: KeyEvent,
-    config: &crate::config::Config,
+    config: &Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match key.code {
         // Quit

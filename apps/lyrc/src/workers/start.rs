@@ -7,8 +7,8 @@ pub struct Workers {
 
 impl Workers {
     pub async fn start() -> Self {
-        let alignment = AlignmentWorker::new();
-        let translation = TranslationWorker::new().await;
+        let alignment = AlignmentWorker::start();
+        let translation = TranslationWorker::start().await;
 
         Self {
             alignment,

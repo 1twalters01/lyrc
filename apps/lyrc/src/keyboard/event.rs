@@ -1,7 +1,8 @@
+use configuration::config::Config;
 use crossterm::event::KeyEvent;
 use lyrc_core::{app::App, mode::AppMode, renderer::Renderer};
 
-use crate::{config::Config, keyboard};
+use crate::keyboard;
 
 pub async fn handle_keyboard_event<R: Renderer>(
     app: &mut App<R>,

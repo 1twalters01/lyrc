@@ -1,5 +1,6 @@
 use alignment::messages::AlignmentRequest;
 use chrono::Duration;
+use configuration::config::Config;
 use mpris::client::MprisClient;
 use synchronizer::{
     strategies::{
@@ -37,14 +38,15 @@ where
 {
     pub async fn new(
         renderer: R,
-        cue_synchronizer: CueSynchronizer,
-        word_synchronizer: WordSynchronizer,
-        clock_offset: Duration,
         player: &str,
         alignment_req_tx: Sender<AlignmentRequest>,
         translation_req_tx: Sender<TranslationRequest>,
+        config: &Config,
     ) -> Self {
-        let clock = PlaybackClock::new(clock_offset);
+        let cue_synchronizer = CueSynchronizer::new();
+        let word_synchronizer = WordSynchronizer::new();
+
+        let clock = PlaybackClock::new(config.clock_offset);
         let state = AppState::new();
         let mpris = MprisClient::connect(player).await.unwrap();
         let synchronizer = AppSynchronizer {
@@ -53,7 +55,7 @@ where
             mode: SynchronizerMode::Cue,
         };
 
-        Self {
+        let mut app = Self {
             renderer,
             clock,
             state,
@@ -61,6 +63,11 @@ where
             mpris,
             alignment_req_tx,
             translation_req_tx,
-        }
+        };
+
+        app.update_track().await;
+        app.update_subtitle_document().await;
+
+        app
     }
 }

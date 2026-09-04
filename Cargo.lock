@@ -514,8 +514,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "config"
+name = "configuration"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+]
 
 [[package]]
 name = "convert_case"
@@ -2461,6 +2464,7 @@ dependencies = [
  "alignment",
  "chrono",
  "clap",
+ "configuration",
  "crossterm",
  "futures-util",
  "gui",
@@ -2482,6 +2486,7 @@ version = "0.1.0"
 dependencies = [
  "alignment",
  "chrono",
+ "configuration",
  "mpris",
  "subtitles",
  "synchronizer",
