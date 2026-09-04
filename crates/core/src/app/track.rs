@@ -6,7 +6,7 @@ where
 {
     pub async fn update_track(&mut self) {
         self.state
-            .update_track(self.mpris.get_current_track().await.ok())
+            .update_track(self.mpris_client.get_current_track().await.ok())
             .await;
     }
 

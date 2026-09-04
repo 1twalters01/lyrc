@@ -46,6 +46,17 @@ pub struct AppSynchronizer {
 }
 
 impl AppSynchronizer {
+    pub fn new() -> Self {
+        let cue_synchronizer = CueSynchronizer::new();
+        let word_synchronizer = WordSynchronizer::new();
+
+        Self {
+            cue_synchronizer,
+            word_synchronizer,
+            mode: SynchronizerMode::Cue,
+        }
+    }
+
     pub fn get_active_indices(&self) -> Vec<ActiveIndex> {
         match self.mode {
             SynchronizerMode::Word => self

@@ -8,18 +8,18 @@ where
     R: Renderer,
 {
     pub async fn get_current_position(&self) -> Option<Duration> {
-        self.mpris.get_current_position().await.ok()
+        self.mpris_client.get_current_position().await.ok()
     }
 
     pub async fn get_playback_status(&self) -> PlaybackStatus {
-        self.mpris
+        self.mpris_client
             .get_playback_status()
             .await
             .unwrap_or(PlaybackStatus::Unknown)
     }
 
     pub async fn toggle_play_pause(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        self.mpris.execute(PlaybackCommand::Toggle).await?;
+        self.mpris_client.execute(PlaybackCommand::Toggle).await?;
         Ok(())
     }
 
@@ -27,7 +27,9 @@ where
         &mut self,
         duration: Duration,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.mpris.execute(PlaybackCommand::Seek(duration)).await?;
+        self.mpris_client
+            .execute(PlaybackCommand::Seek(duration))
+            .await?;
         Ok(())
     }
 
@@ -43,7 +45,7 @@ where
         if let Some(ref document) = self.state.subtitle_document {
             let cue = &document.cues[cue_index];
             let duration = cue.start;
-            self.mpris
+            self.mpris_client
                 .execute(PlaybackCommand::SetPosition(duration))
                 .await?;
         } else {

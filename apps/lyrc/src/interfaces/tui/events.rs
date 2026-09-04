@@ -15,7 +15,7 @@ pub async fn handle_tui_events(
     mut workers: Workers,
     config: &Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mpris = app.mpris.clone();
+    let mpris = app.mpris_client.clone();
     let mut events = mpris.events().await?;
     let mut tick = interval(Duration::from_secs_f64(1f64 / config.fps));
     let mut keyboard = EventStream::new();

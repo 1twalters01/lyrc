@@ -34,7 +34,7 @@ pub async fn run_gui(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     app.update_track().await;
     app.update_subtitle_document().await;
 
-    let mpris = app.mpris.clone();
+    let mpris = app.mpris_client.clone();
     let mut events = mpris.events().await?;
 
     todo!()

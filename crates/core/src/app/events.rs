@@ -13,7 +13,7 @@ where
         &mut self,
         event: PlayerEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.state.update(&mut self.mpris, &event).await?;
+        self.state.update(&mut self.mpris_client, &event).await?;
         self.clock.update(event);
 
         let subtitle_document = &self.state.subtitle_document;

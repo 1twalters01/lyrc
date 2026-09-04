@@ -8,7 +8,7 @@ use zbus::{
     Connection,
     fdo::PropertiesProxy,
     names::OwnedWellKnownName,
-    zvariant::{OwnedValue, Value},
+    zvariant::{Dict, OwnedValue, Value},
 };
 
 use crate::{
@@ -25,6 +25,25 @@ pub struct MprisClient {
 }
 
 impl MprisClient {
+    pub fn get_service(&self) -> OwnedWellKnownName {
+        self.service.clone()
+    }
+
+    pub fn get_player(&self) -> String {
+        self.player.clone()
+    }
+
+    pub async fn connect(player: &str) -> zbus::Result<Self> {
+        let connection = Connection::session().await?;
+        let service = format!("org.mpris.MediaPlayer2.{player}");
+
+        Ok(Self {
+            connection,
+            service: service.try_into()?,
+            player: String::from(player),
+        })
+    }
+
     pub async fn find_players() -> zbus::Result<Vec<String>> {
         let connection = Connection::session().await?;
 
@@ -39,66 +58,6 @@ impl MprisClient {
                     .map(str::to_owned)
             })
             .collect::<Vec<_>>())
-    }
-
-    pub async fn choose_player(targets: &[String]) -> zbus::Result<String> {
-        let players = Self::find_players().await?;
-
-        let mut clients = Vec::new();
-        for player in &players {
-            let client = Self::connect(player).await?;
-            clients.push(client);
-        }
-
-        let mut playback_statuses = Vec::new();
-        for client in clients {
-            playback_statuses.push(client.get_playback_status().await?);
-        }
-
-        for status in [
-            PlaybackStatus::Playing,
-            PlaybackStatus::Paused,
-            PlaybackStatus::Stopped,
-        ] {
-            let matching_players: Vec<_> = players
-                .iter()
-                .zip(&playback_statuses)
-                .filter(|(_, player_status)| player_status == &&status)
-                .map(|(player, _)| player.clone())
-                .collect();
-
-            if !matching_players.is_empty() {
-                if let Some(player) = targets
-                    .iter()
-                    .find(|target| matching_players.iter().any(|p| &p == target))
-                {
-                    return Ok(player.clone());
-                }
-
-                return Ok(matching_players[0].clone());
-            }
-        }
-
-        Ok(players[0].clone())
-    }
-
-    pub async fn connect(player: &str) -> zbus::Result<Self> {
-        let connection = Connection::session().await?;
-        let service = format!("org.mpris.MediaPlayer2.{player}");
-
-        Ok(Self {
-            connection,
-            service: service.try_into()?,
-            player: String::from(player),
-        })
-    }
-
-    pub fn get_service(&self) -> OwnedWellKnownName {
-        self.service.clone()
-    }
-
-    pub fn get_player(&self) -> String {
-        self.player.clone()
     }
 
     async fn proxy(&self) -> zbus::Result<PlayerProxy<'_>> {
@@ -132,6 +91,49 @@ impl MprisClient {
         Ok(PlaybackStatus::parse(&status))
     }
 
+    pub async fn choose_player(targets: &[String]) -> zbus::Result<String> {
+        let players = Self::find_players().await?;
+
+        let mut players_with_status = Vec::new();
+        for player in &players {
+            let client = Self::connect(player).await?;
+            let status = client.get_playback_status().await?;
+            players_with_status.push((player, status));
+        }
+
+        Ok(Self::select_player(&players_with_status, targets))
+    }
+
+    fn select_player(
+        players_with_status: &[(&String, PlaybackStatus)],
+        targets: &[String],
+    ) -> String {
+        for status in [
+            PlaybackStatus::Playing,
+            PlaybackStatus::Paused,
+            PlaybackStatus::Stopped,
+        ] {
+            let matching_players = players_with_status
+                .iter()
+                .filter(|(_, player_status)| player_status == &status);
+
+            for target in targets {
+                if let Some((player, _)) = matching_players
+                    .clone()
+                    .find(|(player, _)| *player == target)
+                {
+                    return player.to_string();
+                }
+            }
+
+            if let Some((player, _)) = matching_players.into_iter().next() {
+                return player.to_string();
+            }
+        }
+
+        players_with_status[0].0.to_string()
+    }
+
     pub async fn execute(&self, command: PlaybackCommand) -> zbus::Result<()> {
         let proxy = self.proxy().await?;
 
@@ -163,6 +165,8 @@ impl MprisClient {
         Ok(())
     }
 
+    // pub async fn events(&self) -> zbus::Result<Pin<Box<dyn Stream<Item =
+    // PlayerEvent> + '_>>> {
     pub async fn events(&self) -> zbus::Result<impl Stream<Item = PlayerEvent>> {
         let properties_proxy = PropertiesProxy::builder(&self.connection)
             .destination(&self.service)?
@@ -190,18 +194,7 @@ impl MprisClient {
                         let changed = args.changed_properties();
 
                         if let Some(Value::Dict(metadata)) = changed.get("Metadata") {
-                            let owned_metadata: HashMap<String, OwnedValue> = metadata
-                                .iter()
-                                .filter_map(|(k, v)| {
-                                    let key = match k {
-                                        Value::Str(s) => s.to_string(),
-                                        _ => return None,
-                                    };
-                                    let value = OwnedValue::try_from(v.clone()).ok()?;
-                                    Some((key, value))
-                                })
-                                .collect();
-
+                            let owned_metadata = Self::own_metadata(metadata);
                             let track = Track::parse_track(self, owned_metadata).await;
                             yield PlayerEvent::TrackChanged(track);
                         }
@@ -227,5 +220,19 @@ impl MprisClient {
         };
 
         Ok(Box::pin(output))
+    }
+
+    fn own_metadata(metadata: &Dict<'_, '_>) -> HashMap<String, OwnedValue> {
+        metadata
+            .iter()
+            .filter_map(|(k, v)| {
+                let key = match k {
+                    Value::Str(s) => s.to_string(),
+                    _ => return None,
+                };
+                let value = OwnedValue::try_from(v.clone()).ok()?;
+                Some((key, value))
+            })
+            .collect()
     }
 }

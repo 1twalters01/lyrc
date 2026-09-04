@@ -1,22 +1,11 @@
 use alignment::messages::AlignmentRequest;
-use chrono::Duration;
 use configuration::config::Config;
 use mpris::client::MprisClient;
-use synchronizer::{
-    strategies::{
-        cues::{CueIndex, CueSynchronizer},
-        words::{WordIndex, WordSynchronizer},
-    },
-    traits::Synchronizer,
-};
 use tokio::sync::mpsc::Sender;
 use translation::messages::TranslationRequest;
 
 use crate::{
-    clock::PlaybackClock,
-    renderer::Renderer,
-    state::AppState,
-    synchronizer::{AppSynchronizer, SynchronizerMode},
+    clock::PlaybackClock, renderer::Renderer, state::AppState, synchronizer::AppSynchronizer,
 };
 
 pub struct App<R>
@@ -27,7 +16,7 @@ where
     pub synchronizer: AppSynchronizer,
     pub clock: PlaybackClock,
     pub state: AppState,
-    pub mpris: MprisClient,
+    pub mpris_client: MprisClient,
     pub alignment_req_tx: Sender<AlignmentRequest>,
     pub translation_req_tx: Sender<TranslationRequest>,
 }
@@ -43,24 +32,17 @@ where
         translation_req_tx: Sender<TranslationRequest>,
         config: &Config,
     ) -> Self {
-        let cue_synchronizer = CueSynchronizer::new();
-        let word_synchronizer = WordSynchronizer::new();
-
+        let synchronizer = AppSynchronizer::new();
         let clock = PlaybackClock::new(config.clock_offset);
         let state = AppState::new();
-        let mpris = MprisClient::connect(player).await.unwrap();
-        let synchronizer = AppSynchronizer {
-            cue_synchronizer,
-            word_synchronizer,
-            mode: SynchronizerMode::Cue,
-        };
+        let mpris_client = MprisClient::connect(player).await.unwrap();
 
         let mut app = Self {
             renderer,
             clock,
             state,
             synchronizer,
-            mpris,
+            mpris_client,
             alignment_req_tx,
             translation_req_tx,
         };
