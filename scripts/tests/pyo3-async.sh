@@ -8,10 +8,12 @@ while [ ! -f "$ROOT/Cargo.toml" ] && [ "$ROOT" != "/" ]; do
     ROOT="$(dirname "$ROOT")"
 done
 
-export VIRTUAL_ENV="$ROOT/.venv"
-export PYTHONHOME="$($VIRTUAL_ENV/bin/python -c 'import sys; print(sys.base_prefix)')"
+export VIRTUAL_ENV="$ROOT/python/.venv"
+PYTHON="$VIRTUAL_ENV/bin/python"
 
-export PYTHONPATH="$(uv run python -c '
+export PYTHONHOME="$("$PYTHON" -c 'import sys; print(sys.base_prefix)')"
+
+export PYTHONPATH="$("$PYTHON" -c '
 import sys
 print(":".join(
     p for p in sys.path
@@ -21,7 +23,7 @@ print(":".join(
 
 cd "$ROOT"
 
-
-cargo test -p \
-    --features=python-tests
-    --test python-async \
+RUST_TEST_NOCAPTURE=1 cargo test \
+    -p lyrics \
+    --features python-tests \
+    --test python-async

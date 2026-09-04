@@ -10,4 +10,4 @@ done
 
 cd "$ROOT"
 
-uv run pytest -m "integration" -s
+uv --directory "$ROOT/python" run pytest -m "integration" -s

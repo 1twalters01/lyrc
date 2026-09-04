@@ -1,4 +1,5 @@
 import os
+import pytest
 
 from .lrc_contents import LRC_CONTENTS
 from aligner.service import AlignmentService

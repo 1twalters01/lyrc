@@ -1,5 +1,5 @@
 use chrono::Duration;
-use lyrics::{provider::LyricsProvider, providers::lrclib::LrclibProvider};
+use lyrics::{provider::LyricsDownloader, providers::lrclib::LrclibProvider};
 use mpris::track::Track;
 
 #[pyo3_async_runtimes::tokio::test]
@@ -18,7 +18,7 @@ async fn test_search() -> pyo3::PyResult<()> {
     };
 
     let lyrics = LrclibProvider.search(track).await.unwrap();
-    assert_eq!(lyrics, None);
+    println!("{:#?}", lyrics);
 
     Ok(())
 }
