@@ -123,7 +123,7 @@ impl LyricsAligner for WhisperXAligner {
             languages: subtitle_document.metadata.languages,
             file_path: match subtitle_document.metadata.file_path {
                 Some(mut path) => {
-                    path.set_extension(".elrc");
+                    path.set_extension("elrc");
                     Some(path)
                 }
                 None => None,

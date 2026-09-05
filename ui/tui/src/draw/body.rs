@@ -108,6 +108,8 @@ pub fn draw_body(
         .first()
         .unwrap_or(&0usize)
         .saturating_sub(middle);
+    // println!("active indices: {:?}", active_indices);
+    // println!("offset: {:?}", automatic_scroll_offset);
     state.automatic_scroll_offset = automatic_scroll_offset;
 
     let scroll_offset = match selected_cue {

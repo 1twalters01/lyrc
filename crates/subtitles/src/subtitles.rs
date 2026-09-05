@@ -1,5 +1,8 @@
 use crate::{
-    formats::lrc::{parser::LrcParser, writer::LrcWriter},
+    formats::{
+        elrc::writer::ElrcWriter,
+        lrc::{parser::LrcParser, writer::LrcWriter},
+    },
     language::Language,
     parser::SubtitleParser,
     writer::SubtitleWriter,
@@ -65,9 +68,14 @@ impl SubtitleDocument {
             Some(file_path) => match file_path.extension() {
                 Some(os_str) => match os_str.to_str() {
                     Some("lrc") => {
-                        let lrc_writer = LrcWriter;
-                        let lrc_file = lrc_writer.write(&subtitle_document.clone())?;
-                        Ok(lrc_file)
+                        let writer = LrcWriter;
+                        let file = writer.write(&subtitle_document.clone())?;
+                        Ok(file)
+                    }
+                    Some("elrc") => {
+                        let writer = ElrcWriter;
+                        let file = writer.write(&subtitle_document.clone())?;
+                        Ok(file)
                     }
                     Some(_) => Err(String::from("unknown file type").into()),
                     None => Err(String::from("os str cannot be turned into a &str").into()),

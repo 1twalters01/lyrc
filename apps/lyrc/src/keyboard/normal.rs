@@ -43,17 +43,6 @@ pub async fn handle_key<R: Renderer>(
                 Some(document) => {
                     document.save()?;
                     app.state.unsaved_changes = false;
-                    app.state.subtitle_document = match app.state.track {
-                        Some(ref track) => match &track.file_path {
-                            Some(file_path) => {
-                                let mut lyrics_path = file_path.to_path_buf();
-                                lyrics_path.set_extension("lrc");
-                                SubtitleDocument::from_pathbuf(lyrics_path).ok()
-                            }
-                            None => None,
-                        },
-                        None => None,
-                    };
                 }
                 None => {}
             }

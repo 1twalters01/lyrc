@@ -42,6 +42,7 @@ pub enum WordSyncEvent {
 
 pub struct WordSynchronizer {
     active_words: Vec<WordIndex>,
+    last_position: Option<Duration>,
 }
 
 impl Synchronizer for WordSynchronizer {
@@ -58,7 +59,14 @@ impl Synchronizer for WordSynchronizer {
             (_, _) => return None,
         };
 
-        let new_words = Self::get_words_at(&subtitle_document, Some(position));
+        let is_seeking_backwards = self.last_position.is_some_and(|last| position < &last);
+
+        let mut new_words = Self::get_words_at(&subtitle_document, Some(position));
+        new_words = if new_words.is_empty() && !is_seeking_backwards {
+            self.active_words.clone()
+        } else {
+            new_words
+        };
 
         if new_words != self.active_words {
             let old_words = std::mem::replace(&mut self.active_words, new_words);
@@ -83,6 +91,7 @@ impl WordSynchronizer {
     pub fn new() -> Self {
         Self {
             active_words: Vec::new(),
+            last_position: None,
         }
     }
 

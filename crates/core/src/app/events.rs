@@ -3,7 +3,7 @@ use chrono::Duration;
 use mpris::playback::{PlaybackStatus, PlayerEvent};
 use translation::messages::TranslationResult;
 
-use crate::{app::App, renderer::Renderer};
+use crate::{app::App, renderer::Renderer, synchronizer::SynchronizerMode};
 
 impl<R> App<R>
 where
@@ -15,10 +15,8 @@ where
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.state.update(&mut self.mpris_client, &event).await?;
         self.clock.update(event);
-
-        let subtitle_document = &self.state.subtitle_document;
-        let position = self.clock.get_position();
-        self.synchronizer.update(subtitle_document, &position);
+        self.synchronizer
+            .update(&self.state.subtitle_document, &self.clock.get_position());
 
         self.render()?;
         Ok(())
@@ -30,9 +28,14 @@ where
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
             AlignmentResult::Complete(subtitle_document) => {
-                self.state.subtitle_document = subtitle_document;
+                self.state.subtitle_document = subtitle_document.clone();
                 self.state.alignment_running = false;
-                self.synchronizer.mode = crate::synchronizer::SynchronizerMode::Word;
+                self.synchronizer.mode = SynchronizerMode::Word;
+                println!(
+                    "file_path {:?}",
+                    subtitle_document.unwrap().metadata.file_path
+                );
+
                 println!("alignment run successfully");
             }
             AlignmentResult::Cancelled => {
@@ -72,8 +75,6 @@ where
         let playback_status = self.get_playback_status().await;
         self.process_tick(current_position, playback_status)
     }
-
-    fn update_synchronizer(&mut self) {}
 
     fn process_tick(
         &mut self,

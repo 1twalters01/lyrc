@@ -32,6 +32,7 @@ pub enum CueSyncEvent {
 
 pub struct CueSynchronizer {
     active_cues: Vec<CueIndex>,
+    last_position: Option<Duration>,
 }
 
 impl Synchronizer for CueSynchronizer {
@@ -48,7 +49,14 @@ impl Synchronizer for CueSynchronizer {
             (_, _) => return None,
         };
 
-        let new_cues = Self::get_cues_at(&subtitle_document, Some(position));
+        let is_seeking_backwards = self.last_position.is_some_and(|last| position < &last);
+
+        let mut new_cues = Self::get_cues_at(&subtitle_document, Some(position));
+        new_cues = if new_cues.is_empty() && !is_seeking_backwards {
+            self.active_cues.clone()
+        } else {
+            new_cues
+        };
 
         if new_cues != self.active_cues {
             let old_cues = std::mem::replace(&mut self.active_cues, new_cues);
@@ -73,6 +81,7 @@ impl CueSynchronizer {
     pub fn new() -> Self {
         Self {
             active_cues: Vec::new(),
+            last_position: None,
         }
     }
 

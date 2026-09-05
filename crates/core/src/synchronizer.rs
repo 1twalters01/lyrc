@@ -34,6 +34,7 @@ impl Default for ActiveIndex {
     }
 }
 
+#[derive(Debug)]
 pub enum SynchronizerMode {
     Cue,
     Word,
