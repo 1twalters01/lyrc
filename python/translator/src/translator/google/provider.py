@@ -10,7 +10,7 @@ class GoogleTranslator(TranslationProvider[GoogleOptions]):
     def translate(
             self,
             cues: [Cue],
-            language: Language,
+            to_language: Language,
             options: GoogleOptions,
     ) -> list[Cue]:
         pass

@@ -20,9 +20,9 @@ def test_whisperx_aligner():
     })
     options = WhisperXOptions(language_code=language_code)
     aligned_cues = service.align_cues(
-        "whisperx",
-        lrc_contents,
-        audio_path,
+        provider_name="whisperx",
+        lrc_content=lrc_contents,
+        audio_path=audio_path,
         options=options
     )
 

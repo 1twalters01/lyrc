@@ -10,7 +10,7 @@ class DeepLTranslator(TranslationProvider[DeepLOptions]):
     def translate(
             self,
             cues: [Cue],
-            language: Language,
+            to_language: Language,
             options: DeepLOptions,
     ) -> list[Cue]:
         pass
