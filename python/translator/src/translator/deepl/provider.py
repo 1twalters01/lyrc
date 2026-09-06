@@ -16,9 +16,14 @@ class DeepLTranslator(TranslationProvider[DeepLOptions]):
     ) -> list[Cue]:
         content = [cue.content for cue in cues]
 
+        if options.source_language is not None:
+            source_language = options.source_language.code_2.upper()
+        else:
+            source_language = None
+
         results = self.client.translate_text(
             content,
-            source_lang=options.source_language,
+            source_lang=source_language,
             target_lang=to_language.code_2.upper(),
             formality=options.formality,
         )

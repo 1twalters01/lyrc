@@ -3,4 +3,4 @@ from translator.abstractions.options import TranslationOptions
 
 @dataclass
 class GoogleOptions(TranslationOptions):
-    pass
+    source_language: Language | None = None,

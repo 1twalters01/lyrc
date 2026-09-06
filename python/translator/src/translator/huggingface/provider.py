@@ -9,7 +9,7 @@ class HuggingfaceTranslator(TranslationProvider[HuggingfaceOptions]):
 
     def translate(
             self,
-            cues: [Cue],
+            cues: list[Cue],
             to_language: Language,
             options: HuggingfaceOptions,
     ) -> list[Cue]:

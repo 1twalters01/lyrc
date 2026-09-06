@@ -10,7 +10,7 @@ class TranslationService:
     async def translate(
             self,
             provider_name: str,
-            cues: [Cue],
+            cues: list[Cue],
             to_language: Language,
             options: OptionsT,
     ) -> list[Cue]:
