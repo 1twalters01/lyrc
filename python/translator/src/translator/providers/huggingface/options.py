@@ -3,10 +3,10 @@ from enum import Enum
 
 from translator.abstractions.options import TranslationOptions
 from translator.models.language import Language
-from translator.huggingface.translators.base import HuggingfaceFamilyTranslator
-from translator.huggingface.translators.nllb import NLLBTranslator
-from translator.huggingface.translators.m2m100 import M2M100Translator
-from translator.huggingface.translators.marian import MarianTranslator
+from translator.providers.huggingface.translators.base import HuggingfaceFamilyTranslator
+from translator.providers.huggingface.translators.nllb import NLLBTranslator
+from translator.providers.huggingface.translators.m2m100 import M2M100Translator
+from translator.providers.huggingface.translators.marian import MarianTranslator
 
 @dataclass
 class HuggingfaceOptions(TranslationOptions):

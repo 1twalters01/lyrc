@@ -3,8 +3,8 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, PreTrainedModel, 
 from translator.models.cue import Cue
 from translator.models.language import Language
 from translator.abstractions.providers import TranslationProvider
-from translator.huggingface.options import HuggingfaceOptions
-from translator.huggingface.model import HuggingfaceLoadedModel
+from translator.providers.huggingface.options import HuggingfaceOptions
+from translator.providers.huggingface.model import HuggingfaceLoadedModel
 
 class HuggingfaceTranslator(TranslationProvider[HuggingfaceOptions]):
     def __init__(self):

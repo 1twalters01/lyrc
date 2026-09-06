@@ -1,7 +1,8 @@
 from translator.models.cue import Cue
 from translator.models.language import Language
 from translator.abstractions.providers import TranslationProvider
-from translator.argos.options import ArgosOptions
+from translator.providers.argos.options import ArgosOptions
+
 import argostranslate.package
 import argostranslate.translate
 

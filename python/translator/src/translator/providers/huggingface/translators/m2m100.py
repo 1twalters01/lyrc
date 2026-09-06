@@ -1,6 +1,6 @@
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
-from translator.huggingface.translators.base import HuggingfaceFamilyTranslator
 from translator.models.language import Language
+from translator.providers.huggingface.translators.base import HuggingfaceFamilyTranslator
 
 class M2M100Translator(HuggingfaceFamilyTranslator):
     @staticmethod

@@ -9,11 +9,9 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "argostranslate>=1.11.0",
-    "datasets>=5.0.1",
     "deepl>=1.32.0",
-    "evaluate>=0.4.6",
     "google-cloud-translate>=3.27.0",
-    "sacrebleu>=2.6.0",
+    "ollama>=0.6.2",
     "transformers>=4.57.6",
 ]
 

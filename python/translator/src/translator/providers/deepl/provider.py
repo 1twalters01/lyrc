@@ -1,7 +1,7 @@
 from translator.models.cue import Cue
 from translator.models.language import Language
 from translator.abstractions.providers import TranslationProvider
-from translator.deepl.options import DeepLOptions
+from translator.providers.deepl.options import DeepLOptions
 import deepl
 
 class DeepLTranslator(TranslationProvider[DeepLOptions]):

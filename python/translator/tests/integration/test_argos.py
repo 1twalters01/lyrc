@@ -1,7 +1,7 @@
 from .lrc_contents import LRC_CONTENTS
 from translator.service import TranslationService
-from translator.argos.provider import ArgosTranslator
-from translator.argos.options import ArgosOptions
+from translator.providers.argos.provider import ArgosTranslator
+from translator.providers.argos.options import ArgosOptions
 from translator.models.language import Language
 import pytest
 
