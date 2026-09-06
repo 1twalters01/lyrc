@@ -3,4 +3,6 @@ from translator.abstractions.options import TranslationOptions
 
 @dataclass
 class DeepLOptions(TranslationOptions):
-    pass
+    api_key: str
+    source_language: str | None = None
+    formality: str | None = None

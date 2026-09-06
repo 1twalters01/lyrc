@@ -14,6 +14,8 @@
 
 * Sync cues/words with aeneas/whisperx and make elrc files
 
+* Add error types to python libraries
+
 # V2
 * GUI(s)
     * Linux
