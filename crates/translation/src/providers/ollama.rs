@@ -14,9 +14,9 @@ use crate::{
     provider::LyricsTranslator,
 };
 
-pub struct GoogleTranslator;
+pub struct HuggingfaceTranslator;
 
-impl LyricsTranslator for GoogleTranslator {
+impl LyricsTranslator for HuggingfaceTranslator {
     fn translate(
         &self,
         language: Language,
@@ -44,7 +44,7 @@ impl LyricsTranslator for GoogleTranslator {
     }
 }
 
-impl GoogleTranslator {
+impl HuggingfaceTranslator {
     async fn translate_cues(
         original_language: &Language,
         language: &Language,
@@ -57,8 +57,8 @@ impl GoogleTranslator {
             let service_module = PyModule::import(py, "translator.service")?;
             let cue_module = PyModule::import(py, "translator.models.cue")?;
             let language_module = PyModule::import(py, "translator.models.language")?;
-            let provider_module = PyModule::import(py, "translator.providers.google.provider")?;
-            let options_module = PyModule::import(py, "translator.providers.google.options")?;
+            let provider_module = PyModule::import(py, "translator.providers.ollama.provider")?;
+            let options_module = PyModule::import(py, "translator.providers.ollama.options")?;
 
             let to_language_py = language_module.getattr("Language")?.call1((
                 language.as_name(),
@@ -69,8 +69,12 @@ impl GoogleTranslator {
             ))?;
 
 
+
+
+
+
             let options = options_module
-                .getattr("GoogleOptions")?
+                .getattr("OllamaOptions")?
                 .call1((
 
 
@@ -78,10 +82,16 @@ impl GoogleTranslator {
 
                 ))?;
 
-            let google_translator = provider_module.getattr("GoogleTranslator")?.call0()?;
+
+
+
+
+
+
+            let google_translator = provider_module.getattr("OllamaTranslator")?.call0()?;
 
             let providers = PyDict::new(py);
-            providers.set_item("google", google_translator)?;
+            providers.set_item("ollama", google_translator)?;
 
             let translation_service = service_module
                 .getattr("TranslationService")?
@@ -112,7 +122,7 @@ impl GoogleTranslator {
 
             let coroutine = translation_service.call_method1(
                 "translate",
-                ("google", lrc_contents, to_language_py, options),
+                ("Ollama", lrc_contents, to_language_py, options),
             )?;
 
             into_future(coroutine)

@@ -15,9 +15,11 @@ async fn translator_test() -> pyo3::PyResult<()> {
     let new_language = Language::French;
 
     let subtitle_document = SubtitleDocument::from_pathbuf(lrc_file_path).unwrap();
-    let translated_subtitle_document = ArgosTranslator.translate(new_language, subtitle_document).await.unwrap();
+    let translated_subtitle_document = ArgosTranslator
+        .translate(new_language, subtitle_document)
+        .await
+        .unwrap();
     println!("{:#?}", translated_subtitle_document);
 
     Ok(())
 }
-

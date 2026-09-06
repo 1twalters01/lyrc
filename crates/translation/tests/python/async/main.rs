@@ -4,4 +4,3 @@ mod argos_translator_tests;
 async fn main() -> pyo3::PyResult<()> {
     pyo3_async_runtimes::testing::main().await
 }
-
