@@ -39,7 +39,7 @@ impl LyricsAligner for WhisperXAligner {
             let service_module = PyModule::import(py, "aligner.service")?;
             let provider_module = PyModule::import(py, "aligner.whisperx.provider")?;
             let options_module = PyModule::import(py, "aligner.whisperx.options")?;
-            let models_module = PyModule::import(py, "aligner.models.cue")?;
+            let cue_module = PyModule::import(py, "aligner.models.cue")?;
 
             let whisperx_aligner = provider_module
                 .getattr("WhisperXAligner")?
@@ -70,7 +70,7 @@ impl LyricsAligner for WhisperXAligner {
                         }
                     };
 
-                    Ok(models_module.getattr("Cue")?.call1((start, end, content))?)
+                    Ok(cue_module.getattr("Cue")?.call1((start, end, content))?)
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 

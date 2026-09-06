@@ -88,6 +88,16 @@ class ArgosTranslator(TranslationProvider[ArgosOptions]):
         to_code = to_language.code_2
         from_code = from_language.code_2
 
+        installed_langauges = argostranslate.translate.get_installed_languages()
+
+        installed_path = ArgosTranslator.find_installed_path(
+            installed_langauges,
+            from_code,
+            to_code,
+        )
+
+        if installed_path is not None:
+            return
 
         argostranslate.package.update_package_index()
         available_packages = argostranslate.package.get_available_packages()

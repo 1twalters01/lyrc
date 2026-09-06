@@ -24,6 +24,11 @@ print(":".join(
 cd "$ROOT"
 
 RUST_TEST_NOCAPTURE=1 cargo test \
+    -p translation \
+    --features python-tests \
+    --test python-async
+
+RUST_TEST_NOCAPTURE=1 cargo test \
     -p lyrics \
     --features python-tests \
     --test python-async
