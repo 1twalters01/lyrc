@@ -1,20 +1,34 @@
 # V1
 * Fix downloading
-* Have more download providers (maybe 2 more)
+    * Have more download providers
+    [] Musixmatch?
+    * Kugou/NetEaseo?
+    * Genius?
 
-* Allow completely empty lines (no timestamps or words) - maybe have it as an option to show blank lines or not?
+* Translate lyrics
+[] Google
+    [] Fill in options python variable in rust provider file
+    [] Test
+[] DeepL
+    [] Fill in options python variable in rust provider file
+    [] Test
+[] Huggingface
+    [] Fill in options python variable in rust provider file
+    [] Test
+[] Ollama
+    [] Fill in options python variable in rust provider file
+    [] Test
+
+* Load plain text files
+
+* Align text to become cue based lrc files
+[] Cue level alignment
+
+* Add error types to python libraries
 
 * Signify that you are editing a cue (maybe add a cursor?)
 * Improve keyboard commands
 * Improve UI/UX/Design
-
-* Load plain text files
-
-* Translate lyrics
-
-* Sync cues/words with aeneas/whisperx and make elrc files
-
-* Add error types to python libraries
 
 # V2
 * GUI(s)

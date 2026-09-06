@@ -8,5 +8,5 @@ pub trait LyricsTranslator: Send + Sync {
         &self,
         language: Language,
         subtitle_document: SubtitleDocument,
-    ) -> BoxFuture<'_, Result<SubtitleDocument, TranslationError>>;
+    ) -> BoxFuture<'_, Result<Option<SubtitleDocument>, TranslationError>>;
 }

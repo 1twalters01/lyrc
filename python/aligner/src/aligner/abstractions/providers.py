@@ -8,7 +8,7 @@ class AlignmentProvider(ABC, Generic[OptionsT]):
     @abstractmethod
     def align_cues(
             self,
-            lrc_content: list[Cue],
+            content: list[Cue],
             audio_path: str,
             options: OptionsT,
     ) -> list[AlignedCue]:

@@ -10,12 +10,12 @@ class AlignmentService:
     def align_cues(
             self,
             provider_name: str,
-            lrc_content: list[Cue],
+            content: list[Cue | str],
             audio_path: str,
             options: AlignmentOptions,
-    ) -> list[AlignedCue]:
+    ) -> list[AlignedCue | Cue]:
         provider = self.providers.get(provider_name)
         if provider is None:
             raise ValueError(f"unknown provider: {provider_name}")
 
-        return provider.align_cues(lrc_content, audio_path, options)
+        return provider.align_cues(content, audio_path, options)

@@ -1,14 +1,15 @@
 use std::path::PathBuf;
 
-use pyo3::{
-    prelude::*,
-    types::{PyDict, PyList},
-};
-use subtitles::subtitles::{
-    AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument, SubtitleMetadata,
+use pyo3::{prelude::*, types::PyDict};
+use subtitles::{
+    language::Language,
+    subtitles::{SubtitleContent, SubtitleDocument},
 };
 
-use crate::{error::AlignmentError, helpers::timedelta_to_duration, provider::LyricsAligner};
+use crate::{
+    error::AlignmentError, helpers::convert_py_cues_to_word_aligned_subtitle_document,
+    provider::LyricsAligner,
+};
 
 pub struct WhisperXAligner;
 
@@ -22,23 +23,35 @@ impl LyricsAligner for WhisperXAligner {
             .ok_or(AlignmentError::InvalidAudioPath)?
             .to_owned();
 
-        // Get the language code from the track instead?
-        // Would need to use mpris::track::Track in that case
-        let language_code = subtitle_document
+        let language = subtitle_document
             .metadata
             .languages
             .first()
-            .ok_or(AlignmentError::NoLanguageCode)?
-            .as_code_2();
+            .ok_or(AlignmentError::NoLanguageCode)?;
+
         let device = "cuda"; // Store in Config crate
 
-        let aligned_cues = Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
+        let py_aligned_cues = Self::align_cues(&subtitle_document, audio_path, language, device)?;
+
+        convert_py_cues_to_word_aligned_subtitle_document(py_aligned_cues, subtitle_document)
+    }
+}
+
+impl WhisperXAligner {
+    fn align_cues(
+        subtitle_document: &SubtitleDocument,
+        audio_path: String,
+        language: &Language,
+        device: &str,
+    ) -> Result<Py<PyAny>, AlignmentError> {
+        Python::attach(|py| -> Result<Py<PyAny>, AlignmentError> {
             let datetime = py.import("datetime")?;
             let timedelta = datetime.getattr("timedelta")?;
 
             let service_module = PyModule::import(py, "aligner.service")?;
             let provider_module = PyModule::import(py, "aligner.whisperx.provider")?;
             let options_module = PyModule::import(py, "aligner.whisperx.options")?;
+            let language_module = PyModule::import(py, "aligner.models.language")?;
             let cue_module = PyModule::import(py, "aligner.models.cue")?;
 
             let whisperx_aligner = provider_module
@@ -51,9 +64,16 @@ impl LyricsAligner for WhisperXAligner {
                 .getattr("AlignmentService")?
                 .call1((providers,))?;
 
+            let language_py = language_module.getattr("Language")?.call1((
+                language.as_name(),
+                language.as_native_name(),
+                language.as_code_2(),
+                language.as_code_3(),
+                language.as_flores_200(),
+            ))?;
             let options = options_module
                 .getattr("WhisperXOptions")?
-                .call1((language_code,))?;
+                .call1((language_py,))?;
 
             let lrc_contents = subtitle_document
                 .cues
@@ -80,61 +100,6 @@ impl LyricsAligner for WhisperXAligner {
             )?;
 
             Ok(result.unbind())
-        })?;
-
-        let aligned_cues = Python::attach(|py| -> PyResult<Vec<SubtitleCue>> {
-            let aligned_cues = aligned_cues.bind(py).cast::<PyList>()?;
-            aligned_cues
-                .iter()
-                .enumerate()
-                .map(|(i, cue)| {
-                    let start = timedelta_to_duration(&cue.getattr("start")?)?;
-                    let end = timedelta_to_duration(&cue.getattr("end")?)?;
-                    let words = cue
-                        .getattr("words")?
-                        .cast::<PyList>()?
-                        .iter()
-                        .map(|word| {
-                            Ok(AlignedWord {
-                                start: timedelta_to_duration(&word.getattr("start")?)?,
-                                end: timedelta_to_duration(&word.getattr("end")?)?,
-                                content: word.getattr("text")?.extract()?,
-                            })
-                        })
-                        .collect::<PyResult<Vec<_>>>()?;
-
-                    // Need to check that length of subtitle_document.cues
-                    // is the same as the length of aligned_cues
-                    Ok(SubtitleCue {
-                        id: subtitle_document.cues[i].id,
-                        start,
-                        end,
-                        content: SubtitleContent::Words(words),
-                    })
-                })
-                .collect()
         })
-        .map_err(|e| AlignmentError::PythonError { error: e })?;
-
-        let aligned_metadata = SubtitleMetadata {
-            album: subtitle_document.metadata.album,
-            title: subtitle_document.metadata.title,
-            artists: subtitle_document.metadata.artists,
-            languages: subtitle_document.metadata.languages,
-            file_path: match subtitle_document.metadata.file_path {
-                Some(mut path) => {
-                    path.set_extension("elrc");
-                    Some(path)
-                }
-                None => None,
-            },
-        };
-
-        let aligned_subtitle_document = SubtitleDocument {
-            metadata: aligned_metadata,
-            cues: aligned_cues,
-        };
-
-        Ok(Some(aligned_subtitle_document))
     }
 }

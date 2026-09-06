@@ -21,7 +21,7 @@ impl LyricsTranslator for HuggingfaceTranslator {
         &self,
         language: Language,
         subtitle_document: SubtitleDocument,
-    ) -> BoxFuture<'_, Result<SubtitleDocument, TranslationError>> {
+    ) -> BoxFuture<'_, Result<Option<SubtitleDocument>, TranslationError>> {
         Box::pin(async move {
             let original_language = subtitle_document
                 .metadata
@@ -29,11 +29,8 @@ impl LyricsTranslator for HuggingfaceTranslator {
                 .first()
                 .ok_or(TranslationError::NoLanguageCode)?;
 
-            let py_translated_cues = Self::translate_cues(
-                original_language,
-                &language,
-                &subtitle_document
-            ).await?;
+            let py_translated_cues =
+                Self::translate_cues(original_language, &language, &subtitle_document).await?;
 
             convert_py_cues_to_translated_subtitle_document(
                 py_translated_cues,
@@ -57,7 +54,8 @@ impl HuggingfaceTranslator {
             let service_module = PyModule::import(py, "translator.service")?;
             let cue_module = PyModule::import(py, "translator.models.cue")?;
             let language_module = PyModule::import(py, "translator.models.language")?;
-            let provider_module = PyModule::import(py, "translator.providers.huggingface.provider")?;
+            let provider_module =
+                PyModule::import(py, "translator.providers.huggingface.provider")?;
             let options_module = PyModule::import(py, "translator.providers.huggingface.options")?;
 
             let to_language_py = language_module.getattr("Language")?.call1((
@@ -68,15 +66,7 @@ impl HuggingfaceTranslator {
                 language.as_flores_200(),
             ))?;
 
-
-            let options = options_module
-                .getattr("HuggingfaceOptions")?
-                .call1((
-
-
-
-
-                ))?;
+            let options = options_module.getattr("HuggingfaceOptions")?.call1(())?;
 
             let google_translator = provider_module.getattr("HuggingfaceTranslator")?.call0()?;
 
@@ -89,8 +79,7 @@ impl HuggingfaceTranslator {
 
             let lrc_contents = PyList::empty(py);
             for cue in &subtitle_document.cues {
-                let start =
-                timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
+                let start = timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
                 let end = timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
 
                 let content = match &cue.content {

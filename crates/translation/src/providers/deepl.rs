@@ -21,7 +21,7 @@ impl LyricsTranslator for DeepLTranslator {
         &self,
         language: Language,
         subtitle_document: SubtitleDocument,
-    ) -> BoxFuture<'_, Result<SubtitleDocument, TranslationError>> {
+    ) -> BoxFuture<'_, Result<Option<SubtitleDocument>, TranslationError>> {
         Box::pin(async move {
             let original_language = subtitle_document
                 .metadata
@@ -29,11 +29,8 @@ impl LyricsTranslator for DeepLTranslator {
                 .first()
                 .ok_or(TranslationError::NoLanguageCode)?;
 
-            let py_translated_cues = Self::translate_cues(
-                original_language,
-                &language,
-                &subtitle_document
-            ).await?;
+            let py_translated_cues =
+                Self::translate_cues(original_language, &language, &subtitle_document).await?;
 
             convert_py_cues_to_translated_subtitle_document(
                 py_translated_cues,
@@ -68,15 +65,7 @@ impl DeepLTranslator {
                 language.as_flores_200(),
             ))?;
 
-
-            let options = options_module
-                .getattr("DeepLOptions")?
-                .call1((
-
-
-
-
-                ))?;
+            let options = options_module.getattr("DeepLOptions")?.call1(())?;
 
             let deepl_translator = provider_module.getattr("DeepLTranslator")?.call0()?;
 
@@ -89,8 +78,7 @@ impl DeepLTranslator {
 
             let lrc_contents = PyList::empty(py);
             for cue in &subtitle_document.cues {
-                let start =
-                timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
+                let start = timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
                 let end = timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
 
                 let content = match &cue.content {

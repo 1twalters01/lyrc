@@ -10,12 +10,12 @@ class WhisperXAligner(AlignmentProvider[WhisperXOptions]):
         self.device = device
 
     def align_cues(
-            self,
-            lrc_content: list[Cue],
-            audio_path: str,
-            options: WhisperXOptions
-    ) -> list[AlignedCue]:
-        language_code = options.language_code
+        self,
+        content: list[Cue | str],
+        audio_path: str,
+        options: WhisperXOptions
+    ) -> list[AlignedCue | Cue]:
+        language_code = options.language.code_2
         device = self.device
 
         segments = [
@@ -24,7 +24,7 @@ class WhisperXAligner(AlignmentProvider[WhisperXOptions]):
                 "end": cue.end.total_seconds(),
                 "text": cue.content.strip()
             }
-            for cue in lrc_content
+            for cue in content
             if cue.content.strip()
         ]
         if not segments:
