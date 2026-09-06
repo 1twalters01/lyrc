@@ -7,7 +7,6 @@ from translator.huggingface.translators.base import HuggingfaceFamilyTranslator
 from translator.huggingface.translators.nllb import NLLBTranslator
 from translator.huggingface.translators.m2m100 import M2M100Translator
 from translator.huggingface.translators.marian import MarianTranslator
-from translator.huggingface.translators.t5 import T5Translator
 
 @dataclass
 class HuggingfaceOptions(TranslationOptions):
@@ -23,4 +22,3 @@ class HuggingfaceFamily(Enum):
     NLLB = NLLBTranslator
     M2M100 = M2M100Translator
     MARIAN = MarianTranslator
-    T5 = T5Translator

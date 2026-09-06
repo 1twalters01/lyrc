@@ -7,3 +7,4 @@ class Language:
     native_name: str
     code_2: str
     code_3: str
+    flores_200: str

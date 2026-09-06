@@ -11,5 +11,29 @@ class M2M100Translator(HuggingfaceFamilyTranslator):
         source_language: Language | None,
         target_language: Language,
     ) -> list[str]:
-        pass
+        if source_language is None:
+            raise ValueError("NLLB requires a source language")
 
+        source_code = source_language.flores_200
+        target_code = target_language.flores_200
+
+        tokenizer.src_lang = source_code
+
+        inputs = tokenizer(
+            content,
+            return_tensors="pt"
+            padding=True,
+            truncation=True,
+        )
+
+        outputs = model.generate(
+            **inputs,
+            forced_bos_token_id=tokenizer.get_lang_id(
+                target_code
+            ),
+        )
+
+        return tokenizer.batch_decode(
+            outputs,
+            skip_special_tokens=True,
+        )
