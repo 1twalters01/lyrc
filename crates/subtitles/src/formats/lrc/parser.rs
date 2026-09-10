@@ -7,7 +7,7 @@ use crate::{
     formats::lrc::error::LrcError,
     language::Language,
     parser::SubtitleParser,
-    subtitles::{SubtitleContent, SubtitleCue, SubtitleDocument},
+    subtitles::{Cue, SubtitleCues, SubtitleDocument},
 };
 
 enum LrcLine {
@@ -199,15 +199,17 @@ impl LrcParser {
                     _ => {}
                 },
                 LrcLine::Lyric { timestamps, text } => {
-                    let cues: Vec<SubtitleCue> = timestamps
-                        .into_iter()
-                        .map(|timestamp| SubtitleCue {
-                            id: Uuid::new_v4(),
-                            start: timestamp,
-                            end: timestamp,
-                            content: SubtitleContent::Text(text.clone()),
-                        })
-                        .collect();
+                    let cues = SubtitleCues::Cue(
+                        timestamps
+                            .into_iter()
+                            .map(|timestamp| Cue {
+                                id: Uuid::new_v4(),
+                                start: timestamp,
+                                end: timestamp,
+                                content: text.clone(),
+                            })
+                            .collect(),
+                    );
                     subtitle_document.cues.extend(cues);
                 }
                 LrcLine::Empty => {}
@@ -215,16 +217,15 @@ impl LrcParser {
             }
         }
 
-        subtitle_document.cues.sort_by_key(|c| c.start);
+        if let SubtitleCues::Cue(ref mut cues) = subtitle_document.cues {
+            cues.sort_by_key(|c| c.start);
 
-        for i in 0..subtitle_document.cues.len().saturating_sub(1) {
-            let start = subtitle_document.cues[i].start;
+            for i in 0..cues.len().saturating_sub(1) {
+                let start = cues[i].start;
 
-            if let Some(next) = subtitle_document.cues[i + 1..]
-                .iter()
-                .find(|cue| cue.start > start)
-            {
-                subtitle_document.cues[i].end = next.start;
+                if let Some(next) = cues[i + 1..].iter().find(|cue| cue.start > start) {
+                    cues[i].end = next.start;
+                }
             }
         }
 

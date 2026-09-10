@@ -1,5 +1,6 @@
 use chrono::Duration;
 use mpris::playback::{PlaybackCommand, PlaybackStatus};
+use subtitles::subtitles::SubtitleCues;
 
 use crate::{app::App, renderer::Renderer};
 
@@ -43,8 +44,12 @@ where
         }
 
         if let Some(ref document) = self.state.subtitle_document {
-            let cue = &document.cues[cue_index];
-            let duration = cue.start;
+            let duration = match &document.cues {
+                SubtitleCues::Word(cues) => cues[cue_index].start,
+                SubtitleCues::Cue(cues) => cues[cue_index].start,
+                SubtitleCues::Line(_) => return Err(String::from("No subtitle times").into()),
+                SubtitleCues::None => return Err(String::from("No subtitle cues").into()),
+            };
             self.mpris_client
                 .execute(PlaybackCommand::SetPosition(duration))
                 .await?;

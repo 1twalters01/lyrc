@@ -21,6 +21,7 @@ dependencies = [
  "pyo3",
  "subtitles",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -2919,6 +2920,7 @@ dependencies = [
  "pyo3",
  "pyo3-async-runtimes",
  "subtitles",
+ "uuid",
 ]
 
 [[package]]

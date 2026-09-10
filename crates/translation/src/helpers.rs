@@ -4,8 +4,9 @@ use chrono::Duration;
 use pyo3::{prelude::*, types::PyList};
 use subtitles::{
     language::Language,
-    subtitles::{SubtitleContent, SubtitleCue, SubtitleDocument, SubtitleMetadata},
+    subtitles::{Cue, SubtitleCues, SubtitleDocument, SubtitleMetadata},
 };
+use uuid::Uuid;
 
 use crate::error::TranslationError;
 
@@ -37,10 +38,17 @@ pub fn convert_py_cues_to_translated_subtitle_document(
 pub fn convert_py_cues_to_cues(
     py_translated_cues: Py<PyAny>,
     subtitle_document: &SubtitleDocument,
-) -> Result<Vec<SubtitleCue>, TranslationError> {
-    Python::attach(|py| -> PyResult<Vec<SubtitleCue>> {
-        let translated_cues = py_translated_cues.bind(py).cast::<PyList>()?;
-        translated_cues
+) -> Result<SubtitleCues, TranslationError> {
+    let ids: Vec<Uuid> = match &subtitle_document.cues {
+        SubtitleCues::Word(cues) => cues.iter().map(|c| c.id).collect(),
+        SubtitleCues::Cue(cues) => cues.iter().map(|c| c.id).collect(),
+        SubtitleCues::Line(lines) => lines.iter().map(|l| l.id).collect(),
+        SubtitleCues::None => return Err(TranslationError::NoSubtitles),
+    };
+
+    Python::attach(|py| -> PyResult<SubtitleCues> {
+        let binded_py_translated_cues = py_translated_cues.bind(py).cast::<PyList>()?;
+        let translated_cues: PyResult<Vec<Cue>> = binded_py_translated_cues
             .iter()
             .enumerate()
             .map(|(i, cue)| {
@@ -50,14 +58,15 @@ pub fn convert_py_cues_to_cues(
 
                 // Need to check that length of subtitle_document.cues
                 // is the same as the length of aligned_cues
-                Ok(SubtitleCue {
-                    id: subtitle_document.cues[i].id,
+                Ok::<Cue, PyErr>(Cue {
+                    id: ids[i],
                     start,
                     end,
-                    content: SubtitleContent::Text(content),
+                    content: content,
                 })
             })
-            .collect()
+            .collect();
+        Ok(SubtitleCues::Cue(translated_cues?))
     })
     .map_err(|e| TranslationError::PythonError { error: e })
 }

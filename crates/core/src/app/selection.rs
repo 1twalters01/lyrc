@@ -1,3 +1,4 @@
+use subtitles::subtitles::SubtitleCues;
 use synchronizer::traits::Synchronizer;
 
 use crate::{app::App, mode::AppMode, renderer::Renderer};
@@ -48,13 +49,30 @@ where
                 AppMode::Select {
                     cue_index,
                     selected_cues,
-                } => {
-                    if selected_cues.is_empty() {
-                        *selected_cues = (0..subtitle_document.cues.len()).collect::<Vec<usize>>();
-                    } else {
-                        *selected_cues = Vec::new();
+                } => match &subtitle_document.cues {
+                    SubtitleCues::Word(cues) => {
+                        if selected_cues.is_empty() {
+                            *selected_cues = (0..cues.len()).collect::<Vec<usize>>();
+                        } else {
+                            *selected_cues = Vec::new();
+                        }
                     }
-                }
+                    SubtitleCues::Cue(cues) => {
+                        if selected_cues.is_empty() {
+                            *selected_cues = (0..cues.len()).collect::<Vec<usize>>();
+                        } else {
+                            *selected_cues = Vec::new();
+                        }
+                    }
+                    SubtitleCues::Line(cues) => {
+                        if selected_cues.is_empty() {
+                            *selected_cues = (0..cues.len()).collect::<Vec<usize>>();
+                        } else {
+                            *selected_cues = Vec::new();
+                        }
+                    }
+                    SubtitleCues::None => return Ok(()),
+                },
                 AppMode::Edit {
                     cue_index,
                     selected_cues,

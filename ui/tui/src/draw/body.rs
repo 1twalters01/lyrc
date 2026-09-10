@@ -6,11 +6,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::Paragraph,
 };
-use subtitles::subtitles::SubtitleContent;
-use synchronizer::{
-    strategies::words::WordIndex,
-    traits::{ActiveIndexed, CueIndexed},
-};
+use subtitles::subtitles::SubtitleCues;
 
 pub fn draw_body(
     frame: &mut Frame,
@@ -25,50 +21,64 @@ pub fn draw_body(
     let subtitle_document = state.subtitle_document.as_ref();
 
     let mut lines: Vec<Line> = subtitle_document
-        .map(|document| {
-            document
-                .cues
+        .map(|document| match &document.cues {
+            SubtitleCues::Word(cues) => cues
                 .iter()
                 .map(|cue| {
                     let start_timestamp = format!(
-                        "[{:02}:{:02}.{:03}]",
+                        "{:02}:{:02}.{:03}",
                         cue.start.num_minutes(),
                         cue.start.num_seconds() % 60,
                         (cue.start.num_milliseconds() % 1000) / 10,
                     );
 
                     let end_timestamp = format!(
-                        "[{:02?}:{:02?}.{:03?}]",
+                        "{:02?}:{:02?}.{:03?}",
                         cue.end.num_minutes(),
                         cue.end.num_seconds() % 60,
                         (cue.end.num_milliseconds() % 1000) / 10,
                     );
-                    match &cue.content {
-                        SubtitleContent::Text(content) => {
-                            Line::from(format!("{}-{} {}", start_timestamp, end_timestamp, content))
-                        }
 
-                        SubtitleContent::Words(words) => {
-                            let mut line = Line::from(Span::raw(format!(
-                                "{}-{}  ",
-                                start_timestamp, end_timestamp
-                            )));
+                    let mut line = Line::from(Span::raw(format!(
+                        "[{} - {}]  ",
+                        start_timestamp, end_timestamp
+                    )));
 
-                            line.extend(
-                                words
-                                    .iter()
-                                    .map(|word| {
-                                        let mut spaced_word = word.clone();
-                                        spaced_word.content.push_str(" ");
-                                        Span::raw(spaced_word.content)
-                                    })
-                                    .collect::<Vec<_>>(),
-                            );
-                            line
-                        }
-                    }
+                    line.extend(cue.words.iter().map(|word| {
+                        let mut spaced_word = word.clone();
+                        spaced_word.content.push_str(" ");
+                        Span::raw(spaced_word.content)
+                    }));
+                    line
                 })
-                .collect()
+                .collect(),
+            SubtitleCues::Cue(cues) => cues
+                .iter()
+                .map(|cue| {
+                    let start_timestamp = format!(
+                        "{:02}:{:02}.{:03}",
+                        cue.start.num_minutes(),
+                        cue.start.num_seconds() % 60,
+                        (cue.start.num_milliseconds() % 1000) / 10,
+                    );
+
+                    let end_timestamp = format!(
+                        "{:02?}:{:02?}.{:03?}",
+                        cue.end.num_minutes(),
+                        cue.end.num_seconds() % 60,
+                        (cue.end.num_milliseconds() % 1000) / 10,
+                    );
+                    Line::from(format!(
+                        "[{} - {}] {}",
+                        start_timestamp, end_timestamp, cue.content
+                    ))
+                })
+                .collect(),
+            SubtitleCues::Line(cues) => cues
+                .iter()
+                .map(|cue| Line::from(format!("{}", cue.content)))
+                .collect(),
+            SubtitleCues::None => Vec::new(),
         })
         .unwrap_or_default();
 

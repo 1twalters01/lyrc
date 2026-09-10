@@ -31,12 +31,6 @@ where
                 self.state.subtitle_document = subtitle_document.clone();
                 self.state.alignment_running = false;
                 self.synchronizer.mode = SynchronizerMode::Word;
-                println!(
-                    "file_path {:?}",
-                    subtitle_document.unwrap().metadata.file_path
-                );
-
-                println!("alignment run successfully");
             }
             AlignmentResult::Cancelled => {
                 self.state.alignment_running = false;

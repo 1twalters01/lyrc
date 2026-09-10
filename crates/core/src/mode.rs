@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
-use subtitles::subtitles::SubtitleContent;
+use subtitles::subtitles::SubtitleCues;
 
 #[derive(Clone, PartialEq)]
 pub struct EditCue {
     pub index: usize,
-    pub original_content: SubtitleContent,
+    pub original_content: SubtitleCues,
 }
 
 #[derive(Clone, PartialEq)]

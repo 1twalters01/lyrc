@@ -6,7 +6,7 @@ use lyrc_core::{
     mode::{AppMode, EditCue},
     renderer::Renderer,
 };
-use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
+use subtitles::subtitles::{SubtitleCues, SubtitleDocument};
 
 pub fn handle_key<R: Renderer>(
     app: &mut App<R>,
@@ -15,60 +15,96 @@ pub fn handle_key<R: Renderer>(
     selected_cues: Vec<EditCue>,
     _config: &Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    match &mut app.state.subtitle_document {
-        Some(document) => {
-            let current_cue = &mut document.cues[cue_index];
-            match key.code {
-                KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => {
-                    app.state.quit = true
-                }
+    let document = match &mut app.state.subtitle_document {
+        Some(document) => document,
+        None => {
+            app.switch_to_normal_mode();
+            return Ok(());
+        }
+    };
 
-                KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
-                    match &app.state.subtitle_document {
-                        Some(document) => {
-                            document.save()?;
-                            app.state.unsaved_changes = false;
-                            app.state.subtitle_document = match app.state.track {
-                                Some(ref track) => match &track.file_path {
-                                    Some(file_path) => {
-                                        let mut lyrics_path = file_path.to_path_buf();
-                                        lyrics_path.set_extension("lrc");
-                                        let subtitle_document =
-                                            SubtitleDocument::from_pathbuf(lyrics_path)?;
+    match key.code {
+        KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.state.quit = true,
 
-                                        let selected_cues = selected_cues
-                                            .iter()
-                                            .map(|c| EditCue {
-                                                index: c.index,
-                                                original_content: subtitle_document.cues[c.index]
-                                                    .content
-                                                    .clone(),
-                                            })
-                                            .collect();
+        KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => match &document.cues {
+            SubtitleCues::Word(cues) => {
+                document.save()?;
+                app.state.unsaved_changes = false;
+                app.state.subtitle_document = match app.state.track {
+                    Some(ref track) => match &track.file_path {
+                        Some(file_path) => {
+                            let mut lyrics_path = file_path.to_path_buf();
+                            lyrics_path.set_extension("lrc");
+                            let subtitle_document = SubtitleDocument::from_pathbuf(lyrics_path)?;
 
-                                        app.state.app_mode = AppMode::Edit {
-                                            cue_index,
-                                            selected_cues,
-                                        };
-                                        Some(subtitle_document)
-                                    }
-                                    None => None,
-                                },
-                                None => None,
+                            let selected_cues = selected_cues
+                                .iter()
+                                .map(|c| EditCue {
+                                    index: c.index,
+                                    original_content: SubtitleCues::Word(Vec::from([cues
+                                        [c.index]
+                                        .clone()])),
+                                })
+                                .collect();
+
+                            app.state.app_mode = AppMode::Edit {
+                                cue_index,
+                                selected_cues,
                             };
+                            Some(subtitle_document)
                         }
-                        None => {}
-                    }
-                }
+                        None => None,
+                    },
+                    None => None,
+                };
+            }
+            SubtitleCues::Cue(cues) => {
+                document.save()?;
+                app.state.unsaved_changes = false;
+                app.state.subtitle_document = match app.state.track {
+                    Some(ref track) => match &track.file_path {
+                        Some(file_path) => {
+                            let mut lyrics_path = file_path.to_path_buf();
+                            lyrics_path.set_extension("lrc");
+                            let subtitle_document = SubtitleDocument::from_pathbuf(lyrics_path)?;
 
-                // Undo and redo changes
-                KeyCode::Char('z') if key.modifiers == KeyModifiers::CONTROL => app.undo(),
-                KeyCode::Char('r') if key.modifiers == KeyModifiers::CONTROL => app.redo(),
+                            let selected_cues = selected_cues
+                                .iter()
+                                .map(|c| EditCue {
+                                    index: c.index,
+                                    original_content: SubtitleCues::Cue(Vec::from([
+                                        cues[c.index].clone()
+                                    ])),
+                                })
+                                .collect();
 
-                KeyCode::Esc => {
-                    if app.state.unsaved_changes == true {
-                        for cue in selected_cues {
-                            document.cues[cue.index].content = cue.original_content;
+                            app.state.app_mode = AppMode::Edit {
+                                cue_index,
+                                selected_cues,
+                            };
+                            Some(subtitle_document)
+                        }
+                        None => None,
+                    },
+                    None => None,
+                };
+            }
+            SubtitleCues::Line(_) => {}
+            SubtitleCues::None => {}
+        },
+
+        // Undo and redo changes
+        KeyCode::Char('z') if key.modifiers == KeyModifiers::CONTROL => app.undo(),
+        KeyCode::Char('r') if key.modifiers == KeyModifiers::CONTROL => app.redo(),
+
+        KeyCode::Esc => {
+            if app.state.unsaved_changes == true {
+                match &mut document.cues {
+                    SubtitleCues::Word(subtitle_cues) => {
+                        for selected_cue in selected_cues {
+                            if let SubtitleCues::Word(cues) = selected_cue.original_content {
+                                subtitle_cues[selected_cue.index] = cues[0].clone();
+                            }
                         }
 
                         app.state.unsaved_changes = false;
@@ -83,59 +119,173 @@ pub fn handle_key<R: Renderer>(
                             },
                             None => None,
                         };
-                    } else {
-                        app.switch_to_select_mode()?
                     }
-                }
-
-                KeyCode::Tab => app.switch_to_normal_mode(),
-                KeyCode::Enter => app.switch_to_select_mode()?,
-
-                KeyCode::Char(char) => {
-                    let old_content = current_cue.content.clone();
-
-                    match &mut current_cue.content {
-                        SubtitleContent::Text(text) => {
-                            app.state.unsaved_changes = true;
-                            text.push(char);
-
-                            let edit = Edit::EditCueContent {
-                                changes: Vec::from([CueContentChange {
-                                    index: cue_index,
-                                    old_content,
-                                    new_content: current_cue.content.clone(),
-                                }]),
-                            };
-                            app.push_to_history(edit);
+                    SubtitleCues::Cue(subtitle_cues) => {
+                        for selected_cue in selected_cues {
+                            if let SubtitleCues::Cue(cues) = selected_cue.original_content {
+                                subtitle_cues[selected_cue.index] = cues[0].clone();
+                            }
                         }
-                        SubtitleContent::Words(words) => todo!(),
+
+                        app.state.unsaved_changes = false;
+                        app.state.subtitle_document = match app.state.track {
+                            Some(ref track) => match &track.file_path {
+                                Some(file_path) => {
+                                    let mut lyrics_path = file_path.to_path_buf();
+                                    lyrics_path.set_extension("lrc");
+                                    SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                                }
+                                None => None,
+                            },
+                            None => None,
+                        };
                     }
-                }
-                KeyCode::Backspace => {
-                    let old_content = current_cue.content.clone();
-
-                    match &mut current_cue.content {
-                        SubtitleContent::Text(text) => {
-                            app.state.unsaved_changes = true;
-                            text.pop();
-
-                            let edit = Edit::EditCueContent {
-                                changes: Vec::from([CueContentChange {
-                                    index: cue_index,
-                                    old_content,
-                                    new_content: current_cue.content.clone(),
-                                }]),
-                            };
-                            app.push_to_history(edit);
+                    SubtitleCues::Line(subtitle_cues) => {
+                        for selected_cue in selected_cues {
+                            if let SubtitleCues::Line(cues) = selected_cue.original_content {
+                                subtitle_cues[selected_cue.index] = cues[0].clone();
+                            }
                         }
-                        SubtitleContent::Words(words) => todo!(),
-                    }
-                }
 
-                _ => {}
+                        app.state.unsaved_changes = false;
+                        app.state.subtitle_document = match app.state.track {
+                            Some(ref track) => match &track.file_path {
+                                Some(file_path) => {
+                                    let mut lyrics_path = file_path.to_path_buf();
+                                    lyrics_path.set_extension("lrc");
+                                    SubtitleDocument::from_pathbuf(lyrics_path).ok()
+                                }
+                                None => None,
+                            },
+                            None => None,
+                        };
+                    }
+                    SubtitleCues::None => {}
+                }
+            } else {
+                app.switch_to_select_mode()?
             }
         }
-        None => app.switch_to_normal_mode(),
+
+        KeyCode::Tab => app.switch_to_normal_mode(),
+        KeyCode::Enter => app.switch_to_select_mode()?,
+
+        KeyCode::Char(char) => match &mut document.cues {
+            SubtitleCues::Word(cues) => {
+                let current_cue = &mut cues[cue_index];
+                let old_content = SubtitleCues::Word(Vec::from([current_cue.clone()]));
+
+                app.state.unsaved_changes = true;
+                current_cue.words.last_mut().map(|l| l.content.push(char));
+
+                let new_content = SubtitleCues::Word(Vec::from([current_cue.clone()]));
+
+                let edit = Edit::EditCueContent {
+                    changes: Vec::from([CueContentChange {
+                        index: cue_index,
+                        old_content,
+                        new_content,
+                    }]),
+                };
+                app.push_to_history(edit);
+            }
+            SubtitleCues::Cue(cues) => {
+                let current_cue = &mut cues[cue_index];
+                let old_content = SubtitleCues::Cue(Vec::from([current_cue.clone()]));
+
+                app.state.unsaved_changes = true;
+                current_cue.content.push(char);
+
+                let new_content = SubtitleCues::Cue(Vec::from([current_cue.clone()]));
+
+                let edit = Edit::EditCueContent {
+                    changes: Vec::from([CueContentChange {
+                        index: cue_index,
+                        old_content,
+                        new_content,
+                    }]),
+                };
+                app.push_to_history(edit);
+            }
+            SubtitleCues::Line(cues) => {
+                let current_cue = &mut cues[cue_index];
+                let old_content = SubtitleCues::Line(Vec::from([current_cue.clone()]));
+
+                app.state.unsaved_changes = true;
+                current_cue.content.push(char);
+
+                let new_content = SubtitleCues::Line(Vec::from([current_cue.clone()]));
+
+                let edit = Edit::EditCueContent {
+                    changes: Vec::from([CueContentChange {
+                        index: cue_index,
+                        old_content,
+                        new_content,
+                    }]),
+                };
+                app.push_to_history(edit);
+            }
+            SubtitleCues::None => {}
+        },
+        KeyCode::Backspace => match &mut document.cues {
+            SubtitleCues::Word(cues) => {
+                let current_cue = &mut cues[cue_index];
+                let old_content = SubtitleCues::Word(Vec::from([current_cue.clone()]));
+
+                app.state.unsaved_changes = true;
+                current_cue.words.last_mut().map(|w| w.content.pop());
+
+                let new_content = SubtitleCues::Word(Vec::from([current_cue.clone()]));
+
+                let edit = Edit::EditCueContent {
+                    changes: Vec::from([CueContentChange {
+                        index: cue_index,
+                        old_content,
+                        new_content,
+                    }]),
+                };
+                app.push_to_history(edit);
+            }
+            SubtitleCues::Cue(cues) => {
+                let current_cue = &mut cues[cue_index];
+                let old_content = SubtitleCues::Cue(Vec::from([current_cue.clone()]));
+
+                app.state.unsaved_changes = true;
+                current_cue.content.pop();
+
+                let new_content = SubtitleCues::Cue(Vec::from([current_cue.clone()]));
+
+                let edit = Edit::EditCueContent {
+                    changes: Vec::from([CueContentChange {
+                        index: cue_index,
+                        old_content,
+                        new_content,
+                    }]),
+                };
+                app.push_to_history(edit);
+            }
+            SubtitleCues::Line(cues) => {
+                let current_cue = &mut cues[cue_index];
+                let old_content = SubtitleCues::Line(Vec::from([current_cue.clone()]));
+
+                app.state.unsaved_changes = true;
+                current_cue.content.pop();
+
+                let new_content = SubtitleCues::Line(Vec::from([current_cue.clone()]));
+
+                let edit = Edit::EditCueContent {
+                    changes: Vec::from([CueContentChange {
+                        index: cue_index,
+                        old_content,
+                        new_content,
+                    }]),
+                };
+                app.push_to_history(edit);
+            }
+            SubtitleCues::None => {}
+        },
+
+        _ => {}
     }
 
     Ok(())

@@ -7,7 +7,7 @@ use crate::{
     formats::elrc::error::ElrcError,
     language::Language,
     parser::SubtitleParser,
-    subtitles::{AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument},
+    subtitles::{AlignedCue, SubtitleCues, SubtitleDocument, Word},
 };
 
 #[derive(Debug, Clone)]
@@ -243,7 +243,7 @@ impl ElrcParser {
     fn build_aligned_words(
         words: &Vec<ElrcWord>,
         next_lyric_timestamp: Option<Duration>,
-    ) -> Vec<AlignedWord> {
+    ) -> Vec<Word> {
         words
             .iter()
             .enumerate()
@@ -254,7 +254,7 @@ impl ElrcParser {
                     .or(next_lyric_timestamp)
                     .unwrap_or(word.timestamp);
 
-                AlignedWord {
+                Word {
                     start: word.timestamp,
                     end,
                     content: word.content.clone(),
@@ -264,14 +264,13 @@ impl ElrcParser {
     }
 
     fn set_cue_end_times(subtitle_document: &mut SubtitleDocument) {
-        for index in 0..subtitle_document.cues.len().saturating_sub(1) {
-            let start = subtitle_document.cues[index].start;
+        if let SubtitleCues::Cue(ref mut cues) = subtitle_document.cues {
+            for index in 0..cues.len().saturating_sub(1) {
+                let start = cues[index].start;
 
-            if let Some(next) = subtitle_document.cues[index + 1..]
-                .iter()
-                .find(|cue| cue.start > start)
-            {
-                subtitle_document.cues[index].end = next.start;
+                if let Some(next) = cues[index + 1..].iter().find(|cue| cue.start > start) {
+                    cues[index].end = next.start;
+                }
             }
         }
     }
@@ -289,21 +288,26 @@ impl ElrcParser {
 
                     let aligned_words = Self::build_aligned_words(words, next_lyric_timestamp);
 
-                    for timestamp in timestamps {
-                        subtitle_document.cues.push(SubtitleCue {
-                            id: Uuid::new_v4(),
-                            start: *timestamp,
-                            end: *timestamp,
-                            content: SubtitleContent::Words(aligned_words.clone()),
-                        });
-                    }
+                    subtitle_document.cues.extend(SubtitleCues::Word(
+                        timestamps
+                            .iter()
+                            .map(|timestamp| AlignedCue {
+                                id: Uuid::new_v4(),
+                                start: *timestamp,
+                                end: *timestamp,
+                                words: aligned_words.clone(),
+                            })
+                            .collect(),
+                    ));
                 }
                 ElrcLine::Empty => {}
                 ElrcLine::Unknown { value } => {}
             }
         }
 
-        subtitle_document.cues.sort_by_key(|c| c.start);
+        if let SubtitleCues::Cue(ref mut cues) = subtitle_document.cues {
+            cues.sort_by_key(|c| c.start);
+        }
 
         Self::set_cue_end_times(&mut subtitle_document);
 

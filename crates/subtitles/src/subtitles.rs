@@ -13,32 +13,25 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub enum SyncLevel {
-    None,
-    Cue,
+    Phoneme,
     Word,
+    Cue,
+    None,
 }
 
 #[derive(Clone, Debug)]
 pub struct SubtitleDocument {
     pub metadata: SubtitleMetadata,
-    pub cues: Vec<SubtitleCue>,
+    pub cues: SubtitleCues,
 }
 
 impl SubtitleDocument {
     pub fn sync_level(&self) -> SyncLevel {
-        if self
-            .cues
-            .iter()
-            .any(|cue| matches!(cue.content, SubtitleContent::Words(_)))
-        {
-            SyncLevel::Word
-        } else if self.cues.iter().any(|cue| {
-            // cue.start
-            true
-        }) {
-            SyncLevel::Cue
-        } else {
-            SyncLevel::None
+        match self.cues {
+            SubtitleCues::Word(_) => SyncLevel::Word,
+            SubtitleCues::Cue(_) => SyncLevel::Cue,
+            SubtitleCues::Line(_) => SyncLevel::None,
+            SubtitleCues::None => SyncLevel::None,
         }
     }
 
@@ -66,13 +59,13 @@ impl SubtitleDocument {
         match &subtitle_document.metadata.file_path {
             Some(file_path) => match file_path.extension() {
                 Some(os_str) => match os_str.to_str() {
-                    Some("lrc") => {
-                        let writer = LrcWriter;
+                    Some("elrc") => {
+                        let writer = ElrcWriter;
                         let file = writer.write(&subtitle_document.clone())?;
                         Ok(file)
                     }
-                    Some("elrc") => {
-                        let writer = ElrcWriter;
+                    Some("lrc") => {
+                        let writer = LrcWriter;
                         let file = writer.write(&subtitle_document.clone())?;
                         Ok(file)
                     }
@@ -96,15 +89,10 @@ impl SubtitleDocument {
     }
 
     pub fn update_languages(&mut self) {
-        let text = self
-            .cues
-            .iter()
-            .filter_map(|cue| match &cue.content {
-                SubtitleContent::Text(text) => Some(text.as_str()),
-                SubtitleContent::Words(_) => None,
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
+        let text = match &self.cues.get_lines() {
+            Some(lines) => lines.join("\n"),
+            None => return,
+        };
 
         if let Some(info) = whatlang::detect(&text) {
             self.metadata.languages.push(info.lang().into());
@@ -117,7 +105,7 @@ impl SubtitleDocument {
 impl Default for SubtitleDocument {
     fn default() -> Self {
         let metadata = SubtitleMetadata::default();
-        let cues = Vec::new();
+        let cues = SubtitleCues::default();
 
         Self { metadata, cues }
     }
@@ -145,21 +133,91 @@ impl Default for SubtitleMetadata {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct SubtitleCue {
+pub enum SubtitleCues {
+    Word(Vec<AlignedCue>),
+    Cue(Vec<Cue>),
+    Line(Vec<Line>),
+    None,
+}
+
+impl Default for SubtitleCues {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl SubtitleCues {
+    pub fn extend(&mut self, other: Self) {
+        if *self == Self::None {
+            *self = other;
+            return;
+        }
+
+        match (self, other) {
+            (Self::Word(a), Self::Word(b)) => a.extend(b),
+            (Self::Cue(a), Self::Cue(b)) => a.extend(b),
+            (Self::Line(a), Self::Line(b)) => a.extend(b),
+            _ => {}
+        }
+    }
+}
+
+impl SubtitleCues {
+    pub fn get_lines(&self) -> Option<Vec<String>> {
+        match self {
+            SubtitleCues::Word(aligned_cues) => Some(
+                aligned_cues
+                    .iter()
+                    .map(|aligned_cue| {
+                        aligned_cue
+                            .words
+                            .iter()
+                            .map(|word| word.content.clone())
+                            .collect::<Vec<String>>()
+                            .join("\n")
+                    })
+                    .collect::<Vec<String>>(),
+            ),
+            SubtitleCues::Cue(cues) => Some(
+                cues.iter()
+                    .map(|cue| cue.content.clone())
+                    .collect::<Vec<String>>(),
+            ),
+            SubtitleCues::Line(lines) => Some(
+                lines
+                    .iter()
+                    .map(|line| line.content.clone())
+                    .collect::<Vec<String>>(),
+            ),
+            SubtitleCues::None => None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Line {
+    pub id: Uuid,
+    pub content: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Cue {
     pub id: Uuid,
     pub start: Duration,
     pub end: Duration,
-    pub content: SubtitleContent,
+    pub content: String,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum SubtitleContent {
-    Text(String),
-    Words(Vec<AlignedWord>),
+pub struct AlignedCue {
+    pub id: Uuid,
+    pub start: Duration,
+    pub end: Duration,
+    pub words: Vec<Word>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AlignedWord {
+pub struct Word {
     pub start: Duration,
     pub end: Duration,
     pub content: String,

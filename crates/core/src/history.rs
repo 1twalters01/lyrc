@@ -1,5 +1,5 @@
 use chrono::Duration;
-use subtitles::subtitles::{SubtitleContent, SubtitleCue};
+use subtitles::subtitles::SubtitleCues;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -57,8 +57,8 @@ pub enum Edit {
 #[derive(Clone)]
 pub struct CueContentChange {
     pub index: usize,
-    pub old_content: SubtitleContent,
-    pub new_content: SubtitleContent,
+    pub old_content: SubtitleCues,
+    pub new_content: SubtitleCues,
 }
 
 #[derive(Clone)]
@@ -75,5 +75,5 @@ pub struct CueTimeChange {
 #[derive(Clone)]
 pub struct IndexedSubtitleCue {
     pub index: usize,
-    pub subtitle_cue: SubtitleCue,
+    pub subtitle_cue: SubtitleCues, // Have an enum of just the value, not the vec
 }

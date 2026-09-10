@@ -1,9 +1,12 @@
 use std::path::PathBuf;
 
-use pyo3::{prelude::*, types::PyDict};
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PyList},
+};
 use subtitles::{
     language::Language,
-    subtitles::{SubtitleContent, SubtitleDocument},
+    subtitles::{SubtitleCues, SubtitleDocument},
 };
 
 use crate::{
@@ -72,24 +75,29 @@ impl AeneasAligner {
                 .getattr("AeneasOptions")?
                 .call1((language_py,))?;
 
-            let lrc_contents = subtitle_document
-                .cues
-                .iter()
-                .map(|cue| {
-                    let start =
-                        timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
-                    let end = timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
-
-                    let content = match &cue.content {
-                        SubtitleContent::Text(text) => text,
-                        SubtitleContent::Words(_words) => {
-                            return Err(AlignmentError::AlreadyAligned);
-                        }
-                    };
-
-                    Ok(cue_module.getattr("Cue")?.call1((start, end, content))?)
-                })
-                .collect::<Result<Vec<_>, _>>()?;
+            let lrc_contents = PyList::empty(py);
+            match &subtitle_document.cues {
+                SubtitleCues::Word(_) => return Err(AlignmentError::AlreadyAligned),
+                SubtitleCues::Cue(cues) => {
+                    for cue in cues {
+                        let start =
+                            timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
+                        let end =
+                            timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
+                        let content = cue.content.clone();
+                        let py_cue = cue_module.getattr("Cue")?.call1((start, end, content))?;
+                        lrc_contents.append(py_cue)?;
+                    }
+                }
+                SubtitleCues::Line(lines) => {
+                    for line in lines {
+                        let content = line.content.clone();
+                        lrc_contents.append(content)?;
+                    }
+                }
+                // SubtitleCues::None => return Err(TranslationError::NoSubtitles),
+                SubtitleCues::None => {}
+            }
 
             let result = alignment_service
                 .call_method1("align_cues", ("aeneas", lrc_contents, audio_path, options))?;

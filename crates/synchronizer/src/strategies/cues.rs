@@ -1,5 +1,5 @@
 use chrono::Duration;
-use subtitles::subtitles::SubtitleDocument;
+use subtitles::subtitles::{SubtitleCues, SubtitleDocument};
 
 use crate::traits::{ActiveIndexed, CueIndexed, Synchronizer};
 
@@ -94,20 +94,37 @@ impl CueSynchronizer {
             None => return Vec::new(),
         };
 
-        let start = subtitle_document
-            .cues
-            .partition_point(|cue| &cue.start <= position);
-
-        subtitle_document.cues[..start]
-            .iter()
-            .enumerate()
-            .filter_map(|(index, cue)| {
-                if position < &cue.end {
-                    Some(CueIndex { cue: index })
-                } else {
-                    None
-                }
-            })
-            .collect()
+        match &subtitle_document.cues {
+            SubtitleCues::Word(cues) => {
+                let start = cues.partition_point(|cue| &cue.start <= position);
+                cues[..start]
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(index, cue)| {
+                        if position < &cue.end {
+                            Some(CueIndex { cue: index })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<CueIndex>>()
+            }
+            SubtitleCues::Cue(cues) => {
+                let start = cues.partition_point(|cue| &cue.start <= position);
+                cues[..start]
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(index, cue)| {
+                        if position < &cue.end {
+                            Some(CueIndex { cue: index })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<CueIndex>>()
+            }
+            SubtitleCues::Line(_) => Vec::new(),
+            SubtitleCues::None => Vec::new(),
+        }
     }
 }

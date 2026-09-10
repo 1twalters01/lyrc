@@ -2,6 +2,7 @@ use std::{error::Error, fmt};
 
 #[derive(Debug)]
 pub enum LrcError {
+    InvalidSubtitleDocumentFormat,
     MissingTagClosingBracket,
     InvalidTimestamp,
     InvalidTimestampMillisecondFormat,
@@ -15,6 +16,9 @@ pub enum LrcError {
 impl fmt::Display for LrcError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            LrcError::InvalidSubtitleDocumentFormat => {
+                write!(f, "Invalid subtitle document format")
+            }
             LrcError::MissingTagClosingBracket => {
                 write!(f, "Missing tag closing bracket")
             }

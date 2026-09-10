@@ -6,7 +6,7 @@ use pyo3::{
 use pyo3_async_runtimes::tokio::into_future;
 use subtitles::{
     language::Language,
-    subtitles::{SubtitleContent, SubtitleDocument},
+    subtitles::{SubtitleCues, SubtitleDocument},
 };
 
 use crate::{
@@ -77,25 +77,42 @@ impl GoogleTranslator {
                 .call1((providers,))?;
 
             let lrc_contents = PyList::empty(py);
-            for cue in &subtitle_document.cues {
-                let start = timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
-                let end = timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
-
-                let content = match &cue.content {
-                    SubtitleContent::Text(text) => text.clone(),
-                    SubtitleContent::Words(words) => {
-                        let mut content = String::new();
-                        for word in words {
-                            content.push_str(&word.content);
-                        }
-
-                        content
+            match &subtitle_document.cues {
+                SubtitleCues::Word(cues) => {
+                    for cue in cues {
+                        let start =
+                            timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
+                        let end =
+                            timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
+                        let content = cue
+                            .words
+                            .iter()
+                            .map(|word| word.content.clone())
+                            .collect::<Vec<String>>()
+                            .join("");
+                        let py_cue = cue_module.getattr("Cue")?.call1((start, end, content))?;
+                        lrc_contents.append(py_cue)?;
                     }
-                };
-
-                let py_cue = cue_module.getattr("Cue")?.call1((start, end, content))?;
-
-                lrc_contents.append(py_cue)?;
+                }
+                SubtitleCues::Cue(cues) => {
+                    for cue in cues {
+                        let start =
+                            timedelta.call1((0, 0, cue.start.num_microseconds().unwrap_or(0)))?;
+                        let end =
+                            timedelta.call1((0, 0, cue.end.num_microseconds().unwrap_or(0)))?;
+                        let content = cue.content.clone();
+                        let py_cue = cue_module.getattr("Cue")?.call1((start, end, content))?;
+                        lrc_contents.append(py_cue)?;
+                    }
+                }
+                SubtitleCues::Line(lines) => {
+                    for line in lines {
+                        let content = line.content.clone();
+                        lrc_contents.append(content)?;
+                    }
+                }
+                // SubtitleCues::None => return Err(TranslationError::NoSubtitles),
+                SubtitleCues::None => {}
             }
 
             let coroutine = translation_service.call_method1(

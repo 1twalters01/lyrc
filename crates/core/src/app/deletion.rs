@@ -1,3 +1,5 @@
+use subtitles::subtitles::SubtitleCues;
+
 use crate::{app::App, history::IndexedSubtitleCue, mode::AppMode, renderer::Renderer};
 
 impl<R> App<R>
@@ -15,26 +17,66 @@ where
                 AppMode::Select {
                     cue_index,
                     selected_cues,
-                } => {
-                    for index in selected_cues.iter().rev() {
-                        subtitle_document.cues.remove(*index);
-                        if index < cue_index {
-                            *cue_index = cue_index.saturating_sub(1);
+                } => match &mut subtitle_document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for index in selected_cues.iter().rev() {
+                            cues.remove(*index);
+                            if index < cue_index {
+                                *cue_index = cue_index.saturating_sub(1);
+                            }
                         }
+                        *selected_cues = Vec::new();
                     }
-                    *selected_cues = Vec::new();
-                }
+                    SubtitleCues::Cue(cues) => {
+                        for index in selected_cues.iter().rev() {
+                            cues.remove(*index);
+                            if index < cue_index {
+                                *cue_index = cue_index.saturating_sub(1);
+                            }
+                        }
+                        *selected_cues = Vec::new();
+                    }
+                    SubtitleCues::Line(cues) => {
+                        for index in selected_cues.iter().rev() {
+                            cues.remove(*index);
+                            if index < cue_index {
+                                *cue_index = cue_index.saturating_sub(1);
+                            }
+                        }
+                        *selected_cues = Vec::new();
+                    }
+                    SubtitleCues::None => {}
+                },
                 AppMode::Edit {
                     cue_index,
                     selected_cues,
-                } => {
-                    for cue in selected_cues.iter().rev() {
-                        subtitle_document.cues.remove(cue.index);
-                        if cue.index < *cue_index {
-                            *cue_index = cue_index.saturating_sub(1);
+                } => match &mut subtitle_document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for cue in selected_cues.iter().rev() {
+                            cues.remove(cue.index);
+                            if cue.index < *cue_index {
+                                *cue_index = cue_index.saturating_sub(1);
+                            }
                         }
                     }
-                }
+                    SubtitleCues::Cue(cues) => {
+                        for cue in selected_cues.iter().rev() {
+                            cues.remove(cue.index);
+                            if cue.index < *cue_index {
+                                *cue_index = cue_index.saturating_sub(1);
+                            }
+                        }
+                    }
+                    SubtitleCues::Line(cues) => {
+                        for cue in selected_cues.iter().rev() {
+                            cues.remove(cue.index);
+                            if cue.index < *cue_index {
+                                *cue_index = cue_index.saturating_sub(1);
+                            }
+                        }
+                    }
+                    SubtitleCues::None => {}
+                },
             },
             None => self.switch_to_normal_mode(),
         }
@@ -51,17 +93,39 @@ where
                 AppMode::Select {
                     cue_index,
                     selected_cues,
-                } => {
-                    selected_cues.retain(|c_index| c_index != cue_index);
-                    subtitle_document.cues.remove(*cue_index);
-                }
+                } => match &mut subtitle_document.cues {
+                    SubtitleCues::Word(cues) => {
+                        selected_cues.retain(|c_index| c_index != cue_index);
+                        cues.remove(*cue_index);
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        selected_cues.retain(|c_index| c_index != cue_index);
+                        cues.remove(*cue_index);
+                    }
+                    SubtitleCues::Line(cues) => {
+                        selected_cues.retain(|c_index| c_index != cue_index);
+                        cues.remove(*cue_index);
+                    }
+                    SubtitleCues::None => {}
+                },
                 AppMode::Edit {
                     cue_index,
                     selected_cues,
-                } => {
-                    selected_cues.retain(|cue| cue.index != *cue_index);
-                    subtitle_document.cues.remove(*cue_index);
-                }
+                } => match &mut subtitle_document.cues {
+                    SubtitleCues::Word(cues) => {
+                        selected_cues.retain(|cue| cue.index != *cue_index);
+                        cues.remove(*cue_index);
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        selected_cues.retain(|cue| cue.index != *cue_index);
+                        cues.remove(*cue_index);
+                    }
+                    SubtitleCues::Line(cues) => {
+                        selected_cues.retain(|cue| cue.index != *cue_index);
+                        cues.remove(*cue_index);
+                    }
+                    SubtitleCues::None => {}
+                },
             },
             None => self.switch_to_normal_mode(),
         }
@@ -74,36 +138,99 @@ where
 
         indexed_cues.sort_by_key(|c| c.index);
         match &mut self.state.subtitle_document {
-            Some(subtitle_document) => {
-                for indexed_cue in indexed_cues.iter().rev() {
-                    subtitle_document.cues.remove(indexed_cue.index);
+            Some(subtitle_document) => match &mut subtitle_document.cues {
+                SubtitleCues::Word(cues) => {
+                    for indexed_cue in indexed_cues.iter().rev() {
+                        cues.remove(indexed_cue.index);
 
-                    match &mut self.state.app_mode {
-                        AppMode::Normal => {}
-                        AppMode::Select {
-                            cue_index: _,
-                            selected_cues,
-                        } => {
-                            selected_cues.retain(|c_index| *c_index != indexed_cue.index);
-                            for selected_cue in selected_cues {
-                                if *selected_cue > indexed_cue.index {
-                                    *selected_cue -= 1;
+                        match &mut self.state.app_mode {
+                            AppMode::Normal => {}
+                            AppMode::Select {
+                                cue_index: _,
+                                selected_cues,
+                            } => {
+                                selected_cues.retain(|c_index| *c_index != indexed_cue.index);
+                                for selected_cue in selected_cues {
+                                    if *selected_cue > indexed_cue.index {
+                                        *selected_cue -= 1;
+                                    }
                                 }
                             }
-                        }
-                        AppMode::Edit {
-                            cue_index: _,
-                            selected_cues,
-                        } => {
-                            for selected_cue in selected_cues {
-                                if selected_cue.index > indexed_cue.index {
-                                    selected_cue.index -= 1;
+                            AppMode::Edit {
+                                cue_index: _,
+                                selected_cues,
+                            } => {
+                                for selected_cue in selected_cues {
+                                    if selected_cue.index > indexed_cue.index {
+                                        selected_cue.index -= 1;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
+                SubtitleCues::Cue(cues) => {
+                    for indexed_cue in indexed_cues.iter().rev() {
+                        cues.remove(indexed_cue.index);
+
+                        match &mut self.state.app_mode {
+                            AppMode::Normal => {}
+                            AppMode::Select {
+                                cue_index: _,
+                                selected_cues,
+                            } => {
+                                selected_cues.retain(|c_index| *c_index != indexed_cue.index);
+                                for selected_cue in selected_cues {
+                                    if *selected_cue > indexed_cue.index {
+                                        *selected_cue -= 1;
+                                    }
+                                }
+                            }
+                            AppMode::Edit {
+                                cue_index: _,
+                                selected_cues,
+                            } => {
+                                for selected_cue in selected_cues {
+                                    if selected_cue.index > indexed_cue.index {
+                                        selected_cue.index -= 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                SubtitleCues::Line(cues) => {
+                    for indexed_cue in indexed_cues.iter().rev() {
+                        cues.remove(indexed_cue.index);
+
+                        match &mut self.state.app_mode {
+                            AppMode::Normal => {}
+                            AppMode::Select {
+                                cue_index: _,
+                                selected_cues,
+                            } => {
+                                selected_cues.retain(|c_index| *c_index != indexed_cue.index);
+                                for selected_cue in selected_cues {
+                                    if *selected_cue > indexed_cue.index {
+                                        *selected_cue -= 1;
+                                    }
+                                }
+                            }
+                            AppMode::Edit {
+                                cue_index: _,
+                                selected_cues,
+                            } => {
+                                for selected_cue in selected_cues {
+                                    if selected_cue.index > indexed_cue.index {
+                                        selected_cue.index -= 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                SubtitleCues::None => {}
+            },
             None => self.switch_to_normal_mode(),
         }
     }

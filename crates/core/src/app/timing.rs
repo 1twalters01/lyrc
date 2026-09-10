@@ -1,4 +1,5 @@
 use chrono::Duration;
+use subtitles::subtitles::SubtitleCues;
 
 use crate::{app::App, history::CueTimeChange, mode::AppMode, renderer::Renderer};
 
@@ -15,24 +16,44 @@ where
         changes.sort_by_key(|c| std::cmp::Reverse(c.old_index));
 
         match &mut self.state.subtitle_document {
-            Some(subtitle_document) => {
-                let mut items = Vec::new();
+            Some(subtitle_document) => match &mut subtitle_document.cues {
+                SubtitleCues::Word(cues) => {
+                    let mut items = Vec::new();
+                    for change in changes {
+                        let mut item = cues.remove(change.old_index);
 
-                for change in changes {
-                    let mut item = subtitle_document.cues.remove(change.old_index);
+                        item.start = change.new_start;
+                        item.end = change.new_end;
 
-                    item.start = change.new_start;
-                    item.end = change.new_end;
+                        items.push((change.new_index, item));
+                    }
 
-                    items.push((change.new_index, item));
+                    items.sort_by_key(|(index, _)| *index);
+
+                    for (index, item) in items {
+                        cues.insert(index, item);
+                    }
                 }
+                SubtitleCues::Cue(cues) => {
+                    let mut items = Vec::new();
+                    for change in changes {
+                        let mut item = cues.remove(change.old_index);
 
-                items.sort_by_key(|(index, _)| *index);
+                        item.start = change.new_start;
+                        item.end = change.new_end;
 
-                for (index, item) in items {
-                    subtitle_document.cues.insert(index, item);
+                        items.push((change.new_index, item));
+                    }
+
+                    items.sort_by_key(|(index, _)| *index);
+
+                    for (index, item) in items {
+                        cues.insert(index, item);
+                    }
                 }
-            }
+                SubtitleCues::Line(_) => return,
+                SubtitleCues::None => return,
+            },
             None => self.switch_to_normal_mode(),
         }
     }
@@ -44,39 +65,79 @@ where
             new_position: Duration,
             track: &mpris::track::Track,
         ) -> usize {
-            let current_cue = &mut document.cues[*cue_index];
-            let new_start = new_position;
+            match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_start = new_position;
 
-            if new_start <= track.duration {
-                current_cue.start = new_start;
+                    if new_start <= track.duration {
+                        current_cue.start = new_start;
 
-                while *cue_index + 1 < document.cues.len()
-                    && &document.cues[*cue_index].start > &document.cues[*cue_index + 1].start
-                {
-                    document.cues.swap(*cue_index, *cue_index + 1);
+                        while *cue_index + 1 < cues.len()
+                            && &cues[*cue_index].start > &cues[*cue_index + 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index + 1);
 
-                    *cue_index += 1;
-                }
+                            *cue_index += 1;
+                        }
 
-                if document.cues[*cue_index].start > document.cues[*cue_index].end {
-                    let start = document.cues[*cue_index].start;
-                    if let Some(next) = document.cues[*cue_index + 1..]
-                        .iter()
-                        .find(|cue| cue.start > start)
-                    {
-                        document.cues[*cue_index].end = next.start;
+                        if cues[*cue_index].start > cues[*cue_index].end {
+                            let start = cues[*cue_index].start;
+                            if let Some(next) =
+                                cues[*cue_index + 1..].iter().find(|cue| cue.start > start)
+                            {
+                                cues[*cue_index].end = next.start;
+                            }
+                        }
+                    } else if new_start >= Duration::zero() {
+                        current_cue.start = new_start;
+
+                        while *cue_index > 0
+                            && &cues[*cue_index].start < &cues[*cue_index - 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index - 1);
+
+                            *cue_index -= 1;
+                        }
                     }
                 }
-            } else if new_start >= Duration::zero() {
-                current_cue.start = new_start;
+                SubtitleCues::Cue(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_start = new_position;
 
-                while *cue_index > 0
-                    && &document.cues[*cue_index].start < &document.cues[*cue_index - 1].start
-                {
-                    document.cues.swap(*cue_index, *cue_index - 1);
+                    if new_start <= track.duration {
+                        current_cue.start = new_start;
 
-                    *cue_index -= 1;
+                        while *cue_index + 1 < cues.len()
+                            && &cues[*cue_index].start > &cues[*cue_index + 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index + 1);
+
+                            *cue_index += 1;
+                        }
+
+                        if cues[*cue_index].start > cues[*cue_index].end {
+                            let start = cues[*cue_index].start;
+                            if let Some(next) =
+                                cues[*cue_index + 1..].iter().find(|cue| cue.start > start)
+                            {
+                                cues[*cue_index].end = next.start;
+                            }
+                        }
+                    } else if new_start >= Duration::zero() {
+                        current_cue.start = new_start;
+
+                        while *cue_index > 0
+                            && &cues[*cue_index].start < &cues[*cue_index - 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index - 1);
+
+                            *cue_index -= 1;
+                        }
+                    }
                 }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
             }
 
             *cue_index
@@ -148,17 +209,37 @@ where
             new_position: Duration,
             track: &mpris::track::Track,
         ) -> usize {
-            let current_cue = &mut document.cues[*cue_index];
-            let new_end = new_position;
+            match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_end = new_position;
 
-            if new_end <= track.duration {
-                current_cue.end = new_end;
-            } else if new_end >= Duration::zero() {
-                current_cue.end = new_end;
+                    if new_end <= track.duration {
+                        current_cue.end = new_end;
+                    } else if new_end >= Duration::zero() {
+                        current_cue.end = new_end;
 
-                if current_cue.end < current_cue.start {
-                    current_cue.start = current_cue.end;
+                        if current_cue.end < current_cue.start {
+                            current_cue.start = current_cue.end;
+                        }
+                    }
                 }
+                SubtitleCues::Cue(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_end = new_position;
+
+                    if new_end <= track.duration {
+                        current_cue.end = new_end;
+                    } else if new_end >= Duration::zero() {
+                        current_cue.end = new_end;
+
+                        if current_cue.end < current_cue.start {
+                            current_cue.start = current_cue.end;
+                        }
+                    }
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
             }
 
             *cue_index
@@ -201,29 +282,59 @@ where
             forwards_cue_increment: Duration,
             track: &mpris::track::Track,
         ) -> usize {
-            let current_cue = &mut document.cues[*cue_index];
-            let new_start = current_cue.start + forwards_cue_increment;
+            match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_start = current_cue.start + forwards_cue_increment;
 
-            if new_start <= track.duration {
-                current_cue.start = new_start;
+                    if new_start <= track.duration {
+                        current_cue.start = new_start;
 
-                while *cue_index + 1 < document.cues.len()
-                    && &document.cues[*cue_index].start > &document.cues[*cue_index + 1].start
-                {
-                    document.cues.swap(*cue_index, *cue_index + 1);
+                        while *cue_index + 1 < cues.len()
+                            && &cues[*cue_index].start > &cues[*cue_index + 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index + 1);
 
-                    *cue_index += 1;
-                }
+                            *cue_index += 1;
+                        }
 
-                if document.cues[*cue_index].start > document.cues[*cue_index].end {
-                    let start = document.cues[*cue_index].start;
-                    if let Some(next) = document.cues[*cue_index + 1..]
-                        .iter()
-                        .find(|cue| cue.start > start)
-                    {
-                        document.cues[*cue_index].end = next.start;
+                        if cues[*cue_index].start > cues[*cue_index].end {
+                            let start = cues[*cue_index].start;
+                            if let Some(next) =
+                                cues[*cue_index + 1..].iter().find(|cue| cue.start > start)
+                            {
+                                cues[*cue_index].end = next.start;
+                            }
+                        }
                     }
                 }
+                SubtitleCues::Cue(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_start = current_cue.start + forwards_cue_increment;
+
+                    if new_start <= track.duration {
+                        current_cue.start = new_start;
+
+                        while *cue_index + 1 < cues.len()
+                            && &cues[*cue_index].start > &cues[*cue_index + 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index + 1);
+
+                            *cue_index += 1;
+                        }
+
+                        if cues[*cue_index].start > cues[*cue_index].end {
+                            let start = cues[*cue_index].start;
+                            if let Some(next) =
+                                cues[*cue_index + 1..].iter().find(|cue| cue.start > start)
+                            {
+                                cues[*cue_index].end = next.start;
+                            }
+                        }
+                    }
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
             }
 
             *cue_index
@@ -300,11 +411,25 @@ where
             forwards_cue_increment: Duration,
             track: &mpris::track::Track,
         ) -> usize {
-            let current_cue = &mut document.cues[*cue_index];
-            let new_end = current_cue.end + forwards_cue_increment;
+            match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_end = current_cue.end + forwards_cue_increment;
 
-            if new_end <= track.duration {
-                current_cue.end = new_end;
+                    if new_end <= track.duration {
+                        current_cue.end = new_end;
+                    }
+                }
+                SubtitleCues::Cue(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_end = current_cue.end + forwards_cue_increment;
+
+                    if new_end <= track.duration {
+                        current_cue.end = new_end;
+                    }
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
             }
 
             *cue_index
@@ -357,19 +482,41 @@ where
             cue_index: &mut usize,
             backwards_cue_increment: Duration,
         ) -> usize {
-            let current_cue = &mut document.cues[*cue_index];
-            let new_start = current_cue.start - backwards_cue_increment;
+            match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_start = current_cue.start - backwards_cue_increment;
 
-            if new_start >= Duration::zero() {
-                current_cue.start = new_start;
+                    if new_start >= Duration::zero() {
+                        current_cue.start = new_start;
 
-                while *cue_index > 0
-                    && &document.cues[*cue_index].start < &document.cues[*cue_index - 1].start
-                {
-                    document.cues.swap(*cue_index, *cue_index - 1);
+                        while *cue_index > 0
+                            && &cues[*cue_index].start < &cues[*cue_index - 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index - 1);
 
-                    *cue_index -= 1;
+                            *cue_index -= 1;
+                        }
+                    }
                 }
+                SubtitleCues::Cue(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_start = current_cue.start - backwards_cue_increment;
+
+                    if new_start >= Duration::zero() {
+                        current_cue.start = new_start;
+
+                        while *cue_index > 0
+                            && &cues[*cue_index].start < &cues[*cue_index - 1].start
+                        {
+                            cues.swap(*cue_index, *cue_index - 1);
+
+                            *cue_index -= 1;
+                        }
+                    }
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
             }
 
             *cue_index
@@ -412,15 +559,33 @@ where
             cue_index: &mut usize,
             backwards_cue_increment: Duration,
         ) -> usize {
-            let current_cue = &mut document.cues[*cue_index];
-            let new_end = current_cue.end - backwards_cue_increment;
+            match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_end = current_cue.end - backwards_cue_increment;
 
-            if new_end >= Duration::zero() {
-                current_cue.end = new_end;
+                    if new_end >= Duration::zero() {
+                        current_cue.end = new_end;
 
-                if current_cue.end < current_cue.start {
-                    current_cue.start = current_cue.end;
+                        if current_cue.end < current_cue.start {
+                            current_cue.start = current_cue.end;
+                        }
+                    }
                 }
+                SubtitleCues::Cue(cues) => {
+                    let current_cue = &mut cues[*cue_index];
+                    let new_end = current_cue.end - backwards_cue_increment;
+
+                    if new_end >= Duration::zero() {
+                        current_cue.end = new_end;
+
+                        if current_cue.end < current_cue.start {
+                            current_cue.start = current_cue.end;
+                        }
+                    }
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
             }
 
             *cue_index
@@ -456,27 +621,48 @@ where
 
     pub fn increase_all_cue_start_times(&mut self, forwards_cue_increment: Duration) {
         match (&mut self.state.subtitle_document, &self.state.track) {
-            (Some(document), Some(track)) => {
-                for i in 0..document.cues.len() {
-                    let cue = &mut document.cues[i];
-                    let new_start = cue.start + forwards_cue_increment;
+            (Some(document), Some(track)) => match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    for i in 0..cues.len() {
+                        let cue = &mut cues[i];
+                        let new_start = cue.start + forwards_cue_increment;
 
-                    if new_start <= track.duration {
-                        cue.start = new_start;
-                    }
+                        if new_start <= track.duration {
+                            cue.start = new_start;
+                        }
 
-                    if cue.start > cue.end {
-                        let start = cue.start;
-                        if let Some(next) =
-                            document.cues[i + 1..].iter().find(|cue| cue.start > start)
-                        {
-                            document.cues[i].end = next.start;
+                        if cue.start > cue.end {
+                            let start = cue.start;
+                            if let Some(next) = cues[i + 1..].iter().find(|cue| cue.start > start) {
+                                cues[i].end = next.start;
+                            }
                         }
                     }
-                }
 
-                document.cues.sort_by_key(|cue| cue.start);
-            }
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Cue(cues) => {
+                    for i in 0..cues.len() {
+                        let cue = &mut cues[i];
+                        let new_start = cue.start + forwards_cue_increment;
+
+                        if new_start <= track.duration {
+                            cue.start = new_start;
+                        }
+
+                        if cue.start > cue.end {
+                            let start = cue.start;
+                            if let Some(next) = cues[i + 1..].iter().find(|cue| cue.start > start) {
+                                cues[i].end = next.start;
+                            }
+                        }
+                    }
+
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
+            },
 
             _ => {}
         }
@@ -484,18 +670,34 @@ where
 
     pub fn increase_all_cue_end_times(&mut self, forwards_cue_increment: Duration) {
         match (&mut self.state.subtitle_document, &self.state.track) {
-            (Some(document), Some(track)) => {
-                for i in 0..document.cues.len() {
-                    let cue = &mut document.cues[i];
-                    let new_end = cue.end + forwards_cue_increment;
+            (Some(document), Some(track)) => match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    for i in 0..cues.len() {
+                        let cue = &mut cues[i];
+                        let new_end = cue.end + forwards_cue_increment;
 
-                    if new_end <= track.duration {
-                        cue.end = new_end;
+                        if new_end <= track.duration {
+                            cue.end = new_end;
+                        }
                     }
-                }
 
-                document.cues.sort_by_key(|cue| cue.start);
-            }
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Cue(cues) => {
+                    for i in 0..cues.len() {
+                        let cue = &mut cues[i];
+                        let new_end = cue.end + forwards_cue_increment;
+
+                        if new_end <= track.duration {
+                            cue.end = new_end;
+                        }
+                    }
+
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
+            },
 
             _ => {}
         }
@@ -503,17 +705,32 @@ where
 
     pub fn decrease_all_cue_start_times(&mut self, backwards_cue_increment: Duration) {
         match &mut self.state.subtitle_document {
-            Some(document) => {
-                for cue in &mut document.cues {
-                    let new_start = cue.start - backwards_cue_increment;
+            Some(document) => match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    for cue in &mut *cues {
+                        let new_start = cue.start - backwards_cue_increment;
 
-                    if new_start >= Duration::zero() {
-                        cue.start = new_start;
+                        if new_start >= Duration::zero() {
+                            cue.start = new_start;
+                        }
                     }
-                }
 
-                document.cues.sort_by_key(|cue| cue.start);
-            }
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Cue(cues) => {
+                    for cue in &mut *cues {
+                        let new_start = cue.start - backwards_cue_increment;
+
+                        if new_start >= Duration::zero() {
+                            cue.start = new_start;
+                        }
+                    }
+
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
+            },
 
             _ => {}
         }
@@ -521,21 +738,40 @@ where
 
     pub fn decrease_all_cue_end_times(&mut self, backwards_cue_increment: Duration) {
         match &mut self.state.subtitle_document {
-            Some(document) => {
-                for cue in &mut document.cues {
-                    let new_end = cue.end - backwards_cue_increment;
+            Some(document) => match &mut document.cues {
+                SubtitleCues::Word(cues) => {
+                    for cue in &mut *cues {
+                        let new_end = cue.end - backwards_cue_increment;
 
-                    if new_end >= Duration::zero() {
-                        cue.end = new_end;
+                        if new_end >= Duration::zero() {
+                            cue.end = new_end;
 
-                        if cue.end < cue.start {
-                            cue.start = cue.end;
+                            if cue.end < cue.start {
+                                cue.start = cue.end;
+                            }
                         }
                     }
-                }
 
-                document.cues.sort_by_key(|cue| cue.start);
-            }
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Cue(cues) => {
+                    for cue in &mut *cues {
+                        let new_end = cue.end - backwards_cue_increment;
+
+                        if new_end >= Duration::zero() {
+                            cue.end = new_end;
+
+                            if cue.end < cue.start {
+                                cue.start = cue.end;
+                            }
+                        }
+                    }
+
+                    cues.sort_by_key(|cue| cue.start);
+                }
+                SubtitleCues::Line(_) => {}
+                SubtitleCues::None => {}
+            },
 
             _ => {}
         }

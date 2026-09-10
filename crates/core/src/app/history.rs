@@ -1,3 +1,5 @@
+use subtitles::subtitles::SubtitleCues;
+
 use crate::{
     app::App,
     history::{CueTimeChange, Edit},
@@ -34,11 +36,30 @@ where
     fn undo_edit(&mut self, edit: &Edit) {
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => match edit {
-                Edit::EditCueContent { changes } => {
-                    for change in changes {
-                        subtitle_document.cues[change.index].content = change.old_content.clone()
+                Edit::EditCueContent { changes } => match &mut subtitle_document.cues {
+                    SubtitleCues::Word(subtitle_cues) => {
+                        for change in changes {
+                            if let SubtitleCues::Word(cues) = &change.old_content {
+                                subtitle_cues[change.index] = cues[0].clone();
+                            }
+                        }
                     }
-                }
+                    SubtitleCues::Cue(subtitle_cues) => {
+                        for change in changes {
+                            if let SubtitleCues::Cue(cues) = &change.old_content {
+                                subtitle_cues[change.index] = cues[0].clone();
+                            }
+                        }
+                    }
+                    SubtitleCues::Line(subtitle_cues) => {
+                        for change in changes {
+                            if let SubtitleCues::Line(cues) = &change.old_content {
+                                subtitle_cues[change.index] = cues[0].clone();
+                            }
+                        }
+                    }
+                    SubtitleCues::None => {}
+                },
                 Edit::EditCueTimes { changes } => {
                     let inverse_changes = changes
                         .iter()
@@ -68,11 +89,30 @@ where
     fn redo_edit(&mut self, edit: &Edit) {
         match &mut self.state.subtitle_document {
             Some(subtitle_document) => match edit {
-                Edit::EditCueContent { changes } => {
-                    for change in changes {
-                        subtitle_document.cues[change.index].content = change.new_content.clone()
+                Edit::EditCueContent { changes } => match &mut subtitle_document.cues {
+                    SubtitleCues::Word(subtitle_cues) => {
+                        for change in changes {
+                            if let SubtitleCues::Word(cues) = &change.old_content {
+                                subtitle_cues[change.index] = cues[0].clone();
+                            }
+                        }
                     }
-                }
+                    SubtitleCues::Cue(subtitle_cues) => {
+                        for change in changes {
+                            if let SubtitleCues::Cue(cues) = &change.old_content {
+                                subtitle_cues[change.index] = cues[0].clone();
+                            }
+                        }
+                    }
+                    SubtitleCues::Line(subtitle_cues) => {
+                        for change in changes {
+                            if let SubtitleCues::Line(cues) = &change.old_content {
+                                subtitle_cues[change.index] = cues[0].clone();
+                            }
+                        }
+                    }
+                    SubtitleCues::None => {}
+                },
                 Edit::EditCueTimes { changes } => {
                     self.set_times(changes.clone());
                 }

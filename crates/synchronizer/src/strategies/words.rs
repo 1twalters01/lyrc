@@ -1,10 +1,10 @@
 use std::usize;
 
 use chrono::Duration;
-use subtitles::subtitles::{SubtitleContent, SubtitleDocument};
+use subtitles::subtitles::{SubtitleCues, SubtitleDocument};
 
 use crate::{
-    strategies::cues::{CueIndex, CueSynchronizer},
+    strategies::cues::CueIndex,
     traits::{ActiveIndexed, CueIndexed, Synchronizer},
 };
 
@@ -104,33 +104,33 @@ impl WordSynchronizer {
             None => return Vec::new(),
         };
 
-        let current_cue_indices = CueSynchronizer::get_cues_at(subtitle_document, Some(position));
-
-        current_cue_indices
-            .iter()
-            .flat_map(|cue_index| {
-                let cue = &subtitle_document.cues[cue_index.cue];
-
-                match &cue.content {
-                    SubtitleContent::Text(_) => Vec::new().into_iter(),
-
-                    SubtitleContent::Words(words) => words
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(word_index, word)| {
-                            if word.start <= *position && *position < word.end {
-                                Some(WordIndex {
-                                    cue: cue_index.cue,
-                                    word: word_index,
-                                })
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                        .into_iter(),
-                }
-            })
-            .collect()
+        match &subtitle_document.cues {
+            SubtitleCues::Word(cues) => {
+                let start = cues.partition_point(|cue| &cue.start <= position);
+                cues[..start]
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, cue)| position < &cue.end)
+                    .flat_map(|(cue_index, cue)| {
+                        cue.words
+                            .iter()
+                            .enumerate()
+                            .filter_map(move |(word_index, word)| {
+                                if word.start <= *position && *position < word.end {
+                                    Some(WordIndex {
+                                        cue: cue_index,
+                                        word: word_index,
+                                    })
+                                } else {
+                                    None
+                                }
+                            })
+                    })
+                    .collect::<Vec<WordIndex>>()
+            }
+            SubtitleCues::Cue(_) => Vec::new(),
+            SubtitleCues::Line(_) => Vec::new(),
+            SubtitleCues::None => Vec::new(),
+        }
     }
 }

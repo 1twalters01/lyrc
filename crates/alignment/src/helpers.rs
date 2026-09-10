@@ -1,8 +1,9 @@
 use chrono::Duration;
 use pyo3::{prelude::*, types::PyList};
 use subtitles::subtitles::{
-    AlignedWord, SubtitleContent, SubtitleCue, SubtitleDocument, SubtitleMetadata,
+    AlignedCue, Cue, SubtitleCues, SubtitleDocument, SubtitleMetadata, Word,
 };
+use uuid::Uuid;
 
 use crate::error::AlignmentError;
 
@@ -47,10 +48,17 @@ pub fn convert_py_cues_to_word_aligned_subtitle_document(
 pub fn convert_py_cues_to_word_level_cues(
     py_aligned_cues: Py<PyAny>,
     subtitle_document: &SubtitleDocument,
-) -> Result<Vec<SubtitleCue>, AlignmentError> {
-    Python::attach(|py| -> PyResult<Vec<SubtitleCue>> {
-        let aligned_cues = py_aligned_cues.bind(py).cast::<PyList>()?;
-        aligned_cues
+) -> Result<SubtitleCues, AlignmentError> {
+    let ids: Vec<Uuid> = match &subtitle_document.cues {
+        SubtitleCues::Word(cues) => cues.iter().map(|c| c.id).collect(),
+        SubtitleCues::Cue(cues) => cues.iter().map(|c| c.id).collect(),
+        SubtitleCues::Line(lines) => lines.iter().map(|l| l.id).collect(),
+        SubtitleCues::None => return Err(AlignmentError::NoSubtitles),
+    };
+
+    Python::attach(|py| -> PyResult<SubtitleCues> {
+        let binded_py_aligned_cues = py_aligned_cues.bind(py).cast::<PyList>()?;
+        let aligned_cues: PyResult<Vec<AlignedCue>> = binded_py_aligned_cues
             .iter()
             .enumerate()
             .map(|(i, cue)| {
@@ -61,7 +69,7 @@ pub fn convert_py_cues_to_word_level_cues(
                     .cast::<PyList>()?
                     .iter()
                     .map(|word| {
-                        Ok(AlignedWord {
+                        Ok(Word {
                             start: timedelta_to_duration(&word.getattr("start")?)?,
                             end: timedelta_to_duration(&word.getattr("end")?)?,
                             content: word.getattr("text")?.extract()?,
@@ -71,25 +79,33 @@ pub fn convert_py_cues_to_word_level_cues(
 
                 // Need to check that length of subtitle_document.cues
                 // is the same as the length of aligned_cues
-                Ok(SubtitleCue {
-                    id: subtitle_document.cues[i].id,
+                Ok(AlignedCue {
+                    id: ids[i],
                     start,
                     end,
-                    content: SubtitleContent::Words(words),
+                    words: words,
                 })
             })
-            .collect()
+            .collect();
+        Ok(SubtitleCues::Word(aligned_cues?))
     })
     .map_err(|e| AlignmentError::PythonError { error: e })
 }
 
 pub fn convert_py_cues_to_line_level_cues(
-    py_translated_cues: Py<PyAny>,
+    py_aligned_cues: Py<PyAny>,
     subtitle_document: &SubtitleDocument,
-) -> Result<Vec<SubtitleCue>, AlignmentError> {
-    Python::attach(|py| -> PyResult<Vec<SubtitleCue>> {
-        let translated_cues = py_translated_cues.bind(py).cast::<PyList>()?;
-        translated_cues
+) -> Result<SubtitleCues, AlignmentError> {
+    let ids: Vec<Uuid> = match &subtitle_document.cues {
+        SubtitleCues::Word(cues) => cues.iter().map(|c| c.id).collect(),
+        SubtitleCues::Cue(cues) => cues.iter().map(|c| c.id).collect(),
+        SubtitleCues::Line(lines) => lines.iter().map(|l| l.id).collect(),
+        SubtitleCues::None => return Err(AlignmentError::NoSubtitles),
+    };
+
+    Python::attach(|py| -> PyResult<SubtitleCues> {
+        let binded_py_aligned_cues = py_aligned_cues.bind(py).cast::<PyList>()?;
+        let aligned_cues: PyResult<Vec<Cue>> = binded_py_aligned_cues
             .iter()
             .enumerate()
             .map(|(i, cue)| {
@@ -99,14 +115,15 @@ pub fn convert_py_cues_to_line_level_cues(
 
                 // Need to check that length of subtitle_document.cues
                 // is the same as the length of aligned_cues
-                Ok(SubtitleCue {
-                    id: subtitle_document.cues[i].id,
+                Ok::<Cue, PyErr>(Cue {
+                    id: ids[i],
                     start,
                     end,
-                    content: SubtitleContent::Text(content),
+                    content: content,
                 })
             })
-            .collect()
+            .collect();
+        Ok(SubtitleCues::Cue(aligned_cues?))
     })
     .map_err(|e| AlignmentError::PythonError { error: e })
 }

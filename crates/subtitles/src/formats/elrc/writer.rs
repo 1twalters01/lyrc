@@ -2,7 +2,7 @@ use chrono::Duration;
 
 use crate::{
     formats::elrc::error::ElrcError,
-    subtitles::{SubtitleContent, SubtitleDocument, SubtitleMetadata},
+    subtitles::{SubtitleCues, SubtitleDocument, SubtitleMetadata},
     writer::SubtitleWriter,
 };
 
@@ -15,7 +15,7 @@ impl SubtitleWriter for ElrcWriter {
         let mut file = String::new();
 
         Self::write_metadata(&subtitle_document.metadata, &mut file);
-        Self::write_cues(subtitle_document, &mut file);
+        Self::write_cues(subtitle_document, &mut file)?;
 
         Ok(file)
     }
@@ -48,30 +48,45 @@ impl ElrcWriter {
         }
     }
 
-    fn write_cues(document: &SubtitleDocument, output: &mut String) {
-        for cue in &document.cues {
-            let timestamp = Self::format_timestamp(cue.start);
-            let text = match &cue.content {
-                SubtitleContent::Text(text) => text.to_string(),
-                SubtitleContent::Words(words) => {
-                    let mut text = String::new();
-                    for (index, word) in words.iter().enumerate() {
-                        if index > 0 {
-                            text.push_str(" ");
-                        }
+    fn write_cues(document: &SubtitleDocument, output: &mut String) -> Result<(), ElrcError> {
+        let lines = match &document.cues {
+            SubtitleCues::Word(cues) => cues
+                .iter()
+                .map(|cue| {
+                    let start_time = Self::format_timestamp(cue.start);
+                    let text = cue
+                        .words
+                        .iter()
+                        .enumerate()
+                        .map(|(index, word)| {
+                            format!(
+                                "{}<{}>{}",
+                                if index > 0 { " " } else { "" },
+                                Self::format_timestamp(word.start),
+                                word.content
+                            )
+                        })
+                        .collect::<Vec<String>>()
+                        .join("");
 
-                        text.push_str(&format!(
-                            "<{}>{}",
-                            Self::format_timestamp(word.start),
-                            word.content
-                        ));
-                    }
-                    text
-                }
-            };
+                    format!("[{}]{}\n", start_time, text)
+                })
+                .collect::<Vec<String>>()
+                .join("\n"),
+            SubtitleCues::Cue(cues) => cues
+                .iter()
+                .map(|cue| {
+                    let start_time = Self::format_timestamp(cue.start);
+                    let text = cue.content.clone();
+                    format!("[{}]{}\n", start_time, text)
+                })
+                .collect::<Vec<String>>()
+                .join("\n"),
+            _ => return Err(ElrcError::InvalidSubtitleDocumentFormat),
+        };
 
-            output.push_str(&format!("[{}]{}\n", timestamp, text));
-        }
+        output.push_str(&lines);
+        Ok(())
     }
 
     fn format_timestamp(duration: Duration) -> String {

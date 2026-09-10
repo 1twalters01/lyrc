@@ -7,7 +7,9 @@ use lyrc_core::{
 };
 use lyrics::{models::LyricsFormat, service::LyricsService};
 use subtitles::{
-    formats::lrc::parser::LrcParser, parser::SubtitleParser, subtitles::SubtitleDocument,
+    formats::lrc::parser::LrcParser,
+    parser::SubtitleParser,
+    subtitles::{SubtitleCues, SubtitleDocument},
 };
 
 pub async fn handle_key<R: Renderer>(
@@ -72,20 +74,36 @@ pub async fn handle_key<R: Renderer>(
         // Bulk adjust cue times
         KeyCode::Char('m') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -93,17 +111,31 @@ pub async fn handle_key<R: Renderer>(
             app.decrease_all_cue_start_times(config.backwards_cue_increment_small);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 
@@ -112,20 +144,36 @@ pub async fn handle_key<R: Renderer>(
         }
         KeyCode::Char(',') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -133,17 +181,31 @@ pub async fn handle_key<R: Renderer>(
             app.increase_all_cue_start_times(config.forwards_cue_increment_small);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 
@@ -152,20 +214,36 @@ pub async fn handle_key<R: Renderer>(
         }
         KeyCode::Char('.') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -173,17 +251,31 @@ pub async fn handle_key<R: Renderer>(
             app.decrease_all_cue_end_times(config.backwards_cue_increment_small);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 
@@ -192,20 +284,36 @@ pub async fn handle_key<R: Renderer>(
         }
         KeyCode::Char('/') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -213,17 +321,31 @@ pub async fn handle_key<R: Renderer>(
             app.increase_all_cue_end_times(config.forwards_cue_increment_small);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 
@@ -232,20 +354,36 @@ pub async fn handle_key<R: Renderer>(
         }
         KeyCode::Char('M') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -253,17 +391,31 @@ pub async fn handle_key<R: Renderer>(
             app.decrease_all_cue_start_times(config.backwards_cue_increment_large);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 
@@ -272,20 +424,36 @@ pub async fn handle_key<R: Renderer>(
         }
         KeyCode::Char('<') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -293,17 +461,31 @@ pub async fn handle_key<R: Renderer>(
             app.increase_all_cue_start_times(config.forwards_cue_increment_large);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 
@@ -312,20 +494,36 @@ pub async fn handle_key<R: Renderer>(
         }
         KeyCode::Char('>') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -333,39 +531,69 @@ pub async fn handle_key<R: Renderer>(
             app.decrease_all_cue_end_times(config.backwards_cue_increment_large);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut *changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 
-            let edit = Edit::EditCueTimes { changes };
+            let edit = Edit::EditCueTimes { changes: changes };
             app.push_to_history(edit);
         }
         KeyCode::Char('?') => {
             let mut changes = match &mut app.state.subtitle_document {
-                Some(document) => document
-                    .cues
-                    .iter()
-                    .enumerate()
-                    .map(|(i, cue)| CueTimeChange {
-                        id: cue.id.clone(),
-                        new_index: i,
-                        old_index: i,
-                        new_start: cue.start,
-                        old_start: cue.start,
-                        new_end: cue.end,
-                        old_end: cue.end,
-                    })
-                    .collect::<Vec<CueTimeChange>>(),
+                Some(document) => match &document.cues {
+                    SubtitleCues::Word(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Cue(cues) => cues
+                        .iter()
+                        .enumerate()
+                        .map(|(i, cue)| CueTimeChange {
+                            id: cue.id.clone(),
+                            new_index: i,
+                            old_index: i,
+                            new_start: cue.start,
+                            old_start: cue.start,
+                            new_end: cue.end,
+                            old_end: cue.end,
+                        })
+                        .collect::<Vec<CueTimeChange>>(),
+                    SubtitleCues::Line(_) => Vec::new(),
+                    SubtitleCues::None => Vec::new(),
+                },
                 None => Vec::new(),
             };
 
@@ -373,17 +601,31 @@ pub async fn handle_key<R: Renderer>(
             app.increase_all_cue_end_times(config.forwards_cue_increment_large);
 
             if let Some(document) = &mut app.state.subtitle_document {
-                for change in &mut changes {
-                    if let Some((i, cue)) = document
-                        .cues
-                        .iter()
-                        .enumerate()
-                        .find(|(_, cue)| cue.id == change.id)
-                    {
-                        change.new_index = i;
-                        change.new_start = cue.start;
-                        change.new_end = cue.end;
-                    };
+                match &document.cues {
+                    SubtitleCues::Word(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Cue(cues) => {
+                        for change in &mut changes {
+                            if let Some((i, cue)) =
+                                cues.iter().enumerate().find(|(_, cue)| cue.id == change.id)
+                            {
+                                change.new_index = i;
+                                change.new_start = cue.start;
+                                change.new_end = cue.end;
+                            };
+                        }
+                    }
+                    SubtitleCues::Line(_) => {}
+                    SubtitleCues::None => {}
                 }
             }
 

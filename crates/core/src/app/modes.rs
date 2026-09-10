@@ -1,4 +1,4 @@
-use synchronizer::traits::{CueIndexed, Synchronizer};
+use subtitles::subtitles::SubtitleCues;
 
 use crate::{
     app::App,
@@ -71,7 +71,18 @@ where
                     .collect::<Vec<_>>()
                     .first()
                     .unwrap_or(&0);
-                let original_content = subtitle_document.cues[index].content.clone();
+
+                let original_content = match &subtitle_document.cues {
+                    SubtitleCues::Word(cues) => {
+                        SubtitleCues::Word(Vec::from([cues[index].clone()]))
+                    }
+                    SubtitleCues::Cue(cues) => SubtitleCues::Cue(Vec::from([cues[index].clone()])),
+                    SubtitleCues::Line(lines) => {
+                        SubtitleCues::Line(Vec::from([lines[index].clone()]))
+                    }
+                    SubtitleCues::None => SubtitleCues::None,
+                };
+
                 let selected_edit_cues = Vec::from([EditCue {
                     index,
                     original_content,
@@ -86,7 +97,18 @@ where
                     .iter()
                     .map(|index| EditCue {
                         index: *index,
-                        original_content: subtitle_document.cues[*index].content.clone(),
+                        original_content: match &subtitle_document.cues {
+                            SubtitleCues::Word(cues) => {
+                                SubtitleCues::Word(Vec::from([cues[*index].clone()]))
+                            }
+                            SubtitleCues::Cue(cues) => {
+                                SubtitleCues::Cue(Vec::from([cues[*index].clone()]))
+                            }
+                            SubtitleCues::Line(lines) => {
+                                SubtitleCues::Line(Vec::from([lines[*index].clone()]))
+                            }
+                            SubtitleCues::None => SubtitleCues::None,
+                        },
                     })
                     .collect::<Vec<EditCue>>();
                 (*cue_index, selected_edit_cues.clone())
