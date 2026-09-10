@@ -13,7 +13,7 @@ pub struct MusixmatchProvider;
 
 impl LyricsDownloader for MusixmatchProvider {
     fn search(&self, track: Track) -> BoxFuture<'static, Result<Option<Lyrics>, LyricsError>> {
-        let api_key = "load the correct api key from config?";
+        let api_key = "load the correct api key from config";
 
         // Load from config or default?
         let duration_tolerance = 5;
@@ -38,7 +38,7 @@ impl LyricsDownloader for MusixmatchProvider {
                     .getattr("MusixmatchDownloader")?
                     .call1((client, api_key,))?;
                 let providers = PyDict::new(py);
-                providers.set_item("lrclib", musixmatch_downloader)?;
+                providers.set_item("musixmatch", musixmatch_downloader)?;
 
                 // Create options
                 let options = options_module
@@ -64,7 +64,7 @@ impl LyricsDownloader for MusixmatchProvider {
                     timedelta,
                 ))?;
 
-                let coroutine = lyrics_service.call_method1("search", (py_track, "lrclib", options))?;
+                let coroutine = lyrics_service.call_method1("search", (py_track, "musixmatch", options))?;
                 into_future(coroutine)
 
             })
@@ -95,7 +95,7 @@ impl LyricsDownloader for MusixmatchProvider {
                 };
                 let source = match py_source.as_str() {
                     "self" => LyricsSource::Python,
-                    "lrclib" => LyricsSource::Lrclib,
+                    "musixmatch" => LyricsSource::Lrclib,
                     _ => {
                         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
                             "unknown lyrics source",
