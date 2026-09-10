@@ -6,6 +6,7 @@ import respx
 from downloader.models.track import Track
 from downloader.service import LyricsService
 from downloader.providers.lrclib.provider import LrcLibDownloader
+from downloader.providers.lrclib.options import LrcLibOptions
 
 
 @pytest.mark.asyncio
@@ -29,6 +30,8 @@ async def test_liblrc_search():
         )
     )
 
+    options = LrcLibOptions()
+
     track = Track(
         title="Porcelana",
         artist="Rosalía",
@@ -40,7 +43,7 @@ async def test_liblrc_search():
         provider = LyricsService({
             "lrclib": LrcLibDownloader(client),
         })
-        lyrics = await provider.search(track, "lrclib")
+        lyrics = await provider.search(track, "lrclib", options)
 
         print(lyrics)
 
