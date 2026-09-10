@@ -50,7 +50,6 @@ impl LyricsDownloader for LrclibProvider {
                     0,
                     track.duration.num_microseconds().unwrap_or(0),
                 ))?;
-                println!("timedelta: {:#?}", timedelta);
                 let py_track = track_module.getattr("Track")?.call1((
                     track.title,
                     track.artists.first(),
