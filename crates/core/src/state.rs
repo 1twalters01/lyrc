@@ -83,12 +83,27 @@ impl AppState {
 
     pub async fn update_subtitle_document(&mut self) {
         self.subtitle_document = match self.track {
-            Some(ref track) => match &track.get_lrc_file_path() {
-                Some(lyrics_file_path) => {
-                    SubtitleDocument::from_pathbuf(lyrics_file_path.clone()).ok()
+            Some(ref track) => {
+                let mut document = None;
+
+                for path in [
+                    track.get_elrc_file_path(),
+                    track.get_lrc_file_path(),
+                    track.get_txt_file_path(),
+                ]
+                    .into_iter()
+                    .flatten()
+                {
+                    if path.exists() {
+                        if let Ok(value) = SubtitleDocument::from_pathbuf(path) {
+                            document = Some(value);
+                            break;
+                        }
+                    }
                 }
-                None => None,
-            },
+
+                document
+            }
             None => None,
         };
     }

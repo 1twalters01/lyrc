@@ -19,8 +19,6 @@
     [] Fill in options python variable in rust provider file
     [] Test
 
-* Load plain text files
-
 * Align text to become cue based lrc files
 [] Cue level alignment
 

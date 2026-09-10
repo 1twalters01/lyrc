@@ -15,7 +15,6 @@ enum LrcLine {
         key: String,
         value: String,
     },
-
     Lyric {
         timestamps: Vec<Duration>,
         text: String,

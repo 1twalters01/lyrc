@@ -73,6 +73,15 @@ impl Track {
         }
         None
     }
+
+    pub fn get_txt_file_path(&self) -> Option<PathBuf> {
+        if let Some(track_file_path) = self.file_path.clone() {
+            let mut lyrics_file_path = track_file_path.to_path_buf();
+            lyrics_file_path.set_extension("txt");
+            return Some(lyrics_file_path);
+        }
+        None
+    }
 }
 
 fn get_string(metadata: &HashMap<String, OwnedValue>, key: &str) -> String {

@@ -1,7 +1,7 @@
 use crate::{
     formats::{
-        elrc::writer::ElrcWriter,
-        lrc::{parser::LrcParser, writer::LrcWriter},
+        elrc::{parser::ElrcParser, writer::ElrcWriter},
+        lrc::{parser::LrcParser, writer::LrcWriter}, txt::parser::TxtParser,
     },
     language::Language,
     parser::SubtitleParser,
@@ -41,9 +41,21 @@ impl SubtitleDocument {
             // Make this an actual error type
             None => Err(String::from("File does not have an extension").into()),
             Some(os_str) => match os_str.to_str() {
+                Some("elrc") => {
+                    let parser = ElrcParser;
+                    let mut subtitle_document = parser.parse(&content)?;
+                    subtitle_document.metadata.file_path = Some(path);
+                    Ok(subtitle_document)
+                }
                 Some("lrc") => {
-                    let lrc_parser = LrcParser;
-                    let mut subtitle_document = lrc_parser.parse(&content)?;
+                    let parser = LrcParser;
+                    let mut subtitle_document = parser.parse(&content)?;
+                    subtitle_document.metadata.file_path = Some(path);
+                    Ok(subtitle_document)
+                }
+                Some("txt") => {
+                    let parser = TxtParser;
+                    let mut subtitle_document = parser.parse(&content)?;
                     subtitle_document.metadata.file_path = Some(path);
                     Ok(subtitle_document)
                 }

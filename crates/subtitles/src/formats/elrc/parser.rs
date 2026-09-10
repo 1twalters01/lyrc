@@ -263,18 +263,6 @@ impl ElrcParser {
             .collect()
     }
 
-    fn set_cue_end_times(subtitle_document: &mut SubtitleDocument) {
-        if let SubtitleCues::Cue(ref mut cues) = subtitle_document.cues {
-            for index in 0..cues.len().saturating_sub(1) {
-                let start = cues[index].start;
-
-                if let Some(next) = cues[index + 1..].iter().find(|cue| cue.start > start) {
-                    cues[index].end = next.start;
-                }
-            }
-        }
-    }
-
     fn build_subtitle_document(lines: Vec<ElrcLine>) -> SubtitleDocument {
         let mut subtitle_document = SubtitleDocument::default();
 
@@ -294,7 +282,10 @@ impl ElrcParser {
                             .map(|timestamp| AlignedCue {
                                 id: Uuid::new_v4(),
                                 start: *timestamp,
-                                end: *timestamp,
+                                end: aligned_words
+                                    .last()
+                                    .map(|word| word.end)
+                                    .unwrap_or(*timestamp),
                                 words: aligned_words.clone(),
                             })
                             .collect(),
@@ -305,11 +296,9 @@ impl ElrcParser {
             }
         }
 
-        if let SubtitleCues::Cue(ref mut cues) = subtitle_document.cues {
+        if let SubtitleCues::Word(ref mut cues) = subtitle_document.cues {
             cues.sort_by_key(|c| c.start);
         }
-
-        Self::set_cue_end_times(&mut subtitle_document);
 
         subtitle_document
     }

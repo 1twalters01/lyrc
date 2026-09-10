@@ -1,4 +1,5 @@
 use chrono::Duration;
+use subtitles::subtitles::SubtitleCues;
 use synchronizer::{
     strategies::{
         cues::{CueIndex, CueSyncEvent, CueSynchronizer},
@@ -38,6 +39,7 @@ impl Default for ActiveIndex {
 pub enum SynchronizerMode {
     Cue,
     Word,
+    None,
 }
 
 pub struct AppSynchronizer {
@@ -72,6 +74,7 @@ impl AppSynchronizer {
                 .iter()
                 .map(|index| ActiveIndex::Cue(*index))
                 .collect(),
+            SynchronizerMode::None => Vec::new(),
         }
     }
 
@@ -80,6 +83,14 @@ impl AppSynchronizer {
         subtitle_document: &Option<subtitles::subtitles::SubtitleDocument>,
         position: &Option<Duration>,
     ) -> Option<SyncEvent> {
+        if let Some(document) = subtitle_document {
+            match document.cues {
+                SubtitleCues::Word(_) => self.mode = SynchronizerMode::Word,
+                SubtitleCues::Cue(_) => self.mode = SynchronizerMode::Cue,
+                SubtitleCues::Line(_) => self.mode = SynchronizerMode::Cue,
+                SubtitleCues::None => self.mode = SynchronizerMode::Cue,
+            }
+        }
         let event = match self.mode {
             SynchronizerMode::Word => self
                 .word_synchronizer
@@ -89,6 +100,7 @@ impl AppSynchronizer {
                 .cue_synchronizer
                 .update(subtitle_document, position)
                 .map(|e| SyncEvent::Cue(e)),
+            SynchronizerMode::None => None,
         };
         return event;
     }
