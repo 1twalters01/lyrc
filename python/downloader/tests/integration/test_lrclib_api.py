@@ -4,7 +4,7 @@ import httpx
 import pytest
 from downloader.models.track import Track
 from downloader.service import LyricsService
-from downloader.lrclib.provider import LrcLibDownloader
+from downloader.providers.lrclib.provider import LrcLibDownloader
 
 
 @pytest.mark.integration

@@ -1,16 +1,20 @@
-
 import httpx
 from downloader.models.lyrics import Lyrics, LyricsFormat, LyricsSource
 from downloader.models.track import Track
 from downloader.abstractions.providers import LyricsProvider
+from downloader.providers.lrclib.options import LrcLibOptions
 
 BASE_URL = "https://lrclib.net"
 
-class LrcLibDownloader(LyricsProvider):
+class LrcLibDownloader(LyricsProvider[LrcLibOptions]):
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 
-    async def search(self, track: Track) -> Lyrics | None:
+    async def search(
+            self,
+            track: Track,
+            options: LrcLibOptions,
+    ) -> Lyrics | None:
         params = {
             "track_name": track.title,
             "artist_name": track.artist,

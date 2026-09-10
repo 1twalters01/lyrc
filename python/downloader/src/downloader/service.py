@@ -1,6 +1,7 @@
 from downloader.models.track import Track
 from downloader.models.lyrics import Lyrics, LyricsFormat, LyricsSource
 from downloader.abstractions.providers import LyricsProvider
+from downloader.abstractions.options import OptionsT
 
 import httpx
 
@@ -18,9 +19,14 @@ class LyricsService:
             source=LyricsSource.SELF,
         )
 
-    async def search(self, track: Track, provider_name: str) -> Lyrics | None:
+    async def search(
+        self,
+        track: Track,
+        provider_name: str,
+        options: OptionsT,
+    ) -> Lyrics | None:
         provider = self.providers.get(provider_name)
         if provider is None:
             raise ValueError(f"unknown provider: {provider_name}")
 
-        return await provider.search(track)
+        return await provider.search(track, options)

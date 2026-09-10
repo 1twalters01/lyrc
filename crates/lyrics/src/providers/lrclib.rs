@@ -21,8 +21,9 @@ impl LyricsDownloader for LrclibProvider {
 
                 // import modules
                 let service_module = PyModule::import(py, "downloader.service")?;
-                let provider_module = PyModule::import(py, "downloader.lrclib.provider")?;
                 let track_module = PyModule::import(py, "downloader.models.track")?;
+                let provider_module = PyModule::import(py, "downloader.providers.lrclib.provider")?;
+                let options_module = PyModule::import(py, "downloader.providers.lrclib.options")?;
 
                 // get provider dict with lrclib instance inside
                 let client = httpx.getattr("AsyncClient")?.call0()?;
@@ -31,6 +32,11 @@ impl LyricsDownloader for LrclibProvider {
                     .call1((client,))?;
                 let providers = PyDict::new(py);
                 providers.set_item("lrclib", lrclib_downloader)?;
+
+                // Create options
+                let options = options_module
+                    .getattr("LrcLibOptions")?
+                    .call0()?;
 
                 // Create instance of lyrics service
                 let lyrics_service = service_module
@@ -52,10 +58,7 @@ impl LyricsDownloader for LrclibProvider {
                     timedelta,
                 ))?;
 
-                // run service.search(track, "lrclib")
-                // let coroutine = lyrics_service.call_method1("ping",
-                // (py_track, "lrclib"))?;
-                let coroutine = lyrics_service.call_method1("search", (py_track, "lrclib"))?;
+                let coroutine = lyrics_service.call_method1("search", (py_track, "lrclib", options))?;
                 into_future(coroutine)
             })
             .map_err(|e| LyricsError::PythonError { error: e })?;

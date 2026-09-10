@@ -7,5 +7,9 @@ from downloader.models.track import Track
 class LyricsProvider(ABC):
 
     @abstractmethod
-    async def search(self, track: Track) -> Lyrics | None:
+    async def search(
+        self,
+        track: Track,
+        options: OptionsT,
+    ) -> Lyrics | None:
         pass
